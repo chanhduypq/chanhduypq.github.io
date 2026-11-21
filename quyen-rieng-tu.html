@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chính sách quyền riêng tư - Ứng dụng Toán học</title>
+<style>
+body{max-width:44rem;margin:0 auto;padding:2rem 1.25rem 4rem;font:16px/1.7 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#1c1c1c;background:#fff}
+h1{font-size:1.6rem;margin:0 0 .25rem}
+h2{font-size:1.15rem;margin:2rem 0 .5rem}
+p.updated{color:#666;margin:0 0 2rem;font-size:.9rem}
+ul{padding-left:1.2rem;margin:.4rem 0}
+li{margin:.3rem 0}
+code{background:#f4f4f4;padding:.1rem .35rem;border-radius:4px;font-size:.9em}
+table{border-collapse:collapse;width:100%;font-size:.95rem;margin:.75rem 0}
+th,td{border:1px solid #ddd;padding:.5rem .6rem;text-align:left;vertical-align:top}
+th{background:#fafafa}
+</style>
+</head>
+<body>
+
+<h1>Chính sách quyền riêng tư</h1>
+<p class="updated">Ứng dụng Toán học &middot; Cập nhật ngày 21 tháng 11 năm 2026</p>
+
+<p>Ứng dụng Toán học ("ứng dụng") là phần mềm hỗ trợ dạy và học môn Toán: luyện tập theo bài học trong
+sách giáo khoa, soạn và làm đề thi, nộp bài và nhận kết quả chấm. Chính sách này giải thích ứng dụng
+thu thập gì, dùng để làm gì, và liên quan thế nào tới tài khoản Google của người dùng.</p>
+
+<h2>1. Thông tin ứng dụng lưu</h2>
+<ul>
+  <li><strong>Thông tin định danh trong lớp học:</strong> tên hiển thị, mã học sinh hoặc giáo viên, lớp,
+      vai trò (học sinh / giáo viên / quản trị). Đây là dữ liệu do giáo viên hoặc quản trị nhập.</li>
+  <li><strong>Dữ liệu học tập:</strong> câu hỏi đã làm, đáp án đã chọn hoặc đã viết, điểm, nhận xét chấm bài,
+      thống kê tiến bộ theo chủ đề.</li>
+  <li><strong>Tài liệu người dùng tải lên:</strong> ảnh chụp đề hoặc bài trả lời, kèm tệp âm thanh do ứng dụng
+      tạo ra từ chữ viết của người dùng.</li>
+  <li><strong>Thông tin máy (chỉ với bản cài đặt)</strong>: một định danh máy không phải họ tên, dùng để
+      ràng buộc một bản cấp phép với một thiết bị.</li>
+</ul>
+<p>Ứng dụng không thu thập thông tin thanh toán, không quảng cáo, và không bán dữ liệu cho bên thứ ba.</p>
+
+<h2>2. Nơi dữ liệu được lưu trữ</h2>
+<table>
+  <tr><th>Dữ liệu</th><th>Nơi lưu</th></tr>
+  <tr><td>Tài khoản, bài làm, điểm, câu hỏi, đề thi</td>
+      <td>Cơ sở dữ liệu của ứng dụng, chạy trên máy chủ do quản trị lớp vận hành.</td></tr>
+  <tr><td>Ảnh và tệp người dùng tải lên</td>
+      <td>Thư mục tệp của máy chủ ứng dụng.</td></tr>
+  <tr><td>Bản sao bài nộp và kết quả chấm trung chuyển</td>
+      <td>Hai thư mục Google Drive của quản trị lớp (xem mục 3).</td></tr>
+  <tr><td>Bản cài đặt trên máy học sinh / giáo viên</td>
+      <td>CSDL và tệp dữ liệu nằm trong thư mục <code>%LOCALAPPDATA%\SoftMath</code> của chính máy đó.</td></tr>
+</table>
+
+<h2>3. Vai trò của Google Drive</h2>
+<p>Ứng dụng có một tuỳ chọn dành cho lớp học không có kết nối trực tiếp tới máy chủ ứng dụng: bài nộp và
+kết quả chấm được đóng gói thành tệp JSON và đi qua <strong>hai thư mục Google Drive do quản trị lớp sở
+hữu</strong>.</p>
+<ul>
+  <li>Thư mục <strong>BÀI NỘP</strong>: ứng dụng ghi tệp chứa nội dung bài vừa nộp. Tệp này là bản sao phục vụ
+      việc vận chuyển; bản chính thức vẫn nằm trong CSDL của ứng dụng.</li>
+  <li>Thư mục <strong>KẾT QUẢ</strong>: máy chấm ghi tệp chứa điểm và nhận xét; ứng dụng ở phía người học đọc
+      tệp đó để bật thông báo.</li>
+</ul>
+<p>Ứng dụng chỉ tự tạo và chỉ đọc tệp thuộc về chính nó trong hai thư mục nói trên. Nó không duyệt, không
+sao chép và không xoá các tệp khác trong Drive của bạn. Để làm được việc này, ứng dụng yêu cầu quyền
+<code>https://www.googleapis.com/auth/drive</code> của tài khoản Google mà quản trị lớp dùng để cấp phép;
+quyền đó chỉ có hiệu lực với tài khoản quản trị, không liên quan tới tài khoản của học sinh.</p>
+<p>Học sinh <strong>không</strong> cần đăng nhập bằng Google và không phải đồng ý quyền Drive nào cả.</p>
+
+<h2>4. Nội dung do trí tuệ nhân tạo tạo ra</h2>
+<p>Một số câu hỏi, lời giải và âm thanh đọc nội dung được tạo tự động. Khi tính năng này bật, nội dung cần
+xử lý (đề bài, chữ viết của học sinh) được gửi tới dịch vụ mô hình ngôn ngữ. Việc gửi diễn ra trên máy chủ
+do quản trị lớp cấu hình, và quản trị là người chọn dịch vụ đó.</p>
+
+<h2>5. Ai truy cập được dữ liệu</h2>
+<ul>
+  <li>Học sinh chỉ xem được bài làm và kết quả của chính mình.</li>
+  <li>Giáo viên xem được bài làm của lớp mình phụ trách.</li>
+  <li>Quản trị xem được toàn bộ dữ liệu của lớp và là người chịu trách nhiệm bảo vệ dữ liệu đó.</li>
+</ul>
+
+<h2>6. Lưu giữ và xoá</h2>
+<p>Dữ liệu học tập được giữ cho tới khi quản trị lớp xoá. Người dùng có thể yêu cầu quản trị sửa hoặc xoá
+thông tin của mình. Tệp trung chuyển trên Google Drive có thể bị xoá bất kỳ lúc nào mà không ảnh hưởng
+tới bản chính thức trong CSDL.</p>
+
+<h2>7. Bảo mật</h2>
+<p>Ứng dụng không tự động chia sẻ công khai dữ liệu của lớp. Thư mục Drive dùng để trung chuyển được quản
+trị kiểm soát quyền truy cập. Chúng tôi khuyến nghị quản trị không công khai đường dẫn thư mục Drive và
+thu hẹp quyền chia sẻ khi không còn dùng tính năng trung chuyển.</p>
+
+<h2>8. Liên hệ</h2>
+<p>Mọi yêu cầu về dữ liệu cá nhân trong ứng dụng này vui lòng gửi tới quản trị lớp qua địa chỉ
+<strong>trancongtue0812@gmail.com</strong>.</p>
+
+<p class="updated">Chính sách này có thể được cập nhật; ngày sửa đổi gần nhất luôn hiển thị ở đầu trang.</p>
+
+</body>
+</html>
