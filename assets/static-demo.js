@@ -21,6 +21,13 @@
     return new URL(String(name || 'index.html'), window.location.href).href;
   }
 
+  function entryFileUrl(name) {
+    var prefix = '/' + 'chanhduypq.github.io/';
+    var base = window.location.origin + '/';
+    if (window.location.pathname.indexOf(prefix) === 0) base = window.location.origin + prefix;
+    return new URL(String(name || 'index.html'), base).href;
+  }
+
   function routeTarget(value) {
     var raw = String(value || '');
     if (!raw || raw.charAt(0) === '#') return raw;
@@ -312,6 +319,16 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     var route = document.body.getAttribute('data-static-route') || '/trang-chu';
+    var currentPath = appPath(window.location);
+    if (window.location.protocol !== 'file:' && !/\.html$/.test(currentPath)) {
+      var initialTarget = routeTarget(currentPath + (window.location.search || ''));
+      var targetPath = appPath(parseUrl(entryFileUrl(initialTarget)));
+      if (targetPath !== currentPath && !(currentPath === '/' && targetPath === '/index.html') &&
+          !(initialTarget === 'index.html' && currentPath !== '/')) {
+        window.location.replace(entryFileUrl(initialTarget));
+        return;
+      }
+    }
     if (window.NAV_ACTIVE && window.NAV_ACTIVE.mark) window.NAV_ACTIVE.mark(route);
     if (window.UPGRADE_BANNER && window.UPGRADE_BANNER.show) window.UPGRADE_BANNER.show(route);
   });
