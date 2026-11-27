@@ -1,0 +1,1008 @@
+
+<!DOCTYPE html>
+
+<html>
+<head><script src="./data/demo-config.js"></script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Ứng dụng Toán học</title>
+<link href="./static/bootstrap-5.0.2-dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="./static/css/common.css" rel="stylesheet"/>
+<style>
+    /* Menu con ("Ký hiệu toán học") mở ra ngoài khối menu. Ở bề ngang hẹp,
+       .navbar-main dùng overflow-x:auto để cuộn ngang; theo CSS thì một trục không
+       phải visible buộc trục còn lại thành auto, nên bảng menu con bị cắt mất.
+       Chỉ nới khi đang mở, để thanh cuộn ngang giữ nguyên như cũ. */
+    @media (max-width: 480px) {
+      .navbar-main:has(.dropdown-menu.show) { overflow: visible; }
+    }
+    /* Bốn mục menu con của "Theo dõi quá trình" vẫn do partial riêng render nên mang
+       class nút của hàng menu (btn btn-sm). Vào menu con thì phải khoác dạng item: bỏ
+       viền, chiếm trọn một hàng. Ở đây CHỈ còn phần hình thể — nền và màu chữ của từng
+       mục lấy từ khối "Menu con" trong common.css (lớp .nav-sub), để mỗi mục một màu
+       riêng. Khối này có id nên độ đặc hiệu cao hơn; khai báo màu ở đây sẽ xoá sạch
+       màu của từng mục. */
+    #nav-track-menu > li > a.btn {
+      display: block; width: 100%; padding: .25rem 1rem; clear: both;
+      border: 0; border-radius: 0; box-shadow: none;
+      font-size: 1rem; font-weight: 400;
+      text-align: left; white-space: nowrap;
+    }
+  </style>
+<link href="./static/katex/katex.min.css" rel="stylesheet"/>
+<script src="./static/js/jquery-3.7.1.min.js"></script>
+<script src="./static/bootstrap-5.0.2-dist/js/bootstrap.bundle.min.js"></script>
+<script defer="" src="./static/katex/katex.min.js"></script>
+<script src="./static/js/common.js"></script>
+<script src="./static/js/ajax.js"></script>
+<script src="./static/js/nav_activity.js"></script>
+<script src="./static/js/nav_active.js"></script>
+<script src="./static/js/upgrade_banner.js"></script>
+</head>
+<body data-static-route="/exam/8833">
+<div class="site-top" data-nav-active="exams">
+<div class="topband">
+<div aria-label="Lời tri ân" class="marquee-shell" role="note">
+<div class="marquee-track">
+<span class="marquee-text">Cảm ơn bạn đã tin tưởng và ủng hộ chúng tôi</span>
+<span aria-hidden="true" class="marquee-text">Cảm ơn bạn đã tin tưởng và ủng hộ chúng tôi</span>
+</div>
+</div>
+<div class="notif-shell" id="notif-shell">
+<button aria-controls="notif-panel" aria-expanded="false" aria-haspopup="true" aria-label="Thông báo" class="corner-icon notif-bell" id="notif-bell" title="Thông báo" type="button">
+<svg aria-hidden="true" fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18">
+<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+<path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+</svg>
+<span class="notif-badge" data-max="9" hidden="" id="notif-badge"></span>
+</button>
+<div aria-label="Thông báo" class="notif-panel" hidden="" id="notif-panel" role="dialog">
+<div class="notif-head">
+<span class="notif-heading">Thông báo</span>
+<button class="notif-mark-all" hidden="" id="notif-mark-all" title="Đánh dấu tất cả đã đọc" type="button">Đánh dấu tất cả đã đọc</button>
+</div>
+<div class="notif-list" id="notif-list"></div>
+<p class="notif-empty" hidden="" id="notif-empty">Không có thông báo nào chưa đọc.</p>
+</div>
+</div>
+</div>
+<nav class="navbar-shell">
+<div class="navbar-main align-items-center">
+<a class="btn btn-sm nav-home" data-nav="trang_chu" href="./index.html">Trang chủ</a>
+<div class="btn-group">
+<a aria-controls="nav-study-menu" aria-expanded="false" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="study" href="#" role="button">Lý thuyết</a>
+<ul class="dropdown-menu" id="nav-study-menu">
+<li><a class="dropdown-item nav-sub nav-sub-blue" data-nav="study" href="./study.html">Lý thuyết theo lớp</a></li>
+<li><a class="dropdown-item nav-sub nav-sub-violet" data-nav="symbols" href="./symbols.html">Ký hiệu toán học</a></li>
+</ul>
+</div>
+<div class="btn-group">
+<a aria-controls="nav-play-menu" aria-expanded="false" class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="play" href="#" role="button">Bài tập</a>
+<ul class="dropdown-menu" id="nav-play-menu">
+<li><a class="dropdown-item nav-sub nav-sub-green" data-nav="home" href="./practice-setup.html">Làm bài theo bài học SGK</a></li>
+<li><a class="dropdown-item nav-sub nav-sub-amber" data-nav="exams" href="./exams.html">Luyện thi</a></li>
+</ul>
+</div>
+<div class="btn-group" id="nav-track">
+<a aria-controls="nav-track-menu" aria-expanded="false" class="btn btn-warning btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="track" href="#" role="button">Theo dõi quá trình</a>
+<ul class="dropdown-menu" id="nav-track-menu">
+<li>
+<a class="btn btn-warning btn-sm nav-sub nav-sub-orange" data-nav="history" href="./history.html">Lịch sử</a>
+</li>
+<li>
+<a class="btn btn-outline-primary btn-sm nav-sub nav-sub-teal" data-nav="capability" href="./capability.html">Năng lực</a>
+</li>
+<li><a class="btn btn-outline-warning btn-sm nav-sub nav-sub-pink" data-nav="today" href="./today.html">Ôn hôm nay</a></li>
+<li><a class="btn btn-outline-secondary btn-sm nav-sub nav-sub-indigo" data-nav="weekly_report" href="./weekly-report.html">Báo cáo tuần cho phụ huynh</a></li>
+</ul>
+</div>
+<a class="btn btn-sm nav-help" data-nav="help" href="./help.html">Hướng dẫn sử dụng</a>
+</div>
+</nav>
+<script id="nav-path-map" type="application/json">{"capability": ["/capability"], "exams": ["/exams", "/exam", "/exam_ability"], "help": ["/help"], "history": ["/history"], "home": ["/lam-bai-tap", "/practice", "/practice_ratio", "/practice_similar", "/redo", "/redo_last", "/submit"], "latest_result": ["/latest_result"], "study": ["/study", "/study_lessons"], "symbols": ["/symbols"], "today": ["/today"], "trang_chu": ["/trang-chu"], "weekly_report": ["/weekly_report"]}</script>
+</div>
+<script>
+    (function () {
+      'use strict';
+      var KEYS = ['history', 'capability'];      // thứ tự đúng trong menu con
+
+      function stray(bar, key) {
+        var found = null;
+        Array.prototype.forEach.call(bar.children, function (el) {
+          if (!found && el.getAttribute('data-nav') === key) found = el;
+        });
+        return found;
+      }
+
+      function adopt() {
+        var bar = document.querySelector('.navbar-main');
+        var ul = document.getElementById('nav-track-menu');
+        if (!bar || !ul) return;
+        var moved = false;
+        KEYS.forEach(function (key) {
+          var node = stray(bar, key);
+          if (!node) return;
+          var holder = document.createElement('li');
+          holder.appendChild(node);
+          ul.appendChild(holder);
+          moved = true;
+        });
+        if (!moved) return;
+        var parent = document.getElementById('nav-track');
+        if (parent) parent.style.display = '';
+      }
+
+      function watch() {
+        adopt();
+        var bar = document.querySelector('.navbar-main');
+        if (bar && typeof MutationObserver === 'function') {
+          new MutationObserver(adopt).observe(bar, { childList: true });
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', watch);
+      } else {
+        watch();
+      }
+    })();
+  </script>
+<div class="page-upgrade" hidden}="" id="page-upgrade" role="status">Trang này đang được nâng cấp về giao diện và chức năng</div>
+<script id="upgrade-keys" type="application/json">["home", "latest_result", "capability", "today", "weekly_report"]</script>
+<div id="page-body">
+<link href="./static/practice.css" rel="stylesheet"/>
+<link href="./static/css/exam.css" rel="stylesheet"/>
+<div class="fill">
+<form action="/exam/8833/submit" class="fill" data-demo-form="1" data-demo-submit="1" id="exam-form" method="post">
+<input name="attempt" type="hidden" value="38"/>
+<div class="exam-chrome">
+<div class="exam-bar">
+<div class="exam-bar-id">
+<span class="exam-bar-meta">
+          Toán lớp 11 · Giữa học kì 2 ·
+          22 câu · thang 10 điểm ·
+          90 phút · nạp từ đề thi thật
+        </span>
+</div>
+<div class="q-pager exam-bar-nav" data-pager="" data-pager-index="0" id="exam-pager">
+<button aria-label="Câu trước" class="q-pager-btn" data-pager-prev="" type="button">‹ Trước</button>
+<span class="q-pager-count" data-pager-count=""></span>
+<button aria-label="Câu sau" class="q-pager-btn" data-pager-next="" type="button">Sau ›</button>
+</div>
+<div class="exam-clock" data-remaining="5400" id="exam-clock">
+<span class="exam-clock-label">Thời gian còn lại</span>
+<span class="exam-clock-value" id="exam-clock-value">1:30:00</span>
+</div>
+<div class="exam-bar-actions">
+<button class="btn btn-primary" id="exam-submit" type="submit">Nộp bài</button>
+<a class="btn btn-outline-secondary" href="./exams.html">Rời phòng thi</a>
+</div>
+</div>
+<div class="exam-note warn" id="exam-unanswered" style="display:none"></div>
+<div class="exam-palette" id="exam-palette">
+<span class="exam-palette-note">1 câu trong đề này không kèm đáp án ở nguồn (0,25 điểm).</span>
+<a class="exam-dot" data-dot="150452" href="#q-150452">1</a>
+<a class="exam-dot" data-dot="150453" href="#q-150453">2</a>
+<a class="exam-dot" data-dot="150454" href="#q-150454">3</a>
+<a class="exam-dot" data-dot="150455" href="#q-150455">4</a>
+<a class="exam-dot" data-dot="150456" href="#q-150456">5</a>
+<a class="exam-dot" data-dot="150457" href="#q-150457">6</a>
+<a class="exam-dot" data-dot="150458" href="#q-150458">7</a>
+<a class="exam-dot" data-dot="150459" href="#q-150459">8</a>
+<a class="exam-dot" data-dot="150460" href="#q-150460">9</a>
+<a class="exam-dot" data-dot="150461" href="#q-150461">10</a>
+<a class="exam-dot" data-dot="150462" href="#q-150462">11</a>
+<a class="exam-dot" data-dot="150463" href="#q-150463">12</a>
+<a class="exam-dot" data-dot="150464" href="#q-150464">13</a>
+<a class="exam-dot" data-dot="150465" href="#q-150465">14</a>
+<a class="exam-dot" data-dot="150466" href="#q-150466">15</a>
+<a class="exam-dot" data-dot="150467" href="#q-150467">16</a>
+<a class="exam-dot" data-dot="150468" href="#q-150468">17</a>
+<a class="exam-dot" data-dot="150469" href="#q-150469">18</a>
+<a class="exam-dot" data-dot="150470" href="#q-150470">19</a>
+<a class="exam-dot" data-dot="150471" href="#q-150471">20</a>
+<a class="exam-dot" data-dot="150472" href="#q-150472">21</a>
+<a class="exam-dot" data-dot="150473" href="#q-150473">22</a>
+</div>
+</div>
+<div class="scroll-area">
+<div class="exam-part">
+<div class="question-block exam-q" data-kind="mc" data-qid="150452" id="q-150452">
+<div class="q-number">
+          Câu 1. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Với $a≠ 0; \, b≠ 0;$ $m, \, n$ là các số nguyên, khẳng định nào sau đây đúng?</div>
+<div class="opt">
+<label>
+<input name="q_150452" type="radio" value="A"/>
+<strong>A)</strong> $a^m.a^n={{a}^{m.n}}$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150452" type="radio" value="B"/>
+<strong>B)</strong> $\left(a.b\right)^m=a^m.b^n$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150452" type="radio" value="C"/>
+<strong>C)</strong> $a^m+a^n=a^{m+n}$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150452" type="radio" value="D"/>
+<strong>D)</strong> $a^m.b^n=\left(a.b \right)^{m+n}$ .
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150453" id="q-150453">
+<div class="q-number">
+          Câu 2. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Với $a$ là số thực dương tùy ý, $\ln \left(5a \right)-\ln \left(2a \right)$ bằng</div>
+<div class="opt">
+<label>
+<input name="q_150453" type="radio" value="A"/>
+<strong>A)</strong> $\ln \dfrac{5}{2}.$
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150453" type="radio" value="B"/>
+<strong>B)</strong> $\dfrac{\ln 5}{\ln 2}.$
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150453" type="radio" value="C"/>
+<strong>C)</strong> $\ln \left(3a \right).$
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150453" type="radio" value="D"/>
+<strong>D)</strong> $\dfrac{\ln 5a}{\ln 2a}.$
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150454" id="q-150454">
+<div class="q-number">
+          Câu 3. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Với $a&gt;0, \, a ≠ 1$ . Khẳng định nào sau đây đúng?</div>
+<div class="opt">
+<label>
+<input name="q_150454" type="radio" value="A"/>
+<strong>A)</strong> A
+$\log_a m.\log_a n=\log_a \left(m+n \right)$ với mọi $m, \, n.$
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150454" type="radio" value="B"/>
+<strong>B)</strong> B
+$\log_a \left(m^2\right)=2\log_a \left | m \right | $ với mọi $m∈ ℝ.$
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150454" type="radio" value="C"/>
+<strong>C)</strong> C
+$\log_a m-\log_a n=\log_a \left(m.n \right)$ với mọi $m, \, n.$
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150454" type="radio" value="D"/>
+<strong>D)</strong> D
+$\log_a m+\log_a n=\log_a\left(m.n \right)$ với mọi $m, \, n ∈ ℝ.$
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150455" id="q-150455">
+<div class="q-number">
+          Câu 4. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Hàm số nào sau đây là hàm số mũ?</div>
+<div class="opt">
+<label>
+<input name="q_150455" type="radio" value="A"/>
+<strong>A)</strong> $y=\log x^2$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150455" type="radio" value="B"/>
+<strong>B)</strong> $y=3^x$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150455" type="radio" value="C"/>
+<strong>C)</strong> $y=3x^3-x$
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150455" type="radio" value="D"/>
+<strong>D)</strong> $y=\left(x-1 \right)^{2x}$ .
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150456" id="q-150456">
+<div class="q-number">
+          Câu 5. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Nghiệm của phương trình $3^x=\dfrac{1}{243}$ là</div>
+<div class="opt">
+<label>
+<input name="q_150456" type="radio" value="A"/>
+<strong>A)</strong> $x=-5$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150456" type="radio" value="B"/>
+<strong>B)</strong> $x=3^{-5}$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150456" type="radio" value="C"/>
+<strong>C)</strong> $x=5$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150456" type="radio" value="D"/>
+<strong>D)</strong> $x=-\dfrac{1}{5}$ .
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150457" id="q-150457">
+<div class="q-number">
+          Câu 6. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Phương trình $\log_{3} \left(3x-2 \right)=3$ có nghiệm là</div>
+<div class="opt">
+<label>
+<input name="q_150457" type="radio" value="A"/>
+<strong>A)</strong> $x=\dfrac{25}{3}$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150457" type="radio" value="B"/>
+<strong>B)</strong> $x=\dfrac{29}{3}$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150457" type="radio" value="C"/>
+<strong>C)</strong> $x=\dfrac{11}{3}$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150457" type="radio" value="D"/>
+<strong>D)</strong> $x=87$ .
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150458" id="q-150458">
+<div class="q-number">
+          Câu 7. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-1">Có vẽ hình</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Cho hình lập phương $ABCD.{A}'{B}'{C}'{D}'$ .<img alt="" src="./uploads/ing-f7e70573bc76db58.png"/>Góc giữa hai đường thẳng $AC$ và ${A}'B'$ bằng</div>
+<div class="opt">
+<label>
+<input name="q_150458" type="radio" value="A"/>
+<strong>A)</strong> $0°$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150458" type="radio" value="B"/>
+<strong>B)</strong> $60°$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150458" type="radio" value="C"/>
+<strong>C)</strong> $90°$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150458" type="radio" value="D"/>
+<strong>D)</strong> $45°$ .
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150459" id="q-150459">
+<div class="q-number">
+          Câu 8. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Mệnh đề nào sau đây là mệnh đề đúng ?</div>
+<div class="opt">
+<label>
+<input name="q_150459" type="radio" value="A"/>
+<strong>A)</strong> Một đường thẳng vuông góc với một trong hai đường thẳng vuông góc thì vuông góc với đường thẳng còn lại.
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150459" type="radio" value="B"/>
+<strong>B)</strong> Hai đường thẳng cùng song song với đường thẳng thứ ba thì song song với nhau.
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150459" type="radio" value="C"/>
+<strong>C)</strong> Hai đường thẳng cùng vuông góc với đường thẳng thứ ba thì song song với nhau.
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150459" type="radio" value="D"/>
+<strong>D)</strong> Một đường thẳng vuông góc với một trong hai đường thẳng song song thì vuông góc với đường thẳng còn lại.
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150460" id="q-150460">
+<div class="q-number">
+          Câu 9. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-0">Không vẽ hình</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Trong không gian cho điểm $M$ và đường thẳng $d$ . Có bao nhiêu mặt phẳng qua $M$ và vuông góc với đường thẳng $d$ ?</div>
+<div class="opt">
+<label>
+<input name="q_150460" type="radio" value="A"/>
+<strong>A)</strong> 1.
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150460" type="radio" value="B"/>
+<strong>B)</strong> Vô số.
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150460" type="radio" value="C"/>
+<strong>C)</strong> 3.
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150460" type="radio" value="D"/>
+<strong>D)</strong> 2.
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150461" id="q-150461">
+<div class="q-number">
+          Câu 10. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-0">Không vẽ hình</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Thể tích của khối hộp chữ nhật có ba kích thước $x$ , $y$ , $z$ $\left(x,y,z&gt;0 \right)$ là</div>
+<div class="opt">
+<label>
+<input name="q_150461" type="radio" value="A"/>
+<strong>A)</strong> $\dfrac{1}{3}xyz$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150461" type="radio" value="B"/>
+<strong>B)</strong> $xyz$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150461" type="radio" value="C"/>
+<strong>C)</strong> $\sqrt{xyz}$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150461" type="radio" value="D"/>
+<strong>D)</strong> ${{x}^{2}}{{y}^{2}}{{z}^{2}}$ .
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150462" id="q-150462">
+<div class="q-number">
+          Câu 11. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Số nghiệm của phương trình $2^{x^2 - 4x+8}=16$ là</div>
+<div class="opt">
+<label>
+<input name="q_150462" type="radio" value="A"/>
+<strong>A)</strong> 1.
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150462" type="radio" value="B"/>
+<strong>B)</strong> 3.
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150462" type="radio" value="C"/>
+<strong>C)</strong> 2.
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150462" type="radio" value="D"/>
+<strong>D)</strong> 4.
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150463" id="q-150463">
+<div class="q-number">
+          Câu 12. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-0">Không vẽ hình</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Thể tích của khối chóp có diện tích đáy $B=2 \, 024a^2$ và chiều cao $h=a$ là</div>
+<div class="opt">
+<label>
+<input name="q_150463" type="radio" value="A"/>
+<strong>A)</strong> $2 \, 024a^3$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150463" type="radio" value="B"/>
+<strong>B)</strong> $\dfrac{2 \, 024}{3}a^2$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150463" type="radio" value="C"/>
+<strong>C)</strong> $2 \, 024a^2$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150463" type="radio" value="D"/>
+<strong>D)</strong> $\dfrac{2 \, 024}{3}a^3$ .
+            </label>
+</div>
+</div>
+</div>
+<div class="exam-part">
+<div class="question-block exam-q" data-kind="true_false" data-qid="150464" id="q-150464">
+<div class="q-number">
+          Câu 13. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần II — Trắc nghiệm đúng hoặc sai</span>
+<span class="exam-points">1 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Hàm số $f(x)$ và $g(x)$ xác định trên $ℝ$ . Xét $x&gt;y&gt;0,\,\,x≠ 1$ .
+(Nhấp vào ô màu vàng để chọn đúng / sai)</div>
+<div class="exam-sub-hint">
+            Mỗi ý a), b), c)… là một phát biểu độc lập: nhấp vào ô để chọn Đúng/Sai,
+            0,25 điểm mỗi ý.
+          </div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>a)</strong> ${{\log }_{2}}f(x)&gt;{{\log }_{2}}g(x)\Leftrightarrow f(x)&gt;g(x)$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150464_a" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150464_a" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>b)</strong> $\ln {{f}^{2}}(x)=\ln {{g}^{2}}(x)\Leftrightarrow 2\ln f(x)=2\ln g(x)$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150464_b" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150464_b" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>c)</strong> Hàm số $y={{2}^{x}}{{.3}^{-x}}$ nghịch biến trên $ℝ$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150464_c" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150464_c" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>d)</strong> $\log_{x}y$ luôn nhỏ hơn $1$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150464_d" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150464_d" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="true_false" data-qid="150465" id="q-150465">
+<div class="q-number">
+          Câu 14. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-0">Không vẽ hình</span>
+<span class="exam-part-badge">Phần II — Trắc nghiệm đúng hoặc sai</span>
+<span class="exam-points">1 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Cho hình chóp $S.ABC$ có đáy $ABC$ là tam giác vuông cân tại $B$ . Cạnh bên $SA$ vuông góc với đáy. $M$ là trung điểm của $AC$ .
+(Nhấp vào dòng để chọn đúng / sai)</div>
+<div class="exam-sub-hint">
+            Mỗi ý a), b), c)… là một phát biểu độc lập: nhấp vào ô để chọn Đúng/Sai,
+            0,25 điểm mỗi ý.
+          </div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>a)</strong> $SA ⊥ BC$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150465_a" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150465_a" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>b)</strong> $BM\bot (SAC)$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150465_b" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150465_b" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>c)</strong> $BC$ tạo với mặt phẳng $\left(SAB \right)$ một góc có số đo là ${{45}^{\circ}}$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150465_c" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150465_c" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>d)</strong> Mặt phẳng $\left(SAB \right)$ vuông góc với mặt phẳng $\left(SAC \right)$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150465_d" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150465_d" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="true_false" data-qid="150466" id="q-150466">
+<div class="q-number">
+          Câu 15. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần II — Trắc nghiệm đúng hoặc sai</span>
+<span class="exam-points">1 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Cho $a, \, b, \, c$ là các số thực dương tuỳ ý và $a ≠ 1$ .
+(Nhấp vào dòng để chọn đúng / sai)</div>
+<div class="exam-sub-hint">
+            Mỗi ý a), b), c)… là một phát biểu độc lập: nhấp vào ô để chọn Đúng/Sai,
+            0,25 điểm mỗi ý.
+          </div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>a)</strong> $\log_{a} \left(a.b \right)=1+\log_{a} b$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150466_a" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150466_a" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>b)</strong> $\log_{a} \left(\dfrac{a^3}{b^2} \right)=\dfrac{3}{2\log_{a} b}$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150466_b" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150466_b" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>c)</strong> $\log_a \left(b.c \right)=\log_a b.\log_{a} c$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150466_c" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150466_c" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>d)</strong> $\log_{a} b+2\log_{a} c-\log_{a} 2=\log_{a} \left(b+c^2 - 2 \right)$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150466_d" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150466_d" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="true_false" data-qid="150467" id="q-150467">
+<div class="q-number">
+          Câu 16. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-0">Không vẽ hình</span>
+<span class="exam-part-badge">Phần II — Trắc nghiệm đúng hoặc sai</span>
+<span class="exam-points">1 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Cho hình chóp $S.ABCD$ có đáy $ABCD$ là hình vuông cạnh $a$ , $SA=a$ và $SA$ vuông góc với đáy. Gọi $M$ là trung điểm $SB$ , $N$ là điểm thuộc cạnh $SD$ sao cho $SN=2ND$ .
+(Nhấp vào dòng để chọn đúng / sai)</div>
+<div class="exam-sub-hint">
+            Mỗi ý a), b), c)… là một phát biểu độc lập: nhấp vào ô để chọn Đúng/Sai,
+            0,25 điểm mỗi ý.
+          </div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>a)</strong> Thể tích khối chóp $S.ABCD$ bằng $a^3$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150467_a" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150467_a" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>b)</strong> Thể tích khối chóp $S.ABC$ bằng thể tích khối chóp $S.BCD$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150467_b" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150467_b" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>c)</strong> Thể tích khối chóp $S.AMC$ bằng $\dfrac{1}{3}$ thể tích khối chóp $S.ABCD$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150467_c" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150467_c" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>d)</strong> Thể tích $V$ của khối tứ diện $ACMN$ bằng $\dfrac{a^3}{12}$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150467_d" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150467_d" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+<div class="exam-part">
+<div class="question-block exam-q" data-kind="short" data-qid="150468" id="q-150468">
+<div class="q-number">
+          Câu 17. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-0">Không vẽ hình</span>
+<span class="exam-part-badge">Phần III — Trắc nghiệm trả lời ngắn</span>
+<span class="exam-points">0,5 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Ở địa phương, người ta tính toán thấy rằng: nếu diện tích khai thác rừng hàng năm không đổi như hiện nay thì sau $60$ năm nữa diện tích rừng sẽ hết, nhưng trên thực tế thì diện tích khai thác rừng tăng trung bình hàng năm là $5\%/$ năm. Hỏi sau bao nhiêu năm nữa diện tích rừng sẽ bị khai thác hết? Giả thiết trong quá trình khai thác, rừng không được trồng thêm, diện tích rừng tự sinh ra và mất đi (do không khai thác) là không đáng kể.
+Đáp án: ☐</div>
+<div class="exam-sub-hint">Điền số — gõ kết quả em tính được vào ô.</div>
+<label class="number-label" for="num_150468">Kết quả:</label>
+<input autocomplete="off" class="number-box" id="num_150468" inputmode="decimal" name="num_150468" placeholder="Nhập số…" type="text"/>
+</div>
+<div class="question-block exam-q" data-kind="short" data-qid="150469" id="q-150469">
+<div class="q-number">
+          Câu 18. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần III — Trắc nghiệm trả lời ngắn</span>
+<span class="exam-points">0,5 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Số ca bị nhiễm virus Covid-19 ở một quốc gia sau $t$ ngày là $P\left(t \right)$ và được tính bởi công thức $P\left(t \right)=X.{{e}^{{{r}_{0}}\left(t-1 \right)}}$ , trong đó $X$ là số ca bị nhiễm virus trong ngày thống kê đầu tiên, ${{r}_{0}}$ là hệ số lây nhiễm. Hỏi ngày thứ $20$ có bao nhiêu ca bị lây nhiễm virus? (làm tròn đến hàng đơn vị). Biết rằng trong ngày đầu tiên thống kê có $253$ ca bị nhiễm bệnh, ngày thứ $10$ có $2 \, 024$ ca bị lây nhiễm và trong suốt quá trình thống kê hệ số lây nhiễm là không đổi?
+Đáp án: ☐</div>
+<div class="exam-sub-hint">Điền số — gõ kết quả em tính được vào ô.</div>
+<label class="number-label" for="num_150469">Kết quả:</label>
+<input autocomplete="off" class="number-box" id="num_150469" inputmode="decimal" name="num_150469" placeholder="Nhập số…" type="text"/>
+</div>
+<div class="question-block exam-q" data-kind="short" data-qid="150470" id="q-150470">
+<div class="q-number">
+          Câu 19. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-0">Không vẽ hình</span>
+<span class="exam-part-badge">Phần III — Trắc nghiệm trả lời ngắn</span>
+<span class="exam-points">0,5 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Một nhà sử học đến du lịch Đại kim tự tháp Giza (Ai Cập). Hướng dẫn viên du lịch cung cấp thông tin về Đại kim tự tháp này có dạng hình chóp tứ giác đều, với chiều cao $146,$ m và độ nghiêng của nó là $51° 50'40''$ (tức là số đo góc phẳng nhị diện tạo bởi mặt bên và mặt đáy). Nhà sử học rất muốn thông tin chi tiết hơn nữa về góc phẳng nhị diện tạo bởi hai mặt bên kề nhau của Đại kim tự tháp. Hãy giúp nhà sử học này tính số đo của góc phẳng nhị diện trên?
+Đáp án: ☐ (làm tròn tới đơn vị độ)</div>
+<div class="exam-sub-hint">Điền số — gõ kết quả em tính được vào ô.</div>
+<label class="number-label" for="num_150470">Kết quả:</label>
+<input autocomplete="off" class="number-box" id="num_150470" inputmode="decimal" name="num_150470" placeholder="Nhập số…" type="text"/>
+</div>
+<div class="question-block exam-q" data-kind="short" data-qid="150471" id="q-150471">
+<div class="q-number">
+          Câu 20. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-0">Không vẽ hình</span>
+<span class="exam-part-badge">Phần III — Trắc nghiệm trả lời ngắn</span>
+<span class="exam-points">0,5 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Cho hình chóp $S.ABC$ có đáy $ABC$ là tam giác vuông tại $B$ , $AB=a, \, BC=a\sqrt{3}$ . Hình chiếu vuông góc của $S$ trên mặt đáy là trung điểm $H$ của cạnh $AC$ . Biết $SB=a\sqrt{2}$ . Tính khoảng cách từ điểm $H$ đến mặt phẳng $\left(SAB \right)$ khi $a = 2$ (làm tròn kết quả tới hàng phần trăm).
+Đáp án: ☐</div>
+<div class="exam-sub-hint">Điền số — gõ kết quả em tính được vào ô.</div>
+<label class="number-label" for="num_150471">Kết quả:</label>
+<input autocomplete="off" class="number-box" id="num_150471" inputmode="decimal" name="num_150471" placeholder="Nhập số…" type="text"/>
+</div>
+<div class="question-block exam-q" data-kind="short" data-qid="150472" id="q-150472">
+<div class="q-number">
+          Câu 21. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-0">Không vẽ hình</span>
+<span class="exam-part-badge">Phần III — Trắc nghiệm trả lời ngắn</span>
+<span class="exam-points">0,5 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Ông Đô muốn làm một bể cá hình hộp chữ nhật không nắp bằng kính có thể tích là $2$ m $^3$ . và có chiều cao không đổi là $0,5$ m (giả sử các mép nối là không đáng kể). Giá của kính làm bể là $150\,000$ đồng/m $^2$ . Tính chi phí (đơn vị đồng) mua kính ít nhất để làm bể cá.
+Đáp án: ☐ (đồng).</div>
+<div class="exam-sub-hint">Điền số — gõ kết quả em tính được vào ô.</div>
+<label class="number-label" for="num_150472">Kết quả:</label>
+<input autocomplete="off" class="number-box" id="num_150472" inputmode="decimal" name="num_150472" placeholder="Nhập số…" type="text"/>
+</div>
+<div class="question-block exam-q" data-kind="short" data-qid="150473" id="q-150473">
+<div class="q-number">
+          Câu 22. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-0">Không vẽ hình</span>
+<span class="exam-part-badge">Phần III — Trắc nghiệm trả lời ngắn</span>
+<span class="exam-points">0,5 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Cho hình chóp $S.ABC$ có đáy $ABC$ là tam giác vuông cân tại $B$ , $AC=2$ , tam giác $SAB$ vuông tại $A$ , tam giác $SBC$ vuông tại $B$ , $SB=4$ . Tính thể tích khối chóp $S.ABC$ (kết quả làm tròn đến chữ thập phân thứ hai).
+Đáp án: ☐</div>
+<div class="exam-sub-hint">Điền số — gõ kết quả em tính được vào ô.</div>
+<label class="number-label" for="num_150473">Kết quả:</label>
+<input autocomplete="off" class="number-box" id="num_150473" inputmode="decimal" name="num_150473" placeholder="Nhập số…" type="text"/>
+</div>
+</div>
+</div>
+</form>
+</div>
+<script src="./static/js/exam.js"></script>
+<script src="./static/js/tf_pick.js"></script>
+<script src="./static/js/question_pager.js"></script>
+</div>
+<footer class="footer-shell">
+<div class="footer-main">
+<div class="footer-feedback" id="fb-slot"></div>
+<div class="footer-info">
+<div class="footer-line">Copyright © Trần Công Tuệ</div>
+<div class="footer-line">Phone &amp; Zalo: <a href="tel:+84961969489">096 196 9489</a></div>
+<div class="footer-line">Email: <a href="mailto:trancongtue0812@gmail.com">trancongtue0812@gmail.com</a></div>
+</div>
+</div>
+</footer>
+
+<div aria-hidden="true" class="modal fade" id="modal-lesson" tabindex="-1">
+<div class="modal-dialog modal-lg modal-dialog-scrollable">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title">📖 Lý thuyết</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body">
+
+<div class="d-none mb-3" id="lesson-audio"></div>
+
+<div class="d-none mb-3" id="lesson-image"></div>
+<div class="ai-box visible" id="lesson-body"></div>
+</div>
+<div class="modal-footer">
+<button class="btn btn-x btn-sm" data-bs-dismiss="modal" type="button">Đóng</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="modal fade" id="modal-notice" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title" id="notice-title">Thông báo</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body" id="notice-body" style="white-space:pre-line"></div>
+<div class="modal-footer">
+<button class="btn btn-primary btn-sm" data-bs-dismiss="modal" type="button">Đồng ý</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="modal fade" id="modal-confirm" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title" id="confirm-title">Xác nhận</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body" id="confirm-body" style="white-space:pre-line"></div>
+<div class="modal-footer">
+<button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" type="button">Không</button>
+<button class="btn btn-primary btn-sm" id="confirm-yes" type="button">Có</button>
+</div>
+</div>
+</div>
+</div>
+<link href="./static/feedback.css" rel="stylesheet"/>
+
+<script src="./static/js/feedback.js"></script>
+<link href="./static/notifications.css" rel="stylesheet"/>
+<script src="./static/js/notifications.js"></script>
+<script src="./assets/static-demo.js"></script></body>
+</html>

@@ -1,0 +1,431 @@
+
+<!DOCTYPE html>
+
+<html>
+<head><script src="./data/demo-config.js"></script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Ứng dụng Toán học</title>
+<link href="./static/bootstrap-5.0.2-dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="./static/css/common.css" rel="stylesheet"/>
+<style>
+    /* Menu con ("Ký hiệu toán học") mở ra ngoài khối menu. Ở bề ngang hẹp,
+       .navbar-main dùng overflow-x:auto để cuộn ngang; theo CSS thì một trục không
+       phải visible buộc trục còn lại thành auto, nên bảng menu con bị cắt mất.
+       Chỉ nới khi đang mở, để thanh cuộn ngang giữ nguyên như cũ. */
+    @media (max-width: 480px) {
+      .navbar-main:has(.dropdown-menu.show) { overflow: visible; }
+    }
+    /* Bốn mục menu con của "Theo dõi quá trình" vẫn do partial riêng render nên mang
+       class nút của hàng menu (btn btn-sm). Vào menu con thì phải khoác dạng item: bỏ
+       viền, chiếm trọn một hàng. Ở đây CHỈ còn phần hình thể — nền và màu chữ của từng
+       mục lấy từ khối "Menu con" trong common.css (lớp .nav-sub), để mỗi mục một màu
+       riêng. Khối này có id nên độ đặc hiệu cao hơn; khai báo màu ở đây sẽ xoá sạch
+       màu của từng mục. */
+    #nav-track-menu > li > a.btn {
+      display: block; width: 100%; padding: .25rem 1rem; clear: both;
+      border: 0; border-radius: 0; box-shadow: none;
+      font-size: 1rem; font-weight: 400;
+      text-align: left; white-space: nowrap;
+    }
+  </style>
+<link href="./static/katex/katex.min.css" rel="stylesheet"/>
+<script src="./static/js/jquery-3.7.1.min.js"></script>
+<script src="./static/bootstrap-5.0.2-dist/js/bootstrap.bundle.min.js"></script>
+<script defer="" src="./static/katex/katex.min.js"></script>
+<script src="./static/js/common.js"></script>
+<script src="./static/js/ajax.js"></script>
+<script src="./static/js/nav_activity.js"></script>
+<script src="./static/js/nav_active.js"></script>
+<script src="./static/js/upgrade_banner.js"></script>
+</head>
+<body data-static-route="/today?grade=12">
+<div class="site-top" data-nav-active="today">
+<div class="topband">
+<div aria-label="Lời tri ân" class="marquee-shell" role="note">
+<div class="marquee-track">
+<span class="marquee-text">Cảm ơn bạn đã tin tưởng và ủng hộ chúng tôi</span>
+<span aria-hidden="true" class="marquee-text">Cảm ơn bạn đã tin tưởng và ủng hộ chúng tôi</span>
+</div>
+</div>
+<div class="notif-shell" id="notif-shell">
+<button aria-controls="notif-panel" aria-expanded="false" aria-haspopup="true" aria-label="Thông báo" class="corner-icon notif-bell" id="notif-bell" title="Thông báo" type="button">
+<svg aria-hidden="true" fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18">
+<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+<path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+</svg>
+<span class="notif-badge" data-max="9" hidden="" id="notif-badge"></span>
+</button>
+<div aria-label="Thông báo" class="notif-panel" hidden="" id="notif-panel" role="dialog">
+<div class="notif-head">
+<span class="notif-heading">Thông báo</span>
+<button class="notif-mark-all" hidden="" id="notif-mark-all" title="Đánh dấu tất cả đã đọc" type="button">Đánh dấu tất cả đã đọc</button>
+</div>
+<div class="notif-list" id="notif-list"></div>
+<p class="notif-empty" hidden="" id="notif-empty">Không có thông báo nào chưa đọc.</p>
+</div>
+</div>
+</div>
+<nav class="navbar-shell">
+<div class="navbar-main align-items-center">
+<a class="btn btn-sm nav-home" data-nav="trang_chu" href="./index.html">Trang chủ</a>
+<div class="btn-group">
+<a aria-controls="nav-study-menu" aria-expanded="false" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="study" href="#" role="button">Lý thuyết</a>
+<ul class="dropdown-menu" id="nav-study-menu">
+<li><a class="dropdown-item nav-sub nav-sub-blue" data-nav="study" href="./study.html">Lý thuyết theo lớp</a></li>
+<li><a class="dropdown-item nav-sub nav-sub-violet" data-nav="symbols" href="./symbols.html">Ký hiệu toán học</a></li>
+</ul>
+</div>
+<div class="btn-group">
+<a aria-controls="nav-play-menu" aria-expanded="false" class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="play" href="#" role="button">Bài tập</a>
+<ul class="dropdown-menu" id="nav-play-menu">
+<li><a class="dropdown-item nav-sub nav-sub-green" data-nav="home" href="./practice-setup.html">Làm bài theo bài học SGK</a></li>
+<li><a class="dropdown-item nav-sub nav-sub-amber" data-nav="exams" href="./exams.html">Luyện thi</a></li>
+</ul>
+</div>
+<div class="btn-group" id="nav-track">
+<a aria-controls="nav-track-menu" aria-expanded="false" class="btn btn-warning btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="track" href="#" role="button">Theo dõi quá trình</a>
+<ul class="dropdown-menu" id="nav-track-menu">
+<li>
+<a class="btn btn-warning btn-sm nav-sub nav-sub-orange" data-nav="history" href="./history.html">Lịch sử</a>
+</li>
+<li>
+<a class="btn btn-outline-primary btn-sm nav-sub nav-sub-teal" data-nav="capability" href="./capability.html">Năng lực</a>
+</li>
+<li><a class="btn btn-outline-warning btn-sm nav-sub nav-sub-pink" data-nav="today" href="./today.html">Ôn hôm nay</a></li>
+<li><a class="btn btn-outline-secondary btn-sm nav-sub nav-sub-indigo" data-nav="weekly_report" href="./weekly-report.html">Báo cáo tuần cho phụ huynh</a></li>
+</ul>
+</div>
+<a class="btn btn-sm nav-help" data-nav="help" href="./help.html">Hướng dẫn sử dụng</a>
+</div>
+</nav>
+<script id="nav-path-map" type="application/json">{"capability": ["/capability"], "exams": ["/exams", "/exam", "/exam_ability"], "help": ["/help"], "history": ["/history"], "home": ["/lam-bai-tap", "/practice", "/practice_ratio", "/practice_similar", "/redo", "/redo_last", "/submit"], "latest_result": ["/latest_result"], "study": ["/study", "/study_lessons"], "symbols": ["/symbols"], "today": ["/today"], "trang_chu": ["/trang-chu"], "weekly_report": ["/weekly_report"]}</script>
+</div>
+<script>
+    (function () {
+      'use strict';
+      var KEYS = ['history', 'capability'];      // thứ tự đúng trong menu con
+
+      function stray(bar, key) {
+        var found = null;
+        Array.prototype.forEach.call(bar.children, function (el) {
+          if (!found && el.getAttribute('data-nav') === key) found = el;
+        });
+        return found;
+      }
+
+      function adopt() {
+        var bar = document.querySelector('.navbar-main');
+        var ul = document.getElementById('nav-track-menu');
+        if (!bar || !ul) return;
+        var moved = false;
+        KEYS.forEach(function (key) {
+          var node = stray(bar, key);
+          if (!node) return;
+          var holder = document.createElement('li');
+          holder.appendChild(node);
+          ul.appendChild(holder);
+          moved = true;
+        });
+        if (!moved) return;
+        var parent = document.getElementById('nav-track');
+        if (parent) parent.style.display = '';
+      }
+
+      function watch() {
+        adopt();
+        var bar = document.querySelector('.navbar-main');
+        if (bar && typeof MutationObserver === 'function') {
+          new MutationObserver(adopt).observe(bar, { childList: true });
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', watch);
+      } else {
+        watch();
+      }
+    })();
+  </script>
+<div class="page-upgrade" id="page-upgrade" role="status" }="">Trang này đang được nâng cấp về giao diện và chức năng</div>
+<script id="upgrade-keys" type="application/json">["home", "latest_result", "capability", "today", "weekly_report"]</script>
+<div id="page-body">
+<link href="./static/css/history.css" rel="stylesheet"/>
+<div class="fill">
+<h2 style="margin-bottom:4px">Ôn hôm nay</h2>
+<p class="text-muted" style="margin-bottom:16px">
+    Mỗi bài học SGK đã làm được lên lịch ôn theo khoảng cách tăng dần: một phiên đạt (đúng từ
+    50% trở lên) đẩy lần ôn sau ra xa hơn —
+    1 ngày · 3 ngày · 7 ngày · 14 ngày · 30 ngày.
+    Một phiên trượt đưa bài học SGK về mốc gần nhất, vì chưa vững thì phải gặp lại sớm.
+    Lịch tính lại từ đúng các lượt đã làm, nên bài vừa nộp hôm nay đã có ở đây.
+  </p>
+<form action="/today" class="card card-body mb-3" data-demo-form="1" method="get">
+<div class="row g-2 align-items-end">
+<div class="col-sm-4 col-lg-3">
+<label class="form-label" for="today-grade">Lớp</label>
+<select class="form-select" id="today-grade" name="grade" onchange="this.form.requestSubmit()">
+<option value="">Tất cả lớp</option>
+<option value="1">Lớp 1</option>
+<option value="2">Lớp 2</option>
+<option value="3">Lớp 3</option>
+<option value="4">Lớp 4</option>
+<option value="5">Lớp 5</option>
+<option value="6">Lớp 6</option>
+<option value="7">Lớp 7</option>
+<option value="8">Lớp 8</option>
+<option value="9">Lớp 9</option>
+<option value="10">Lớp 10</option>
+<option value="11">Lớp 11</option>
+<option selected="" value="12">Lớp 12</option>
+</select>
+</div>
+<div class="col-auto">
+<button aria-label="Lọc" class="btn btn-primary btn-sm btn-filter" title="Lọc" type="submit"></button>
+<a class="btn btn-outline-secondary btn-sm" href="./today.html">Xoá lọc</a>
+</div>
+</div>
+</form>
+<div class="scroll-area">
+<div class="sub-card" style="background:#fffbeb; border-color:#fde68a; flex-direction:column; align-items:stretch">
+<div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+<div style="font-weight:700; color:#92400e; flex:1; min-width:0">
+        📅 Phiên hôm nay: 5 bài học SGK
+        · 50 câu
+      </div>
+<a class="btn btn-warning btn-sm" href="/practice_ratio?topic=2852&amp;topic=2864&amp;topic=2870&amp;topic=2887&amp;topic=2914&amp;ratio=20&amp;ratio=20&amp;ratio=20&amp;ratio=20&amp;ratio=20&amp;mode=ca_hai&amp;n=50">Bắt đầu phiên ôn</a>
+</div>
+<div style="font-size:.8rem; color:#92400e; margin-top:6px">
+      Một phiên chỉ gộp tối đa 5 bài học SGK đến hạn nhất; 2 bài học SGK còn
+      lại vẫn nằm dưới đây, bấm ôn riêng từng bài học SGK.
+    </div>
+<div class="text-muted" style="font-size:.8rem; margin-top:4px">
+      7 bài học SGK đến hạn hôm nay hoặc đã quá hạn · 7 bài học SGK đang có lịch
+    </div>
+</div>
+<div class="sub-card">
+<div class="score-circle high">
+<span>100%</span>
+<span style="font-size:.68rem;font-weight:400">phiên trước</span>
+</div>
+<div class="sub-info">
+<div style="font-weight:600">Bài 1. Tính đơn điệu và cực trị của hàm số</div>
+<div class="sub-score-txt">
+<span class="badge bg-warning text-dark">Đến hạn hôm nay</span>
+</div>
+<div class="sub-score-txt">Phiên cuối 26/11/2026 · đúng 100.0% · đã 1 phiên</div>
+<div class="sub-grade">Lớp 12 · mốc giãn cách 1 ngày
+        (1 phiên đạt liên tiếp)</div>
+<div class="mini-bar">
+<div class="mini-bar-fill" style="width:100.0%; background:#22c55e"></div>
+</div>
+</div>
+<div class="sub-actions">
+<a class="btn btn-outline-primary btn-sm" href="/practice_ratio?topic=2852&amp;ratio=100&amp;mode=ca_hai&amp;n=10">Ôn 10 câu</a>
+<a class="btn btn-outline-secondary btn-sm" href="./capability.html">Xem năng lực</a>
+</div>
+</div>
+<div class="sub-card">
+<div class="score-circle high">
+<span>100%</span>
+<span style="font-size:.68rem;font-weight:400">phiên trước</span>
+</div>
+<div class="sub-info">
+<div style="font-weight:600">Bài 2. Giá trị lớn nhất và giá trị nhỏ nhất của hàm số</div>
+<div class="sub-score-txt">
+<span class="badge bg-warning text-dark">Đến hạn hôm nay</span>
+</div>
+<div class="sub-score-txt">Phiên cuối 26/11/2026 · đúng 100.0% · đã 1 phiên</div>
+<div class="sub-grade">Lớp 12 · mốc giãn cách 1 ngày
+        (1 phiên đạt liên tiếp)</div>
+<div class="mini-bar">
+<div class="mini-bar-fill" style="width:100.0%; background:#22c55e"></div>
+</div>
+</div>
+<div class="sub-actions">
+<a class="btn btn-outline-primary btn-sm" href="/practice_ratio?topic=2864&amp;ratio=100&amp;mode=ca_hai&amp;n=10">Ôn 10 câu</a>
+<a class="btn btn-outline-secondary btn-sm" href="./capability.html">Xem năng lực</a>
+</div>
+</div>
+<div class="sub-card">
+<div class="score-circle high">
+<span>100%</span>
+<span style="font-size:.68rem;font-weight:400">phiên trước</span>
+</div>
+<div class="sub-info">
+<div style="font-weight:600">Bài 3. Đường tiệm cận của đồ thị hàm số</div>
+<div class="sub-score-txt">
+<span class="badge bg-warning text-dark">Đến hạn hôm nay</span>
+</div>
+<div class="sub-score-txt">Phiên cuối 26/11/2026 · đúng 100.0% · đã 1 phiên</div>
+<div class="sub-grade">Lớp 12 · mốc giãn cách 1 ngày
+        (1 phiên đạt liên tiếp)</div>
+<div class="mini-bar">
+<div class="mini-bar-fill" style="width:100.0%; background:#22c55e"></div>
+</div>
+</div>
+<div class="sub-actions">
+<a class="btn btn-outline-primary btn-sm" href="/practice_ratio?topic=2870&amp;ratio=100&amp;mode=ca_hai&amp;n=10">Ôn 10 câu</a>
+<a class="btn btn-outline-secondary btn-sm" href="./capability.html">Xem năng lực</a>
+</div>
+</div>
+<div class="sub-card">
+<div class="score-circle high">
+<span>100%</span>
+<span style="font-size:.68rem;font-weight:400">phiên trước</span>
+</div>
+<div class="sub-info">
+<div style="font-weight:600">Bài 5. Ứng dụng đạo hàm để giải quyết một số vấn đề liên quan đến thực tiễn</div>
+<div class="sub-score-txt">
+<span class="badge bg-warning text-dark">Đến hạn hôm nay</span>
+</div>
+<div class="sub-score-txt">Phiên cuối 26/11/2026 · đúng 100.0% · đã 1 phiên</div>
+<div class="sub-grade">Lớp 12 · mốc giãn cách 1 ngày
+        (1 phiên đạt liên tiếp)</div>
+<div class="mini-bar">
+<div class="mini-bar-fill" style="width:100.0%; background:#22c55e"></div>
+</div>
+</div>
+<div class="sub-actions">
+<a class="btn btn-outline-primary btn-sm" href="/practice_ratio?topic=2887&amp;ratio=100&amp;mode=ca_hai&amp;n=10">Ôn 10 câu</a>
+<a class="btn btn-outline-secondary btn-sm" href="./capability.html">Xem năng lực</a>
+</div>
+</div>
+<div class="sub-card">
+<div class="score-circle low">
+<span>0%</span>
+<span style="font-size:.68rem;font-weight:400">phiên trước</span>
+</div>
+<div class="sub-info">
+<div style="font-weight:600">Bài 7. Hệ trục toạ độ trong không gian</div>
+<div class="sub-score-txt">
+<span class="badge bg-warning text-dark">Đến hạn hôm nay</span>
+<span class="badge bg-light text-dark border">Phiên trước chưa đạt</span>
+</div>
+<div class="sub-score-txt">Phiên cuối 26/11/2026 · đúng 0.0% · đã 1 phiên</div>
+<div class="sub-grade">Lớp 12 · mốc giãn cách 1 ngày
+        (0 phiên đạt liên tiếp)</div>
+<div class="mini-bar">
+<div class="mini-bar-fill" style="width:0.0%; background:#ef4444"></div>
+</div>
+</div>
+<div class="sub-actions">
+<a class="btn btn-outline-primary btn-sm" href="/practice_ratio?topic=2914&amp;ratio=100&amp;mode=ca_hai&amp;n=10">Ôn 10 câu</a>
+<a class="btn btn-outline-secondary btn-sm" href="./capability.html">Xem năng lực</a>
+</div>
+</div>
+<div class="sub-card">
+<div class="score-circle high">
+<span>100%</span>
+<span style="font-size:.68rem;font-weight:400">phiên trước</span>
+</div>
+<div class="sub-info">
+<div style="font-weight:600">Tính nguyên hàm và tích phân bằng phần mềm GeoGebra. Tính gần đúng tích phân bằng phương pháp hình thang</div>
+<div class="sub-score-txt">
+<span class="badge bg-warning text-dark">Đến hạn hôm nay</span>
+</div>
+<div class="sub-score-txt">Phiên cuối 26/11/2026 · đúng 100.0% · đã 1 phiên</div>
+<div class="sub-grade">Lớp 12 · mốc giãn cách 1 ngày
+        (1 phiên đạt liên tiếp)</div>
+<div class="mini-bar">
+<div class="mini-bar-fill" style="width:100.0%; background:#22c55e"></div>
+</div>
+</div>
+<div class="sub-actions">
+<a class="btn btn-outline-primary btn-sm" href="/practice_ratio?topic=3085&amp;ratio=100&amp;mode=ca_hai&amp;n=10">Ôn 10 câu</a>
+<a class="btn btn-outline-secondary btn-sm" href="./capability.html">Xem năng lực</a>
+</div>
+</div>
+<div class="sub-card">
+<div class="score-circle low">
+<span>0%</span>
+<span style="font-size:.68rem;font-weight:400">phiên trước</span>
+</div>
+<div class="sub-info">
+<div style="font-weight:600">Vẽ vectơ tổng của ba vectơ trong không gian bằng phần mềm GeoGebra</div>
+<div class="sub-score-txt">
+<span class="badge bg-warning text-dark">Đến hạn hôm nay</span>
+<span class="badge bg-light text-dark border">Phiên trước chưa đạt</span>
+</div>
+<div class="sub-score-txt">Phiên cuối 26/11/2026 · đúng 0.0% · đã 1 phiên</div>
+<div class="sub-grade">Lớp 12 · mốc giãn cách 1 ngày
+        (0 phiên đạt liên tiếp)</div>
+<div class="mini-bar">
+<div class="mini-bar-fill" style="width:0.0%; background:#ef4444"></div>
+</div>
+</div>
+<div class="sub-actions">
+<a class="btn btn-outline-primary btn-sm" href="/practice_ratio?topic=2963&amp;ratio=100&amp;mode=ca_hai&amp;n=10">Ôn 10 câu</a>
+<a class="btn btn-outline-secondary btn-sm" href="./capability.html">Xem năng lực</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+<footer class="footer-shell">
+<div class="footer-main">
+<div class="footer-feedback" id="fb-slot"></div>
+<div class="footer-info">
+<div class="footer-line">Copyright © Trần Công Tuệ</div>
+<div class="footer-line">Phone &amp; Zalo: <a href="tel:+84961969489">096 196 9489</a></div>
+<div class="footer-line">Email: <a href="mailto:trancongtue0812@gmail.com">trancongtue0812@gmail.com</a></div>
+</div>
+</div>
+</footer>
+
+<div aria-hidden="true" class="modal fade" id="modal-lesson" tabindex="-1">
+<div class="modal-dialog modal-lg modal-dialog-scrollable">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title">📖 Lý thuyết</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body">
+
+<div class="d-none mb-3" id="lesson-audio"></div>
+
+<div class="d-none mb-3" id="lesson-image"></div>
+<div class="ai-box visible" id="lesson-body"></div>
+</div>
+<div class="modal-footer">
+<button class="btn btn-x btn-sm" data-bs-dismiss="modal" type="button">Đóng</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="modal fade" id="modal-notice" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title" id="notice-title">Thông báo</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body" id="notice-body" style="white-space:pre-line"></div>
+<div class="modal-footer">
+<button class="btn btn-primary btn-sm" data-bs-dismiss="modal" type="button">Đồng ý</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="modal fade" id="modal-confirm" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title" id="confirm-title">Xác nhận</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body" id="confirm-body" style="white-space:pre-line"></div>
+<div class="modal-footer">
+<button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" type="button">Không</button>
+<button class="btn btn-primary btn-sm" id="confirm-yes" type="button">Có</button>
+</div>
+</div>
+</div>
+</div>
+<link href="./static/feedback.css" rel="stylesheet"/>
+
+<script src="./static/js/feedback.js"></script>
+<link href="./static/notifications.css" rel="stylesheet"/>
+<script src="./static/js/notifications.js"></script>
+<script src="./assets/static-demo.js"></script></body>
+</html>

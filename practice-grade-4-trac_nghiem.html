@@ -1,0 +1,478 @@
+
+<!DOCTYPE html>
+
+<html>
+<head><script src="./data/demo-config.js"></script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Ứng dụng Toán học</title>
+<link href="./static/bootstrap-5.0.2-dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="./static/css/common.css" rel="stylesheet"/>
+<style>
+    /* Menu con ("Ký hiệu toán học") mở ra ngoài khối menu. Ở bề ngang hẹp,
+       .navbar-main dùng overflow-x:auto để cuộn ngang; theo CSS thì một trục không
+       phải visible buộc trục còn lại thành auto, nên bảng menu con bị cắt mất.
+       Chỉ nới khi đang mở, để thanh cuộn ngang giữ nguyên như cũ. */
+    @media (max-width: 480px) {
+      .navbar-main:has(.dropdown-menu.show) { overflow: visible; }
+    }
+    /* Bốn mục menu con của "Theo dõi quá trình" vẫn do partial riêng render nên mang
+       class nút của hàng menu (btn btn-sm). Vào menu con thì phải khoác dạng item: bỏ
+       viền, chiếm trọn một hàng. Ở đây CHỈ còn phần hình thể — nền và màu chữ của từng
+       mục lấy từ khối "Menu con" trong common.css (lớp .nav-sub), để mỗi mục một màu
+       riêng. Khối này có id nên độ đặc hiệu cao hơn; khai báo màu ở đây sẽ xoá sạch
+       màu của từng mục. */
+    #nav-track-menu > li > a.btn {
+      display: block; width: 100%; padding: .25rem 1rem; clear: both;
+      border: 0; border-radius: 0; box-shadow: none;
+      font-size: 1rem; font-weight: 400;
+      text-align: left; white-space: nowrap;
+    }
+  </style>
+<link href="./static/katex/katex.min.css" rel="stylesheet"/>
+<script src="./static/js/jquery-3.7.1.min.js"></script>
+<script src="./static/bootstrap-5.0.2-dist/js/bootstrap.bundle.min.js"></script>
+<script defer="" src="./static/katex/katex.min.js"></script>
+<script src="./static/js/common.js"></script>
+<script src="./static/js/ajax.js"></script>
+<script src="./static/js/nav_activity.js"></script>
+<script src="./static/js/nav_active.js"></script>
+<script src="./static/js/upgrade_banner.js"></script>
+</head>
+<body data-static-route="/practice?grade=4&amp;mode=trac_nghiem">
+<div class="site-top" data-nav-active="home">
+<div class="topband">
+<div aria-label="Lời tri ân" class="marquee-shell" role="note">
+<div class="marquee-track">
+<span class="marquee-text">Cảm ơn bạn đã tin tưởng và ủng hộ chúng tôi</span>
+<span aria-hidden="true" class="marquee-text">Cảm ơn bạn đã tin tưởng và ủng hộ chúng tôi</span>
+</div>
+</div>
+<div class="notif-shell" id="notif-shell">
+<button aria-controls="notif-panel" aria-expanded="false" aria-haspopup="true" aria-label="Thông báo" class="corner-icon notif-bell" id="notif-bell" title="Thông báo" type="button">
+<svg aria-hidden="true" fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18">
+<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+<path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+</svg>
+<span class="notif-badge" data-max="9" hidden="" id="notif-badge"></span>
+</button>
+<div aria-label="Thông báo" class="notif-panel" hidden="" id="notif-panel" role="dialog">
+<div class="notif-head">
+<span class="notif-heading">Thông báo</span>
+<button class="notif-mark-all" hidden="" id="notif-mark-all" title="Đánh dấu tất cả đã đọc" type="button">Đánh dấu tất cả đã đọc</button>
+</div>
+<div class="notif-list" id="notif-list"></div>
+<p class="notif-empty" hidden="" id="notif-empty">Không có thông báo nào chưa đọc.</p>
+</div>
+</div>
+</div>
+<nav class="navbar-shell">
+<div class="navbar-main align-items-center">
+<a class="btn btn-sm nav-home" data-nav="trang_chu" href="./index.html">Trang chủ</a>
+<div class="btn-group">
+<a aria-controls="nav-study-menu" aria-expanded="false" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="study" href="#" role="button">Lý thuyết</a>
+<ul class="dropdown-menu" id="nav-study-menu">
+<li><a class="dropdown-item nav-sub nav-sub-blue" data-nav="study" href="./study.html">Lý thuyết theo lớp</a></li>
+<li><a class="dropdown-item nav-sub nav-sub-violet" data-nav="symbols" href="./symbols.html">Ký hiệu toán học</a></li>
+</ul>
+</div>
+<div class="btn-group">
+<a aria-controls="nav-play-menu" aria-expanded="false" class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="play" href="#" role="button">Bài tập</a>
+<ul class="dropdown-menu" id="nav-play-menu">
+<li><a class="dropdown-item nav-sub nav-sub-green" data-nav="home" href="./practice-setup.html">Làm bài theo bài học SGK</a></li>
+<li><a class="dropdown-item nav-sub nav-sub-amber" data-nav="exams" href="./exams.html">Luyện thi</a></li>
+</ul>
+</div>
+<div class="btn-group" id="nav-track">
+<a aria-controls="nav-track-menu" aria-expanded="false" class="btn btn-warning btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="track" href="#" role="button">Theo dõi quá trình</a>
+<ul class="dropdown-menu" id="nav-track-menu">
+<li>
+<a class="btn btn-warning btn-sm nav-sub nav-sub-orange" data-nav="history" href="./history.html">Lịch sử</a>
+</li>
+<li>
+<a class="btn btn-outline-primary btn-sm nav-sub nav-sub-teal" data-nav="capability" href="./capability.html">Năng lực</a>
+</li>
+<li><a class="btn btn-outline-warning btn-sm nav-sub nav-sub-pink" data-nav="today" href="./today.html">Ôn hôm nay</a></li>
+<li><a class="btn btn-outline-secondary btn-sm nav-sub nav-sub-indigo" data-nav="weekly_report" href="./weekly-report.html">Báo cáo tuần cho phụ huynh</a></li>
+</ul>
+</div>
+<a class="btn btn-sm nav-help" data-nav="help" href="./help.html">Hướng dẫn sử dụng</a>
+</div>
+</nav>
+<script id="nav-path-map" type="application/json">{"capability": ["/capability"], "exams": ["/exams", "/exam", "/exam_ability"], "help": ["/help"], "history": ["/history"], "home": ["/lam-bai-tap", "/practice", "/practice_ratio", "/practice_similar", "/redo", "/redo_last", "/submit"], "latest_result": ["/latest_result"], "study": ["/study", "/study_lessons"], "symbols": ["/symbols"], "today": ["/today"], "trang_chu": ["/trang-chu"], "weekly_report": ["/weekly_report"]}</script>
+</div>
+<script>
+    (function () {
+      'use strict';
+      var KEYS = ['history', 'capability'];      // thứ tự đúng trong menu con
+
+      function stray(bar, key) {
+        var found = null;
+        Array.prototype.forEach.call(bar.children, function (el) {
+          if (!found && el.getAttribute('data-nav') === key) found = el;
+        });
+        return found;
+      }
+
+      function adopt() {
+        var bar = document.querySelector('.navbar-main');
+        var ul = document.getElementById('nav-track-menu');
+        if (!bar || !ul) return;
+        var moved = false;
+        KEYS.forEach(function (key) {
+          var node = stray(bar, key);
+          if (!node) return;
+          var holder = document.createElement('li');
+          holder.appendChild(node);
+          ul.appendChild(holder);
+          moved = true;
+        });
+        if (!moved) return;
+        var parent = document.getElementById('nav-track');
+        if (parent) parent.style.display = '';
+      }
+
+      function watch() {
+        adopt();
+        var bar = document.querySelector('.navbar-main');
+        if (bar && typeof MutationObserver === 'function') {
+          new MutationObserver(adopt).observe(bar, { childList: true });
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', watch);
+      } else {
+        watch();
+      }
+    })();
+  </script>
+<div class="page-upgrade" id="page-upgrade" role="status" }="">Trang này đang được nâng cấp về giao diện và chức năng</div>
+<script id="upgrade-keys" type="application/json">["home", "latest_result", "capability", "today", "weekly_report"]</script>
+<div id="page-body">
+<link href="./static/practice.css" rel="stylesheet"/>
+<div class="fill">
+<div class="toast" id="toast"></div>
+<p style="color:#b45309; margin:8px 0">Chỉ tìm được 8/10 câu hỏi phù hợp với bài học SGK và lớp đã chọn. Hãy thử chọn thêm bài học SGK hoặc giảm số câu.</p>
+<form action="/submit" class="fill" data-demo-form="1" data-demo-submit="1" id="practice-form" method="post">
+<input name="mode" type="hidden" value="trac_nghiem"/>
+<input name="paper" type="hidden" value="9e8cb2966e2067a108c027646b1b2311"/>
+<div class="q-pager" data-pager="" data-pager-index="0" id="practice-pager">
+<h2 class="q-pager-title">Bài tập
+        
+          <span class="mode-badge trac_nghiem">🔘 Trắc nghiệm</span>
+</h2>
+<button class="q-pager-btn" data-pager-prev="" type="button">‹ Câu trước</button>
+<span class="q-pager-count" data-pager-count=""></span>
+<button class="q-pager-btn" data-pager-next="" type="button">Câu sau ›</button>
+</div>
+<div class="q-wrap scroll-area">
+<div class="question-block">
+<div class="q-number">Câu 1. <span class="q-badge branch-dai_so">Đại số</span></div>
+<div class="q-prompt" style="margin-bottom:10px">Phân số nào dưới đây bằng phân số $\dfrac{5}{7}$ ?</div>
+<input name="qids" type="hidden" value="149979"/>
+<div class="opt">
+<label>
+<input name="q_149979" type="radio" value="A"/>
+<strong>A)</strong> $\dfrac{14}{9}$ .
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149979" type="radio" value="B"/>
+<strong>B)</strong> $\dfrac{25}{49}$ .
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149979" type="radio" value="C"/>
+<strong>C)</strong> $\dfrac{25}{35}$ .
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149979" type="radio" value="D"/>
+<strong>D)</strong> $\dfrac{15}{10}$ .
+              </label>
+</div>
+</div>
+<div class="question-block">
+<div class="q-number">Câu 2. <span class="q-badge branch-dai_so">Đại số</span></div>
+<div class="q-prompt" style="margin-bottom:10px">Rút gọn phân số $\dfrac{15}{36}$ , ta được phân số tối giản là:</div>
+<input name="qids" type="hidden" value="149959"/>
+<div class="opt">
+<label>
+<input name="q_149959" type="radio" value="A"/>
+<strong>A)</strong> $\dfrac{5}{12}$ .
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149959" type="radio" value="B"/>
+<strong>B)</strong> $\dfrac{5}{9}$ .
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149959" type="radio" value="C"/>
+<strong>C)</strong> $\dfrac{3}{5}$ .
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149959" type="radio" value="D"/>
+<strong>D)</strong> $\dfrac{1}{3}$ .
+              </label>
+</div>
+</div>
+<div class="question-block">
+<div class="q-number">Câu 3. <span class="q-badge branch-dai_so">Đại số</span></div>
+<div class="q-prompt" style="margin-bottom:10px">5 phút 30 giây bằng</div>
+<input name="qids" type="hidden" value="149978"/>
+<div class="opt">
+<label>
+<input name="q_149978" type="radio" value="A"/>
+<strong>A)</strong> 330 giây.
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149978" type="radio" value="B"/>
+<strong>B)</strong> 503 giây.
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149978" type="radio" value="C"/>
+<strong>C)</strong> 530 giây.
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149978" type="radio" value="D"/>
+<strong>D)</strong> 303 giây.
+              </label>
+</div>
+</div>
+<div class="question-block">
+<div class="q-number">Câu 4. <span class="q-badge branch-dai_so">Đại số</span></div>
+<div class="q-prompt" style="margin-bottom:10px">Phương án nào dưới đây đúng?</div>
+<input name="qids" type="hidden" value="149977"/>
+<div class="opt">
+<label>
+<input name="q_149977" type="radio" value="A"/>
+<strong>A)</strong> 5 000 kg = 50 tấn.
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149977" type="radio" value="B"/>
+<strong>B)</strong> 1 tấn = 100 kg.
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149977" type="radio" value="C"/>
+<strong>C)</strong> 1 tạ = 1 000 kg.
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149977" type="radio" value="D"/>
+<strong>D)</strong> 10 yến = 100 kg.
+              </label>
+</div>
+</div>
+<div class="question-block">
+<div class="q-number">Câu 5. <span class="q-badge branch-dai_so">Đại số</span></div>
+<div class="q-prompt" style="margin-bottom:10px">Điền số thích hợp vào chỗ chấm.
+... $×$ 7 = 2 506</div>
+<input name="qids" type="hidden" value="149966"/>
+<div class="opt">
+<label>
+<input name="q_149966" type="radio" value="A"/>
+<strong>A)</strong> 358.
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149966" type="radio" value="B"/>
+<strong>B)</strong> 360.
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149966" type="radio" value="C"/>
+<strong>C)</strong> 17 363.
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149966" type="radio" value="D"/>
+<strong>D)</strong> 17 542.
+              </label>
+</div>
+</div>
+<div class="question-block">
+<div class="q-number">Câu 6. <span class="q-badge branch-dai_so">Đại số</span></div>
+<div class="q-prompt" style="margin-bottom:10px">Trong các phép tính sau, phép tính nào có kết quả bé nhất?</div>
+<input name="qids" type="hidden" value="149960"/>
+<div class="opt">
+<label>
+<input name="q_149960" type="radio" value="A"/>
+<strong>A)</strong> 4200 : 100.
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149960" type="radio" value="B"/>
+<strong>B)</strong> 42 $×$ 1 000.
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149960" type="radio" value="C"/>
+<strong>C)</strong> 420 $×$ 1.
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149960" type="radio" value="D"/>
+<strong>D)</strong> 42 $×$ 100.
+              </label>
+</div>
+</div>
+<div class="question-block">
+<div class="q-number">Câu 7. <span class="q-badge branch-dai_so">Đại số</span></div>
+<div class="q-prompt" style="margin-bottom:10px">5 000 kg = ... tạ.
+Điền số thích hợp vào chỗ chấm.</div>
+<input name="qids" type="hidden" value="149961"/>
+<div class="opt">
+<label>
+<input name="q_149961" type="radio" value="A"/>
+<strong>A)</strong> 5 000 tạ.
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149961" type="radio" value="B"/>
+<strong>B)</strong> 50 tạ.
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149961" type="radio" value="C"/>
+<strong>C)</strong> 500 tạ.
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149961" type="radio" value="D"/>
+<strong>D)</strong> 5 tạ.
+              </label>
+</div>
+</div>
+<div class="question-block">
+<div class="q-number">Câu 8. <span class="q-badge branch-dai_so">Đại số</span></div>
+<div class="q-prompt" style="margin-bottom:10px">Trong các phân số sau: $\dfrac{2}{5};\dfrac{5}{3};\dfrac{4}{5};\dfrac{19}{7}$ , có bao nhiêu phân số lớn hơn $1$ ?</div>
+<input name="qids" type="hidden" value="149965"/>
+<div class="opt">
+<label>
+<input name="q_149965" type="radio" value="A"/>
+<strong>A)</strong> $3$ .
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149965" type="radio" value="B"/>
+<strong>B)</strong> $1$ .
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149965" type="radio" value="C"/>
+<strong>C)</strong> $2$ .
+              </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_149965" type="radio" value="D"/>
+<strong>D)</strong> $4$ .
+              </label>
+</div>
+</div>
+</div>
+<div class="actions-fixed">
+<button class="btn btn-primary" type="submit">Nộp bài</button>
+</div>
+</form>
+</div>
+<script src="./static/js/question_pager.js"></script>
+</div>
+<footer class="footer-shell">
+<div class="footer-main">
+<div class="footer-feedback" id="fb-slot"></div>
+<div class="footer-info">
+<div class="footer-line">Copyright © Trần Công Tuệ</div>
+<div class="footer-line">Phone &amp; Zalo: <a href="tel:+84961969489">096 196 9489</a></div>
+<div class="footer-line">Email: <a href="mailto:trancongtue0812@gmail.com">trancongtue0812@gmail.com</a></div>
+</div>
+</div>
+</footer>
+
+<div aria-hidden="true" class="modal fade" id="modal-lesson" tabindex="-1">
+<div class="modal-dialog modal-lg modal-dialog-scrollable">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title">📖 Lý thuyết</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body">
+
+<div class="d-none mb-3" id="lesson-audio"></div>
+
+<div class="d-none mb-3" id="lesson-image"></div>
+<div class="ai-box visible" id="lesson-body"></div>
+</div>
+<div class="modal-footer">
+<button class="btn btn-x btn-sm" data-bs-dismiss="modal" type="button">Đóng</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="modal fade" id="modal-notice" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title" id="notice-title">Thông báo</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body" id="notice-body" style="white-space:pre-line"></div>
+<div class="modal-footer">
+<button class="btn btn-primary btn-sm" data-bs-dismiss="modal" type="button">Đồng ý</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="modal fade" id="modal-confirm" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title" id="confirm-title">Xác nhận</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body" id="confirm-body" style="white-space:pre-line"></div>
+<div class="modal-footer">
+<button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" type="button">Không</button>
+<button class="btn btn-primary btn-sm" id="confirm-yes" type="button">Có</button>
+</div>
+</div>
+</div>
+</div>
+<link href="./static/feedback.css" rel="stylesheet"/>
+
+<script src="./static/js/feedback.js"></script>
+<link href="./static/notifications.css" rel="stylesheet"/>
+<script src="./static/js/notifications.js"></script>
+<script src="./assets/static-demo.js"></script></body>
+</html>

@@ -1,0 +1,159 @@
+/* Panel "Góp ý" — khuôn giong chat_assistant.css, chi dao chieu neo: nut nam o
+   mang trai chan trang (o #fb-slot do base.html danh san) nen panel mo len ngay
+   phia tren nut va neo sang trai, khong phai sang phai. */
+#fb-slot { position: relative; }
+
+/* #fb-root khong an: panel an/hien bang .open tren root, con nut "Gop y" phai
+   luon lay-out duoc de bam vao. */
+#fb-root {
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.fb-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border: 1px solid #198754;
+  border-radius: 999px;
+  background: #198754;
+  color: #fff;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .18);
+}
+
+.fb-toggle:hover { background: #157347; }
+
+#fb-panel {
+  display: none;
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  z-index: 1049;
+  flex-direction: column;
+  width: min(380px, calc(100vw - 36px));
+  /* Chừa đủ chỗ cho banner + menu dính đỉnh nên panel không bao giờ chui xuống
+     dưới khối cố định đó. */
+  max-height: min(560px, calc(100vh - var(--fixed-top) - 60px));
+  border: 1px solid #d6dbe1;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .22);
+  overflow: hidden;
+}
+
+#fb-root.open #fb-panel { display: flex; }
+
+#fb-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #198754;
+  color: #fff;
+  font-weight: 600;
+  font-size: .95rem;
+}
+
+#fb-head .fb-title { flex: 1; }
+
+/* feedback.js tao 2 nut nay bang LOP (el('button', 'fb-clear', ...)), khong phai
+   id, nen phai dung .fb-clear / .fb-close — dung #fb-clear thi rule chet. */
+.fb-clear {
+  border: 0;
+  background: rgba(255, 255, 255, .18);
+  color: #fff;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: .8rem;
+  cursor: pointer;
+}
+
+.fb-clear:hover { background: rgba(255, 255, 255, .32); }
+
+.fb-close {
+  border: 0;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: .8rem;
+  cursor: pointer;
+}
+
+#fb-log {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  background: #f8fafc;
+  font-size: .9rem;
+  line-height: 1.45;
+}
+
+.fb-msg { margin-bottom: 10px; }
+
+.fb-msg .fb-bubble {
+  display: inline-block;
+  max-width: 92%;
+  padding: 8px 11px;
+  border-radius: 10px;
+  background: #e9eef5;
+  /* Xuong dong nguoi dung go phai con nguyen: noi dung dua vao day bang
+     textContent nen khong co HTML nao can trinh bay. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.fb-msg.me { text-align: right; }
+.fb-msg.me .fb-bubble { background: #198754; color: #fff; }
+
+.fb-msg.bot .fb-bubble { background: #fff; border: 1px solid #e2e8f0; text-align: left; }
+
+/* .fb-tip chứ không phải .fb-note: common.css đã dùng .fb-note cho khối "Phân tích lỗi"
+   ở trang kết quả (chữ màu lỗi). Trùng tên thì panel này ăn theo màu đỏ và chỉ đúng nhờ
+   thứ tự nạp CSS — đặt tên khác đi để hai bên không dính nhau. */
+.fb-tip { font-size: .78rem; color: #6c757d; margin-top: 4px; }
+.fb-error .fb-bubble { background: #fdecea; border: 1px solid #f5c2c7; color: #842029; }
+
+#fb-form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  padding: 10px 12px;
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+#fb-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: .9rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.fb-send {
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 14px;
+  background: #198754;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .15s ease-in-out;
+}
+
+.fb-send:hover { background: #157347; }
+
+.fb-send[disabled] { background: #a3cfbb; cursor: default; }
+.fb-send[disabled]:hover { background: #a3cfbb; }
+
+@media (max-width: 480px) {
+  /* Nút đã nằm sát mép trái chân trang nên panel chỉ việc rộng hết khổ còn lại;
+     chiều cao vẫn theo công thức chung (trừ --fixed-top). */
+  #fb-panel { width: calc(100vw - 20px); }
+}

@@ -1,0 +1,99 @@
+body{font-family: Arial, sans-serif}
+.q{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:16px 0}
+.opt{margin:4px 0}
+.src{font-size:.75rem;color:#666}
+.admin{margin-top:10px;display:flex;gap:8px}
+.toast{position:fixed;right:16px;top:calc(var(--fixed-top) + 16px);background:#111;color:#fff;padding:10px 14px;border-radius:6px;display:none;z-index:1000}
+.nav{display:flex;gap:8px;margin-bottom:16px}
+.nav a{display:inline-block;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;text-decoration:none;color:#111}
+.nav a:hover{background:#f3f4f6}
+table.tbl{width:100%; background:#fff; border-collapse:collapse}
+table.tbl th, table.tbl td{border:1px solid #e5e7eb; padding:8px}
+/* Bảng câu hỏi: chỉ còn viền + nền, việc cuộn do lớp .scroll-area (css/common.css) lo.
+   Trước đây trần 70vh đặt ngay tại đây sinh ra thanh cuộn thứ hai nằm bên trong cột
+   nội dung vốn đã tự cuộn — hai thanh cuộn lồng nhau trên cùng một trang.
+   Bảng nào mang thêm .scroll-area thì nền của vùng cuộn (common.css) thắng nền trắng
+   dưới đây: bảng vẫn trắng, chỉ khoảng trời quanh nó đổi màu để thấy ranh giới vùng. */
+.tbl-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:8px;position:relative}
+/* Thanh phân trang nằm NGOÀI vùng cuộn của bảng (xem admin_questions_clean.html):
+   trước đây nó sticky bottom ngay trong bảng nên luôn đè lên mấy câu cuối. Giờ nó là
+   một dải riêng, tách khỏi bảng một khoảng để không dòng nào bị che; mọi ô bấm và chữ
+   trong dải đặt tối thiểu 38px/15px cho dễ bấm trên điện thoại. */
+.pager-overlay{background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-top:6px}
+.pager-overlay .btn-sm{min-height:38px;font-size:.9375rem}
+.pager-overlay span{font-size:.9375rem}
+.pager-overlay select{min-height:38px;font-size:.9375rem}
+table.tbl thead th{position:sticky;top:0;background:#fff;z-index:1}
+/* Dải tiêu đề cột nằm NGOÀI vùng cuộn, ở đỉnh, đối xứng với .pager-overlay ở đáy (xem
+   admin_questions_clean.html). Vì nó không còn là <thead> của bảng nên luật sticky ở trên
+   phải tắt tại đây — trong dải không có cuộn dọc, để sticky chỉ tổ thêm lớp z-index vô ích.
+   Đệm trái-phải 12px + viền 1px mô đúng phần .tbl-wrap cộng .scroll-area dành cho bảng, nhờ
+   ô đầu tiên của dải rơi đúng cột đầu tiên của bảng. overflow:hidden cắt phần tiêu đề tràn
+   ngang; JS (syncTableHead) copy bề rộng cột và dịch dải theo cuộn ngang của bảng. */
+.qhead-overlay{background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:6px;padding:0 12px;overflow:hidden}
+/* table-layout:fixed là phần buộc của lối căn dải: bảng chỉ có MỘT hàng nên mọi bề rộng
+   JS ghi vào ô (syncTableHead copy từ dòng đầu của bảng thật) phải được giữ nguyên văn.
+   Để auto thì trình duyệt tự chia lại — đo trên màn 510px: cột "Bài học SGK" 17px bị nới thành
+   71px, cả dải lệch bảng 42px và tiêu đề đè sang cột kề.
+   display:table + overflow:visible là bắt buộc ở màn <=768px: common.css biến MỌI <table>
+   thành display:block (bảng tự cuộn ngang) và table-layout chỉ có nghĩa trên một table box,
+   nằm trên phần tử display:block thì bị bỏ qua toàn bộ — dải vẫn lệch bảng y như để auto.
+   Dải không tự cuộn ngang; phần tràn do overflow:hidden của .qhead-overlay cắt và JS đẩy đi. */
+.qhead-overlay table.tbl{table-layout:fixed;display:table;overflow:visible}
+.qhead-overlay table.tbl thead th{position:static;z-index:auto}
+table.tbl tbody tr.row-unselected td{background:#fff7ed}
+table.tbl tbody tr.row-selected td{background:#ffffff}
+/* Dòng bị "Đối chiếu lời giải với đáp án đúng" báo lệch: đỏ tới mức thắng hai nền hàng
+   ở trên và cả nền hover, vì hàng đổi màu là kết quả duy nhất của lượt đối chiếu. */
+table.tbl tbody tr.row-answer-conflict td{background:#fee2e2}
+table.tbl tbody tr.row-answer-conflict:hover td,table.tbl tbody tr.row-answer-conflict td:hover{background:#fecaca}
+.cb-toggle{cursor:pointer; user-select:none}
+input[type=checkbox], input[type=radio]{cursor:pointer}
+table.tbl tbody td:hover{background:#f3f4f6}
+/* Ô chọn bài học SGK ở bộ lọc: select2 + ô tick từng hàng + checkbox "Tất cả", dùng chung
+   module static/js/topic_select.js với trang chủ. Trang này không nạp index.css nên
+   các style ấy phải khai ở đây. */
+.topic-all-row{display:inline-flex;align-items:center;gap:6px;margin:4px 0;font-weight:500;cursor:pointer;user-select:none}
+.topic-option{display:flex;align-items:center;gap:8px}
+.topic-check{position:relative;flex:0 0 auto;width:14px;height:14px;border:1px solid #9ca3af;border-radius:3px;background:#fff}
+.topic-check.is-checked{border-color:#2c7be5;background:#2c7be5}
+.topic-check.is-checked::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.select2-container--default .select2-selection--multiple{min-height:38px;border:1px solid #e5e7eb;border-radius:6px}
+/* Bộ lọc câu hỏi: khung gập được (details) để người quản trị thu nó lại khi không
+   dùng — bảng câu hỏi mới là nơi thao tác chính nên nhường chỗ cho bảng. Tiêu đề ghi
+   số bộ lọc đang áp dụng, gập lại vẫn biết danh sách đang chạy theo bao nhiêu loc. */
+.qfilter-box{border:1px solid #e5e7eb;border-radius:8px;background:#fff;margin-bottom:8px}
+.qfilter-box>summary{cursor:pointer;padding:9px 12px;font-weight:600;font-size:.95rem;list-style:none}
+.qfilter-box>summary::-webkit-details-marker{display:none}
+.qfilter-box>summary::before{content:"▸ ";color:#6b7280}
+.qfilter-box[open]>summary::before{content:"▾ "}
+.qfilter-box[open]>summary{border-bottom:1px solid #e5e7eb}
+/* Trần cao đặt theo min(32vh, 220px) để khung không ăn quá một phần ba màn hình.
+   Khi vượt khung thì khung tự cuộn dọc, không tràn xuống đẩy bảng ra khỏi màn hình. */
+.qfilter{padding:10px 12px;max-height:min(32vh,220px);overflow:auto}
+/* Mỗi cột tối thiểu 240px để ô không bị bóp hẹp, và cột tự co số lượng theo bề
+   ngang cửa sổ thay vì xếp cố định 6 cột — cố định 6 cột buộc phải cuộn ngang mới
+   thấy hết bộ lọc, tức là che mất thứ người dùng cần bấm. */
+.qfilter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px 12px;justify-content:start}
+.qfilter-grid .form-label{margin-bottom:2px;font-size:.95rem;line-height:1.3}
+.qfilter-grid .form-select,.qfilter-grid .form-control{width:100%;min-width:0}
+.qfilter-grid .select2-container{width:100%!important}
+/* Panel của combobox đầy đủ: đặt NGOÀI .qfilter vì khung đó có trần cao và tự cuộn,
+   panel nằm trong sẽ bị cắt mất mấy nhóm cuối. Panel tự có trần riêng (đặt theo min()
+   như .qfilter, không dùng vh cố định) và cuộn trong lòng nó. */
+.qfilter-full{padding:10px 12px;border-top:1px solid #e5e7eb;background:#f9fafb;
+  max-height:min(45vh,340px);overflow:auto}
+.qfilter-full .qfilter-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+/* Mỗi nhóm radio mang ý nghĩa của một combobox cũ: nhãn ở trên, các lựa chọn xếp dọc. */
+.qf-group{min-width:0}
+.qf-group .form-check{margin-bottom:2px}
+.qf-group .form-check-label{font-size:.95rem}
+.q-source-badge{margin-top:6px}
+.q-source-badge .badge{font-size:.8125rem;font-weight:600}
+/* Menu "…" ở cột Hành động của mỗi hàng: render từ ĐÚNG bảng hành động của combobox
+   "Chọn hành động" nên nhãn khớp nhau; chỉ khác là chạy trên một câu. Vì cùng một danh
+   sách nhãn nên cùng chung luật canh giữa của common.css (mục "Combobox"). */
+.row-menu-wrap{position:relative;display:inline-block}
+.row-menu{position:absolute;right:0;top:calc(100% + 4px);z-index:5;background:#fff;border:1px solid #e5e7eb;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.12);padding:4px;min-width:300px;max-height:60vh;overflow:auto}
+.row-menu-item{display:block;width:100%;text-align:center;background:none;border:0;padding:8px 10px;min-height:36px;font-size:.95rem;color:#111;border-radius:4px;white-space:normal;overflow-wrap:anywhere}
+.row-menu-item:hover{background:#f3f4f6}

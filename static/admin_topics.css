@@ -1,0 +1,19 @@
+body{font-family: Arial, sans-serif}
+table{width:100%; border-collapse:collapse; margin-top:12px}
+th,td{background:#fff;border:1px solid #e5e7eb; padding:8px; text-align:left}
+.nav{display:flex;gap:8px;margin-bottom:16px}
+.nav a{display:inline-block;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;text-decoration:none;color:#111}
+.nav a:hover{background:#f3f4f6}
+button{background:#10b981;color:#fff;border:none;border-radius:6px;padding:8px 12px;cursor:pointer;
+  transition:background-color .15s ease-in-out,box-shadow .15s ease-in-out,transform .15s ease-in-out}
+button:hover{background:#059669;box-shadow:0 .25rem .6rem rgba(15,23,42,.18);transform:translateY(-1px)}
+button:active{transform:none;box-shadow:none}
+input{padding:8px}
+input[type=checkbox], input[type=radio]{cursor:pointer}
+/* CKEditor 5 trong modal: panel bong (thanh link, bang) phu vao body voi z-index 1000
+   -> bi modal Bootstrap (1055) che mat. */
+.ck.ck-balloon-panel { z-index: 1100 !important }
+/* Ba cách nhập ở tab "Nhập thủ công": khối nhập liệu nổi trên nền xám nhạt */
+.aq-method-pane{background:#f8fafc;border:1px solid #e5e7eb;border-radius:6px;padding:10px}
+/* Chữ nhận dạng được từng lúc (interim) khi đọc đề bằng giọng nói */
+.aq-voice-caption{min-height:22px;color:#0d6efd;font-size:.875rem}

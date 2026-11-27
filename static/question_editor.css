@@ -1,0 +1,5 @@
+/* Style cho hộp "Sửa câu hỏi" dùng chung (danh sách admin + trang kết quả làm bài) */
+.edit-opts-grid .opt-row{display:grid;grid-template-columns:46px 1fr 92px 34px;gap:6px;align-items:center;margin-bottom:4px}
+.edit-opts-grid .opt-label{font-weight:700;text-align:right}
+.edit-opts-grid .opt-correct{white-space:nowrap;cursor:pointer}
+button[data-qe-edit]{margin-left:6px}

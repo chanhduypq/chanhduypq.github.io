@@ -1,0 +1,901 @@
+
+<!DOCTYPE html>
+
+<html>
+<head><script src="./data/demo-config.js"></script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Ứng dụng Toán học</title>
+<link href="./static/bootstrap-5.0.2-dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="./static/css/common.css" rel="stylesheet"/>
+<style>
+    /* Menu con ("Ký hiệu toán học") mở ra ngoài khối menu. Ở bề ngang hẹp,
+       .navbar-main dùng overflow-x:auto để cuộn ngang; theo CSS thì một trục không
+       phải visible buộc trục còn lại thành auto, nên bảng menu con bị cắt mất.
+       Chỉ nới khi đang mở, để thanh cuộn ngang giữ nguyên như cũ. */
+    @media (max-width: 480px) {
+      .navbar-main:has(.dropdown-menu.show) { overflow: visible; }
+    }
+    /* Bốn mục menu con của "Theo dõi quá trình" vẫn do partial riêng render nên mang
+       class nút của hàng menu (btn btn-sm). Vào menu con thì phải khoác dạng item: bỏ
+       viền, chiếm trọn một hàng. Ở đây CHỈ còn phần hình thể — nền và màu chữ của từng
+       mục lấy từ khối "Menu con" trong common.css (lớp .nav-sub), để mỗi mục một màu
+       riêng. Khối này có id nên độ đặc hiệu cao hơn; khai báo màu ở đây sẽ xoá sạch
+       màu của từng mục. */
+    #nav-track-menu > li > a.btn {
+      display: block; width: 100%; padding: .25rem 1rem; clear: both;
+      border: 0; border-radius: 0; box-shadow: none;
+      font-size: 1rem; font-weight: 400;
+      text-align: left; white-space: nowrap;
+    }
+  </style>
+<link href="./static/katex/katex.min.css" rel="stylesheet"/>
+<script src="./static/js/jquery-3.7.1.min.js"></script>
+<script src="./static/bootstrap-5.0.2-dist/js/bootstrap.bundle.min.js"></script>
+<script defer="" src="./static/katex/katex.min.js"></script>
+<script src="./static/js/common.js"></script>
+<script src="./static/js/ajax.js"></script>
+<script src="./static/js/nav_activity.js"></script>
+<script src="./static/js/nav_active.js"></script>
+<script src="./static/js/upgrade_banner.js"></script>
+</head>
+<body data-static-route="/exam/8835">
+<div class="site-top" data-nav-active="exams">
+<div class="topband">
+<div aria-label="Lời tri ân" class="marquee-shell" role="note">
+<div class="marquee-track">
+<span class="marquee-text">Cảm ơn bạn đã tin tưởng và ủng hộ chúng tôi</span>
+<span aria-hidden="true" class="marquee-text">Cảm ơn bạn đã tin tưởng và ủng hộ chúng tôi</span>
+</div>
+</div>
+<div class="notif-shell" id="notif-shell">
+<button aria-controls="notif-panel" aria-expanded="false" aria-haspopup="true" aria-label="Thông báo" class="corner-icon notif-bell" id="notif-bell" title="Thông báo" type="button">
+<svg aria-hidden="true" fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18">
+<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+<path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+</svg>
+<span class="notif-badge" data-max="9" hidden="" id="notif-badge"></span>
+</button>
+<div aria-label="Thông báo" class="notif-panel" hidden="" id="notif-panel" role="dialog">
+<div class="notif-head">
+<span class="notif-heading">Thông báo</span>
+<button class="notif-mark-all" hidden="" id="notif-mark-all" title="Đánh dấu tất cả đã đọc" type="button">Đánh dấu tất cả đã đọc</button>
+</div>
+<div class="notif-list" id="notif-list"></div>
+<p class="notif-empty" hidden="" id="notif-empty">Không có thông báo nào chưa đọc.</p>
+</div>
+</div>
+</div>
+<nav class="navbar-shell">
+<div class="navbar-main align-items-center">
+<a class="btn btn-sm nav-home" data-nav="trang_chu" href="./index.html">Trang chủ</a>
+<div class="btn-group">
+<a aria-controls="nav-study-menu" aria-expanded="false" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="study" href="#" role="button">Lý thuyết</a>
+<ul class="dropdown-menu" id="nav-study-menu">
+<li><a class="dropdown-item nav-sub nav-sub-blue" data-nav="study" href="./study.html">Lý thuyết theo lớp</a></li>
+<li><a class="dropdown-item nav-sub nav-sub-violet" data-nav="symbols" href="./symbols.html">Ký hiệu toán học</a></li>
+</ul>
+</div>
+<div class="btn-group">
+<a aria-controls="nav-play-menu" aria-expanded="false" class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="play" href="#" role="button">Bài tập</a>
+<ul class="dropdown-menu" id="nav-play-menu">
+<li><a class="dropdown-item nav-sub nav-sub-green" data-nav="home" href="./practice-setup.html">Làm bài theo bài học SGK</a></li>
+<li><a class="dropdown-item nav-sub nav-sub-amber" data-nav="exams" href="./exams.html">Luyện thi</a></li>
+</ul>
+</div>
+<div class="btn-group" id="nav-track">
+<a aria-controls="nav-track-menu" aria-expanded="false" class="btn btn-warning btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="track" href="#" role="button">Theo dõi quá trình</a>
+<ul class="dropdown-menu" id="nav-track-menu">
+<li>
+<a class="btn btn-warning btn-sm nav-sub nav-sub-orange" data-nav="history" href="./history.html">Lịch sử</a>
+</li>
+<li>
+<a class="btn btn-outline-primary btn-sm nav-sub nav-sub-teal" data-nav="capability" href="./capability.html">Năng lực</a>
+</li>
+<li><a class="btn btn-outline-warning btn-sm nav-sub nav-sub-pink" data-nav="today" href="./today.html">Ôn hôm nay</a></li>
+<li><a class="btn btn-outline-secondary btn-sm nav-sub nav-sub-indigo" data-nav="weekly_report" href="./weekly-report.html">Báo cáo tuần cho phụ huynh</a></li>
+</ul>
+</div>
+<a class="btn btn-sm nav-help" data-nav="help" href="./help.html">Hướng dẫn sử dụng</a>
+</div>
+</nav>
+<script id="nav-path-map" type="application/json">{"capability": ["/capability"], "exams": ["/exams", "/exam", "/exam_ability"], "help": ["/help"], "history": ["/history"], "home": ["/lam-bai-tap", "/practice", "/practice_ratio", "/practice_similar", "/redo", "/redo_last", "/submit"], "latest_result": ["/latest_result"], "study": ["/study", "/study_lessons"], "symbols": ["/symbols"], "today": ["/today"], "trang_chu": ["/trang-chu"], "weekly_report": ["/weekly_report"]}</script>
+</div>
+<script>
+    (function () {
+      'use strict';
+      var KEYS = ['history', 'capability'];      // thứ tự đúng trong menu con
+
+      function stray(bar, key) {
+        var found = null;
+        Array.prototype.forEach.call(bar.children, function (el) {
+          if (!found && el.getAttribute('data-nav') === key) found = el;
+        });
+        return found;
+      }
+
+      function adopt() {
+        var bar = document.querySelector('.navbar-main');
+        var ul = document.getElementById('nav-track-menu');
+        if (!bar || !ul) return;
+        var moved = false;
+        KEYS.forEach(function (key) {
+          var node = stray(bar, key);
+          if (!node) return;
+          var holder = document.createElement('li');
+          holder.appendChild(node);
+          ul.appendChild(holder);
+          moved = true;
+        });
+        if (!moved) return;
+        var parent = document.getElementById('nav-track');
+        if (parent) parent.style.display = '';
+      }
+
+      function watch() {
+        adopt();
+        var bar = document.querySelector('.navbar-main');
+        if (bar && typeof MutationObserver === 'function') {
+          new MutationObserver(adopt).observe(bar, { childList: true });
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', watch);
+      } else {
+        watch();
+      }
+    })();
+  </script>
+<div class="page-upgrade" hidden}="" id="page-upgrade" role="status">Trang này đang được nâng cấp về giao diện và chức năng</div>
+<script id="upgrade-keys" type="application/json">["home", "latest_result", "capability", "today", "weekly_report"]</script>
+<div id="page-body">
+<link href="./static/practice.css" rel="stylesheet"/>
+<link href="./static/css/exam.css" rel="stylesheet"/>
+<div class="fill">
+<form action="/exam/8835/submit" class="fill" data-demo-form="1" data-demo-submit="1" id="exam-form" method="post">
+<input name="attempt" type="hidden" value="40"/>
+<div class="exam-chrome">
+<div class="exam-bar">
+<div class="exam-bar-id">
+<span class="exam-bar-meta">
+          Toán lớp 12 · Giữa học kì 1 ·
+          22 câu · thang 10 điểm ·
+          90 phút · nạp từ đề thi thật
+        </span>
+</div>
+<div class="q-pager exam-bar-nav" data-pager="" data-pager-index="0" id="exam-pager">
+<button aria-label="Câu trước" class="q-pager-btn" data-pager-prev="" type="button">‹ Trước</button>
+<span class="q-pager-count" data-pager-count=""></span>
+<button aria-label="Câu sau" class="q-pager-btn" data-pager-next="" type="button">Sau ›</button>
+</div>
+<div class="exam-clock" data-remaining="5400" id="exam-clock">
+<span class="exam-clock-label">Thời gian còn lại</span>
+<span class="exam-clock-value" id="exam-clock-value">1:30:00</span>
+</div>
+<div class="exam-bar-actions">
+<button class="btn btn-primary" id="exam-submit" type="submit">Nộp bài</button>
+<a class="btn btn-outline-secondary" href="./exams.html">Rời phòng thi</a>
+</div>
+</div>
+<div class="exam-note warn" id="exam-unanswered" style="display:none"></div>
+<div class="exam-palette" id="exam-palette">
+<a class="exam-dot" data-dot="150495" href="#q-150495">1</a>
+<a class="exam-dot" data-dot="150496" href="#q-150496">2</a>
+<a class="exam-dot" data-dot="150497" href="#q-150497">3</a>
+<a class="exam-dot" data-dot="150498" href="#q-150498">4</a>
+<a class="exam-dot" data-dot="150499" href="#q-150499">5</a>
+<a class="exam-dot" data-dot="150500" href="#q-150500">6</a>
+<a class="exam-dot" data-dot="150501" href="#q-150501">7</a>
+<a class="exam-dot" data-dot="150502" href="#q-150502">8</a>
+<a class="exam-dot" data-dot="150503" href="#q-150503">9</a>
+<a class="exam-dot" data-dot="150504" href="#q-150504">10</a>
+<a class="exam-dot" data-dot="150505" href="#q-150505">11</a>
+<a class="exam-dot" data-dot="150506" href="#q-150506">12</a>
+<a class="exam-dot" data-dot="150507" href="#q-150507">13</a>
+<a class="exam-dot" data-dot="150508" href="#q-150508">14</a>
+<a class="exam-dot" data-dot="150509" href="#q-150509">15</a>
+<a class="exam-dot" data-dot="150510" href="#q-150510">16</a>
+<a class="exam-dot" data-dot="150511" href="#q-150511">17</a>
+<a class="exam-dot" data-dot="150512" href="#q-150512">18</a>
+<a class="exam-dot" data-dot="150513" href="#q-150513">19</a>
+<a class="exam-dot" data-dot="150514" href="#q-150514">20</a>
+<a class="exam-dot" data-dot="150515" href="#q-150515">21</a>
+<a class="exam-dot" data-dot="150516" href="#q-150516">22</a>
+</div>
+</div>
+<div class="scroll-area">
+<div class="exam-part">
+<div class="question-block exam-q" data-kind="mc" data-qid="150495" id="q-150495">
+<div class="q-number">
+          Câu 1. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Cho hàm số $y=-x^3 - 3x^2 + 9x-1$ . Mệnh đề nào sau đây đúng?</div>
+<div class="opt">
+<label>
+<input name="q_150495" type="radio" value="A"/>
+<strong>A)</strong> Hàm số đồng biến trên khoảng $(1;\,+∞).$
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150495" type="radio" value="B"/>
+<strong>B)</strong> Hàm số nghịch biến trên khoảng $(-3;\,+∞).$
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150495" type="radio" value="C"/>
+<strong>C)</strong> Hàm số đồng biến trên khoảng $(-3;\,1).$
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150495" type="radio" value="D"/>
+<strong>D)</strong> Hàm số đồng biến trên khoảng $(-∞;\,-3).$
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150496" id="q-150496">
+<div class="q-number">
+          Câu 2. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Hàm số $y=x^3 - 3x^2 - 1$ đạt cực trị tại các điểm nào sau đây?</div>
+<div class="opt">
+<label>
+<input name="q_150496" type="radio" value="A"/>
+<strong>A)</strong> $x=0, \, x=2$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150496" type="radio" value="B"/>
+<strong>B)</strong> $x=± 1$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150496" type="radio" value="C"/>
+<strong>C)</strong> $x=± 2$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150496" type="radio" value="D"/>
+<strong>D)</strong> $x=0, \, x=1$ .
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150497" id="q-150497">
+<div class="q-number">
+          Câu 3. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Cho hàm số $f(x)$ liên tục trên đoạn $[0; 3]$ và có đồ thị như hình vẽ bên dưới.<img alt="" src="./uploads/ing-78948871100c64c8.png"/>Gọi $M$ và $m$ lần lượt là giá trị lớn nhất và nhỏ nhất của hàm số đã cho trên đoạn $[0; 3]$ . Giá trị của $M+m$ bằng?</div>
+<div class="opt">
+<label>
+<input name="q_150497" type="radio" value="A"/>
+<strong>A)</strong> $2$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150497" type="radio" value="B"/>
+<strong>B)</strong> $3$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150497" type="radio" value="C"/>
+<strong>C)</strong> $1$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150497" type="radio" value="D"/>
+<strong>D)</strong> $5$ .
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150498" id="q-150498">
+<div class="q-number">
+          Câu 4. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Giá trị lớn nhất của hàm số $y = f\left( x \right)=\dfrac{x+1}{x+2}$ trên đoạn $\left[ 1;3 \right]$ bằng</div>
+<div class="opt">
+<label>
+<input name="q_150498" type="radio" value="A"/>
+<strong>A)</strong> $\dfrac{4}{5}$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150498" type="radio" value="B"/>
+<strong>B)</strong> $\dfrac{5}{6}$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150498" type="radio" value="C"/>
+<strong>C)</strong> $\dfrac{6}{7}$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150498" type="radio" value="D"/>
+<strong>D)</strong> $\dfrac{2}{3}$ .
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150499" id="q-150499">
+<div class="q-number">
+          Câu 5. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Tiệm cận xiên của đồ thị hàm số $y=f(x)=x+2+\dfrac{1}{x-2}$ có phương trình là</div>
+<div class="opt">
+<label>
+<input name="q_150499" type="radio" value="A"/>
+<strong>A)</strong> $y=x+2$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150499" type="radio" value="B"/>
+<strong>B)</strong> $y=-x+2$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150499" type="radio" value="C"/>
+<strong>C)</strong> $y=x-2$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150499" type="radio" value="D"/>
+<strong>D)</strong> $y=x$ .
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150500" id="q-150500">
+<div class="q-number">
+          Câu 6. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Đồ thị của hai hàm số sau y = x 3 + 2 × 2 + 1 và y = x 2 - x + 2 cắt nhau tại bao nhiêu điểm?</div>
+<div class="opt">
+<label>
+<input name="q_150500" type="radio" value="A"/>
+<strong>A)</strong> 2.
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150500" type="radio" value="B"/>
+<strong>B)</strong> 0.
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150500" type="radio" value="C"/>
+<strong>C)</strong> 3.
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150500" type="radio" value="D"/>
+<strong>D)</strong> 1.
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150501" id="q-150501">
+<div class="q-number">
+          Câu 7. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Đường cong ở hình dưới là đồ thị của hàm số nào?<img alt="" src="./uploads/ing-1ca8d6c8dcca6deb.png"/></div>
+<div class="opt">
+<label>
+<input name="q_150501" type="radio" value="A"/>
+<strong>A)</strong> $y=x^{3}+3 x^{2}+4 x+2$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150501" type="radio" value="B"/>
+<strong>B)</strong> $y=-x^{3}-4 x^{2}-x+2$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150501" type="radio" value="C"/>
+<strong>C)</strong> $y=x^{3}+x^{2}+2 x+2$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150501" type="radio" value="D"/>
+<strong>D)</strong> $y=x^{3}+3 x^{2}-4 x+2$ .
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150502" id="q-150502">
+<div class="q-number">
+          Câu 8. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-1">Có vẽ hình</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Cho hình chóp $S.ABCD$ có đáy $ABCD$ là hình bình hành. Khi đó $\overrightarrow{SA}+\overrightarrow{BC}$ bằng<img alt="" src="./uploads/ing-6cab67e656aee289.png"/></div>
+<div class="opt">
+<label>
+<input name="q_150502" type="radio" value="A"/>
+<strong>A)</strong> $\overrightarrow{SA}$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150502" type="radio" value="B"/>
+<strong>B)</strong> $\overrightarrow{SD}$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150502" type="radio" value="C"/>
+<strong>C)</strong> $\overrightarrow{SC}$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150502" type="radio" value="D"/>
+<strong>D)</strong> $\overrightarrow{SB}$ .
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150503" id="q-150503">
+<div class="q-number">
+          Câu 9. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-0">Không vẽ hình</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Trong không gian $Oxyz$ , gọi $M'$ là hình chiếu vuông góc của điểm $M\left(2;\,3;\,-1 \right)$ trên trục $Oy$ thì tọa độ $\overrightarrow{MM'}$ là</div>
+<div class="opt">
+<label>
+<input name="q_150503" type="radio" value="A"/>
+<strong>A)</strong> $\left(0;\,3;\,0 \right).$
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150503" type="radio" value="B"/>
+<strong>B)</strong> $\left(0;\,2;\,3 \right)$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150503" type="radio" value="C"/>
+<strong>C)</strong> $\left(-2;\,0;\,1 \right).$
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150503" type="radio" value="D"/>
+<strong>D)</strong> $\left(3;\,0;\,0 \right).$
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150504" id="q-150504">
+<div class="q-number">
+          Câu 10. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Trong không gian $Oxyz$ , cho hai điểm $A(2 ; 3 ; 4)$ và $B(3 ; 0 ; 1)$ . Độ dài của vectơ $\overrightarrow{A B}$ bằng</div>
+<div class="opt">
+<label>
+<input name="q_150504" type="radio" value="A"/>
+<strong>A)</strong> $\sqrt{13}.$
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150504" type="radio" value="B"/>
+<strong>B)</strong> $\sqrt{19}.$
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150504" type="radio" value="C"/>
+<strong>C)</strong> $19 .$
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150504" type="radio" value="D"/>
+<strong>D)</strong> $13 .$
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150505" id="q-150505">
+<div class="q-number">
+          Câu 11. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Gọi $M$ và $m$ lần lượt là giá trị lớn nhất và giá trị nhỏ nhất của hàm số $y=x^3 - 3x^2 - 9x+35$ trên đoạn $\left[ -4;4 \right]$ . Giá trị của $M$ và $m$ lần lượt là</div>
+<div class="opt">
+<label>
+<input name="q_150505" type="radio" value="A"/>
+<strong>A)</strong> $M=40$ ; $m=8$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150505" type="radio" value="B"/>
+<strong>B)</strong> $M=40$ ; $m=-41$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150505" type="radio" value="C"/>
+<strong>C)</strong> $M=40$ ; $m=-8$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150505" type="radio" value="D"/>
+<strong>D)</strong> $M=15$ ; $m=-41$ .
+            </label>
+</div>
+</div>
+<div class="question-block exam-q" data-kind="mc" data-qid="150506" id="q-150506">
+<div class="q-number">
+          Câu 12. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần I — Trắc nghiệm chọn một phương án</span>
+<span class="exam-points">0,25 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Đồ thị hàm số $y=\dfrac{x^2-x+1}{x^2-x-2}$ có bao nhiêu đường tiệm cận?</div>
+<div class="opt">
+<label>
+<input name="q_150506" type="radio" value="A"/>
+<strong>A)</strong> $1$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150506" type="radio" value="B"/>
+<strong>B)</strong> $2$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150506" type="radio" value="C"/>
+<strong>C)</strong> $3$ .
+            </label>
+</div>
+<div class="opt">
+<label>
+<input name="q_150506" type="radio" value="D"/>
+<strong>D)</strong> $4$ .
+            </label>
+</div>
+</div>
+</div>
+<div class="exam-part">
+<div class="question-block exam-q" data-kind="true_false" data-qid="150507" id="q-150507">
+<div class="q-number">
+          Câu 13. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần II — Trắc nghiệm đúng hoặc sai</span>
+<span class="exam-points">1 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Cho hàm số $y=f(x)$ xác định và liên tục trên $ℝ$ . Biết $f(x)$ có bảng xét dấu của $f'(x)$ như sau.<img alt="" src="./uploads/ing-4051f8efb93934a4.png"/>(Nhấp vào ô màu vàng để chọn đúng / sai)</div>
+<div class="exam-sub-hint">
+            Mỗi ý a), b), c)… là một phát biểu độc lập: nhấp vào ô để chọn Đúng/Sai,
+            0,25 điểm mỗi ý.
+          </div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>a)</strong> Hàm số $f(x)$ đồng biến trên khoảng $(-3;0)$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150507_a" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150507_a" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>b)</strong> Hàm số $f(x)$ đạt cực đại tại $x=2$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150507_b" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150507_b" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>c)</strong> Giá trị lớn nhất của hàm số $f(x)$ trên đoạn $[-1 ; 2]$ là $f(-1)$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150507_c" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150507_c" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>d)</strong> Giá trị nhỏ nhất của hàm số $f(x)$ trên đoạn $[-1 ; 3]$ là $f(3)$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150507_d" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150507_d" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+<div class="exam-part">
+<div class="question-block exam-q" data-kind="essay" data-qid="150508" id="q-150508">
+<div class="q-number">
+          Câu 14. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần III — Tự luận</span>
+<span class="exam-points">1 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Cho hàm số y = x - 3 - x 2 - 3 x + 4 có đồ thị là ( C ).
+a) Đồ thị ( C ) có tiệm cận xiên là y = - x - 6. | Đ S
+b) Đồ thị ( C ) nhận giao điểm I ( 3 ; - 9 ) làm tâm đối xứng. | Đ S
+c) Đồ thị ( C ) có hai điểm cực trị nằm 2 phía đối với O y. | Đ S
+d) Đồ thị không cắt trục O x. | Đ S</div>
+<span class="essay-label">Bài làm của bạn:</span>
+<textarea class="essay-box" name="essay_150508" placeholder="Viết lời giải / lập luận của bạn…"></textarea>
+</div>
+</div>
+<div class="exam-part">
+<div class="question-block exam-q" data-kind="true_false" data-qid="150509" id="q-150509">
+<div class="q-number">
+          Câu 15. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần IV — Trắc nghiệm đúng hoặc sai</span>
+<span class="exam-points">1 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Độ cao của một thiết bị bay tự hành (drone) bay thẳng đứng lên trên được mô phỏng bởi hàm số $h(t) = -t^{3} + 9~t^{2} + 21~t + 5$ ( $h$ là độ cao tính bằng mét, $t$ là thời gian tính bằng giây, $t ≥ 0$ ).
+(Nhấp vào ô màu vàng để chọn đúng / sai)</div>
+<div class="exam-sub-hint">
+            Mỗi ý a), b), c)… là một phát biểu độc lập: nhấp vào ô để chọn Đúng/Sai,
+            0,25 điểm mỗi ý.
+          </div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>a)</strong> Thiết bị bay đạt độ cao cực đại tại $t = 7$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150509_a" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150509_a" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>b)</strong> Độ cao cực đại của thiết bị bay là $250$ mét.</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150509_b" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150509_b" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>c)</strong> Tại thời điểm $t = 2$ , thiết bị bay đang rơi xuống.</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150509_c" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150509_c" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+<div class="exam-statement">
+<div class="exam-statement-text"><strong>d)</strong> Đạo hàm bậc hai $h"(t)$ triệt tiêu tại $t = 3$ .</div>
+<div class="exam-statement-pick tf-pick">
+<label class="tf-box">
+<input name="tf_150509_d" type="radio" value="đ"/>
+<span>Đúng</span>
+</label>
+<label class="tf-box">
+<input name="tf_150509_d" type="radio" value="s"/>
+<span>Sai</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+<div class="exam-part">
+<div class="question-block exam-q" data-kind="essay" data-qid="150510" id="q-150510">
+<div class="q-number">
+          Câu 16. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-1">Có vẽ hình</span>
+<span class="exam-part-badge">Phần V — Tự luận</span>
+<span class="exam-points">1 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Một vật nặng O được kéo từ ba hướng như hình vẽ và chịu tác dụng của ba lực F 1 , F 2 , F 3 , có độ lớn lần lượt là 24 N, 12 N, 6 N. Biết góc tạo bởi hai lực F 1 , F 2 là 12 0 ∘ và lực thứ ba vuông góc với hai lực đầu tiên.<img alt="" src="./uploads/ing-572c66f1f5b0eb44.png"/>Trong đó điểm D là đỉnh của hình bình hành OB D A và E là đỉnh của hình bình hành OCE D.
+a) BO + B A = B D. | Đ S
+b) OE = O A + OB + OC. | Đ S
+c) Độ dài vectơ O D là 12 7 . | Đ S
+d) Độ lớn hợp lực tác dụng vào vật O là 6 13 N. | Đ S</div>
+<span class="essay-label">Bài làm của bạn:</span>
+<textarea class="essay-box" name="essay_150510" placeholder="Viết lời giải / lập luận của bạn…"></textarea>
+</div>
+</div>
+<div class="exam-part">
+<div class="question-block exam-q" data-kind="short" data-qid="150511" id="q-150511">
+<div class="q-number">
+          Câu 17. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần 6 — Trắc nghiệm trả lời ngắn</span>
+<span class="exam-points">0,5 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Một công ti trung bình bán được $600$ chiếc máy lọc không khí mỗi tháng với giá $10$ triệu đồng một chiếc. Một khảo sát cho thấy nếu giảm giá bán mỗi chiếc $400$ nghìn đồng, thì số lượng bán ra tăng thêm khoảng $60$ chiếc mỗi tháng. Gọi $p$ (triệu đồng) là giá của mỗi máy, $x$ là số máy bán ra. Khi đó, hàm cầu là $p=p(x)$ và hàm doanh thu là $R(x)=px$ . Hỏi công ti phải bán mỗi chiếc với số tiền bao nhiêu triệu đồng để doanh thu là lớn nhất?</div>
+<div class="exam-sub-hint">Trả lời ngắn — gõ kết quả, kèm đơn vị nếu đề hỏi đơn vị.</div>
+<textarea class="essay-box" name="short_150511" placeholder="Kết quả câu 17"></textarea>
+</div>
+<div class="question-block exam-q" data-kind="short" data-qid="150512" id="q-150512">
+<div class="q-number">
+          Câu 18. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần 6 — Trắc nghiệm trả lời ngắn</span>
+<span class="exam-points">0,5 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Giả sử chi phí tiền xăng $C$ (đồng) phụ thuộc tốc độ trung bình $v$ (km/h) theo công thức:
+$C(v)=\dfrac{16\,000}{v}+\dfrac{5}{2}v$ $(0\lt v≤ 120)$
+Để biểu diễn trực quan sự thay đổi của $C(v)$ theo $v$ , người ta đã vẽ đồ thị hàm số $C(v)$ như hình bên.<img alt="" src="./uploads/ing-e15907c57100f945.png"/>Tài xế xe tải lái xe với tốc độ trung bình là bao nhiêu để tiết kiệm tiền xăng nhất?</div>
+<div class="exam-sub-hint">Trả lời ngắn — gõ kết quả, kèm đơn vị nếu đề hỏi đơn vị.</div>
+<textarea class="essay-box" name="short_150512" placeholder="Kết quả câu 18"></textarea>
+</div>
+<div class="question-block exam-q" data-kind="short" data-qid="150513" id="q-150513">
+<div class="q-number">
+          Câu 19. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-0">Không vẽ hình</span>
+<span class="exam-part-badge">Phần 6 — Trắc nghiệm trả lời ngắn</span>
+<span class="exam-points">0,5 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Trạm kiểm soát không lưu đang theo dõi hai máy bay. Giả sử trong không gian với hệ trục tọa độ $Oxyz$ , đơn vị đo lấy theo ki-lô-mét, tại cùng một thời điểm theo dõi ban đầu: máy bay thứ nhất ở tọa độ $A(0;35;10)$ , bay theo hướng vectơ $\overrightarrow{u_1} = (3;4;0)$ , với tốc độ không đổi $900$ km/h và máy bay thứ hai ở tọa độ $B(31;10;11)$ , bay theo hướng $\overrightarrow{u_2} = (5;12;0)$ với tốc độ không đổi $910$ (km/h). Biết khoảng cách an toàn tối thiểu giữa hai máy bay là $5$ hải lý (khoảng $9,3$ km). Nếu hai máy bay tiếp tục di chuyển với tốc độ bay như trên thì sau ít nhất bao nhiêu phút (kể từ thời điểm theo dõi ban đầu), hai máy bay vi phạm khoảng cách an toàn (kết quả làm tròn đến hàng phần trăm)?
+Trả lời : ☐</div>
+<div class="exam-sub-hint">Điền số — gõ kết quả em tính được vào ô.</div>
+<label class="number-label" for="num_150513">Kết quả:</label>
+<input autocomplete="off" class="number-box" id="num_150513" inputmode="decimal" name="num_150513" placeholder="Nhập số…" type="text"/>
+</div>
+<div class="question-block exam-q" data-kind="short" data-qid="150514" id="q-150514">
+<div class="q-number">
+          Câu 20. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần 6 — Trắc nghiệm trả lời ngắn</span>
+<span class="exam-points">0,5 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Một bể chứa $2$ m $^3$ nước tinh khiết. Người ta bơm vào bể đó nước muối có nồng độ không đổi với tốc độ $20$ lít/phút. Biết rằng nồng độ muối trong bể sau $t$ phút (tính bằng tỉ số của khối lượng muối trong bể và thể tích nước trong bể, đơn vị: gam/lít) là một hàm số $f(t )$ , thời gian $t$ tính bằng phút. Biết rằng tiệm cận ngang của đồ thị hàm số $y = f(t)$ là $y=10$ . Tính nồng độ muối trong bể sau khi bơm được $1$ giờ. (làm tròn kết quả đến hàng phần trăm, đơn vị gam/lít)</div>
+<div class="exam-sub-hint">Trả lời ngắn — gõ kết quả, kèm đơn vị nếu đề hỏi đơn vị.</div>
+<textarea class="essay-box" name="short_150514" placeholder="Kết quả câu 20"></textarea>
+</div>
+<div class="question-block exam-q" data-kind="short" data-qid="150515" id="q-150515">
+<div class="q-number">
+          Câu 21. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần 6 — Trắc nghiệm trả lời ngắn</span>
+<span class="exam-points">0,5 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Cho hàm số $y=f(x)=ax^5+bx^4+cx^3+dx^2+ex+f, \, (a≠ 0)$ và hàm số $y=f'(x)$ có đồ thị như hình vẽ:<img alt="" src="./uploads/ing-3518cbd250fc4e1c.png"/>Đặt $g(x)=f(3x-1)-9x^3+\dfrac{9}{2} x^2 - 6x+2\,022$ . Hàm số $y = g( | x | )$ có bao nhiêu điểm cực trị?</div>
+<div class="exam-sub-hint">Trả lời ngắn — gõ kết quả, kèm đơn vị nếu đề hỏi đơn vị.</div>
+<textarea class="essay-box" name="short_150515" placeholder="Kết quả câu 21"></textarea>
+</div>
+<div class="question-block exam-q" data-kind="short" data-qid="150516" id="q-150516">
+<div class="q-number">
+          Câu 22. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-part-badge">Phần 6 — Trắc nghiệm trả lời ngắn</span>
+<span class="exam-points">0,5 điểm</span>
+</div>
+<div class="q-prompt" style="margin-bottom:10px">Hàm số $y=(x+m)^3+(x+n)^3-x^3$ đồng biến trên khoảng $(-∞ ;\,+∞)$ . Giá trị nhỏ nhất của biểu thức $P=100[4(m^2+n^2)-m-n]$ bằng bao nhiêu? ( Làm tròn kết quả đến chữ số thập phân thứ nhất )</div>
+<div class="exam-sub-hint">Trả lời ngắn — gõ kết quả, kèm đơn vị nếu đề hỏi đơn vị.</div>
+<textarea class="essay-box" name="short_150516" placeholder="Kết quả câu 22"></textarea>
+</div>
+</div>
+</div>
+</form>
+</div>
+<script src="./static/js/exam.js"></script>
+<script src="./static/js/tf_pick.js"></script>
+<script src="./static/js/math_suggest.js"></script>
+<script src="./static/js/voice_math.js"></script>
+<script src="./static/js/essay_editor.js"></script>
+<script src="./static/js/question_pager.js"></script>
+</div>
+<footer class="footer-shell">
+<div class="footer-main">
+<div class="footer-feedback" id="fb-slot"></div>
+<div class="footer-info">
+<div class="footer-line">Copyright © Trần Công Tuệ</div>
+<div class="footer-line">Phone &amp; Zalo: <a href="tel:+84961969489">096 196 9489</a></div>
+<div class="footer-line">Email: <a href="mailto:trancongtue0812@gmail.com">trancongtue0812@gmail.com</a></div>
+</div>
+</div>
+</footer>
+
+<div aria-hidden="true" class="modal fade" id="modal-lesson" tabindex="-1">
+<div class="modal-dialog modal-lg modal-dialog-scrollable">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title">📖 Lý thuyết</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body">
+
+<div class="d-none mb-3" id="lesson-audio"></div>
+
+<div class="d-none mb-3" id="lesson-image"></div>
+<div class="ai-box visible" id="lesson-body"></div>
+</div>
+<div class="modal-footer">
+<button class="btn btn-x btn-sm" data-bs-dismiss="modal" type="button">Đóng</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="modal fade" id="modal-notice" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title" id="notice-title">Thông báo</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body" id="notice-body" style="white-space:pre-line"></div>
+<div class="modal-footer">
+<button class="btn btn-primary btn-sm" data-bs-dismiss="modal" type="button">Đồng ý</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="modal fade" id="modal-confirm" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title" id="confirm-title">Xác nhận</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body" id="confirm-body" style="white-space:pre-line"></div>
+<div class="modal-footer">
+<button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" type="button">Không</button>
+<button class="btn btn-primary btn-sm" id="confirm-yes" type="button">Có</button>
+</div>
+</div>
+</div>
+</div>
+<link href="./static/feedback.css" rel="stylesheet"/>
+
+<script src="./static/js/feedback.js"></script>
+<link href="./static/notifications.css" rel="stylesheet"/>
+<script src="./static/js/notifications.js"></script>
+<script src="./assets/static-demo.js"></script></body>
+</html>

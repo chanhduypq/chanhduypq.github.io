@@ -1,0 +1,2671 @@
+
+<!DOCTYPE html>
+
+<html>
+<head><script src="./data/demo-config.js"></script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Ứng dụng Toán học</title>
+<link href="./static/bootstrap-5.0.2-dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="./static/css/common.css" rel="stylesheet"/>
+<style>
+    /* Menu con ("Ký hiệu toán học") mở ra ngoài khối menu. Ở bề ngang hẹp,
+       .navbar-main dùng overflow-x:auto để cuộn ngang; theo CSS thì một trục không
+       phải visible buộc trục còn lại thành auto, nên bảng menu con bị cắt mất.
+       Chỉ nới khi đang mở, để thanh cuộn ngang giữ nguyên như cũ. */
+    @media (max-width: 480px) {
+      .navbar-main:has(.dropdown-menu.show) { overflow: visible; }
+    }
+    /* Bốn mục menu con của "Theo dõi quá trình" vẫn do partial riêng render nên mang
+       class nút của hàng menu (btn btn-sm). Vào menu con thì phải khoác dạng item: bỏ
+       viền, chiếm trọn một hàng. Ở đây CHỈ còn phần hình thể — nền và màu chữ của từng
+       mục lấy từ khối "Menu con" trong common.css (lớp .nav-sub), để mỗi mục một màu
+       riêng. Khối này có id nên độ đặc hiệu cao hơn; khai báo màu ở đây sẽ xoá sạch
+       màu của từng mục. */
+    #nav-track-menu > li > a.btn {
+      display: block; width: 100%; padding: .25rem 1rem; clear: both;
+      border: 0; border-radius: 0; box-shadow: none;
+      font-size: 1rem; font-weight: 400;
+      text-align: left; white-space: nowrap;
+    }
+  </style>
+<link href="./static/katex/katex.min.css" rel="stylesheet"/>
+<script src="./static/js/jquery-3.7.1.min.js"></script>
+<script src="./static/bootstrap-5.0.2-dist/js/bootstrap.bundle.min.js"></script>
+<script defer="" src="./static/katex/katex.min.js"></script>
+<script src="./static/js/common.js"></script>
+<script src="./static/js/ajax.js"></script>
+<script src="./static/js/nav_activity.js"></script>
+<script src="./static/js/nav_active.js"></script>
+<script src="./static/js/upgrade_banner.js"></script>
+</head>
+<body data-static-route="/symbols">
+<div class="site-top" data-nav-active="symbols">
+<div class="topband">
+<div aria-label="Lời tri ân" class="marquee-shell" role="note">
+<div class="marquee-track">
+<span class="marquee-text">Cảm ơn bạn đã tin tưởng và ủng hộ chúng tôi</span>
+<span aria-hidden="true" class="marquee-text">Cảm ơn bạn đã tin tưởng và ủng hộ chúng tôi</span>
+</div>
+</div>
+<div class="notif-shell" id="notif-shell">
+<button aria-controls="notif-panel" aria-expanded="false" aria-haspopup="true" aria-label="Thông báo" class="corner-icon notif-bell" id="notif-bell" title="Thông báo" type="button">
+<svg aria-hidden="true" fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18">
+<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+<path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+</svg>
+<span class="notif-badge" data-max="9" hidden="" id="notif-badge"></span>
+</button>
+<div aria-label="Thông báo" class="notif-panel" hidden="" id="notif-panel" role="dialog">
+<div class="notif-head">
+<span class="notif-heading">Thông báo</span>
+<button class="notif-mark-all" hidden="" id="notif-mark-all" title="Đánh dấu tất cả đã đọc" type="button">Đánh dấu tất cả đã đọc</button>
+</div>
+<div class="notif-list" id="notif-list"></div>
+<p class="notif-empty" hidden="" id="notif-empty">Không có thông báo nào chưa đọc.</p>
+</div>
+</div>
+</div>
+<nav class="navbar-shell">
+<div class="navbar-main align-items-center">
+<a class="btn btn-sm nav-home" data-nav="trang_chu" href="./index.html">Trang chủ</a>
+<div class="btn-group">
+<a aria-controls="nav-study-menu" aria-expanded="false" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="study" href="#" role="button">Lý thuyết</a>
+<ul class="dropdown-menu" id="nav-study-menu">
+<li><a class="dropdown-item nav-sub nav-sub-blue" data-nav="study" href="./study.html">Lý thuyết theo lớp</a></li>
+<li><a class="dropdown-item nav-sub nav-sub-violet" data-nav="symbols" href="./symbols.html">Ký hiệu toán học</a></li>
+</ul>
+</div>
+<div class="btn-group">
+<a aria-controls="nav-play-menu" aria-expanded="false" class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="play" href="#" role="button">Bài tập</a>
+<ul class="dropdown-menu" id="nav-play-menu">
+<li><a class="dropdown-item nav-sub nav-sub-green" data-nav="home" href="./practice-setup.html">Làm bài theo bài học SGK</a></li>
+<li><a class="dropdown-item nav-sub nav-sub-amber" data-nav="exams" href="./exams.html">Luyện thi</a></li>
+</ul>
+</div>
+<div class="btn-group" id="nav-track">
+<a aria-controls="nav-track-menu" aria-expanded="false" class="btn btn-warning btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="track" href="#" role="button">Theo dõi quá trình</a>
+<ul class="dropdown-menu" id="nav-track-menu">
+<li>
+<a class="btn btn-warning btn-sm nav-sub nav-sub-orange" data-nav="history" href="./history.html">Lịch sử</a>
+</li>
+<li>
+<a class="btn btn-outline-primary btn-sm nav-sub nav-sub-teal" data-nav="capability" href="./capability.html">Năng lực</a>
+</li>
+<li><a class="btn btn-outline-warning btn-sm nav-sub nav-sub-pink" data-nav="today" href="./today.html">Ôn hôm nay</a></li>
+<li><a class="btn btn-outline-secondary btn-sm nav-sub nav-sub-indigo" data-nav="weekly_report" href="./weekly-report.html">Báo cáo tuần cho phụ huynh</a></li>
+</ul>
+</div>
+<a class="btn btn-sm nav-help" data-nav="help" href="./help.html">Hướng dẫn sử dụng</a>
+</div>
+</nav>
+<script id="nav-path-map" type="application/json">{"capability": ["/capability"], "exams": ["/exams", "/exam", "/exam_ability"], "help": ["/help"], "history": ["/history"], "home": ["/lam-bai-tap", "/practice", "/practice_ratio", "/practice_similar", "/redo", "/redo_last", "/submit"], "latest_result": ["/latest_result"], "study": ["/study", "/study_lessons"], "symbols": ["/symbols"], "today": ["/today"], "trang_chu": ["/trang-chu"], "weekly_report": ["/weekly_report"]}</script>
+</div>
+<script>
+    (function () {
+      'use strict';
+      var KEYS = ['history', 'capability'];      // thứ tự đúng trong menu con
+
+      function stray(bar, key) {
+        var found = null;
+        Array.prototype.forEach.call(bar.children, function (el) {
+          if (!found && el.getAttribute('data-nav') === key) found = el;
+        });
+        return found;
+      }
+
+      function adopt() {
+        var bar = document.querySelector('.navbar-main');
+        var ul = document.getElementById('nav-track-menu');
+        if (!bar || !ul) return;
+        var moved = false;
+        KEYS.forEach(function (key) {
+          var node = stray(bar, key);
+          if (!node) return;
+          var holder = document.createElement('li');
+          holder.appendChild(node);
+          ul.appendChild(holder);
+          moved = true;
+        });
+        if (!moved) return;
+        var parent = document.getElementById('nav-track');
+        if (parent) parent.style.display = '';
+      }
+
+      function watch() {
+        adopt();
+        var bar = document.querySelector('.navbar-main');
+        if (bar && typeof MutationObserver === 'function') {
+          new MutationObserver(adopt).observe(bar, { childList: true });
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', watch);
+      } else {
+        watch();
+      }
+    })();
+  </script>
+<div class="page-upgrade" hidden}="" id="page-upgrade" role="status">Trang này đang được nâng cấp về giao diện và chức năng</div>
+<script id="upgrade-keys" type="application/json">["home", "latest_result", "capability", "today", "weekly_report"]</script>
+<div id="page-body">
+<link href="./static/css/history.css" rel="stylesheet"/>
+<style>
+  .sym-group { margin-bottom: 22px; }
+  .sym-group h3 { font-size: 1.02rem; margin: 0 0 8px; color: #1d4ed8; }
+  .sym-card { align-items: flex-start; }
+  /* Nền xanh đặt trên Ô KÍ HIỆU, không trên cả thẻ: phần giải thích bên cạnh giữ nguyên
+     nền để mắt phân biệt ngay đâu là ký hiệu, đâu là chữ. Chữ trong ô phải là xanh rêu
+     đậm — KaTeX thừa hưởng `color` của khối chứa.
+     `width` chứ KHÔNG phải `flex-basis`: dưới 600px `.sub-card` lật thành cột (history.css)
+     nên basis biến thành CHIỀU CAO — ô ký hiệu sẽ thành dải xanh cao ngất. Độ rộng cố
+     định cũng giữ cho mọi lời đọc thẳng hàng trên màn hình rộng.
+     Cùng khuôn đó dùng cho pop-up: ô ký hiệu trong pop-up phải giống hệt ô bên trái của
+     danh sách (yêu cầu của user), nên nó mang đúng class .sym-cell chứ không có bản riêng. */
+  .sym-cell { flex: 0 0 auto; width: 144px; background: #dcfce7; color: #14532d;
+              border-radius: 8px; padding: 3px 6px; text-align: center; overflow-x: auto; }
+  .sym-tex { font-size: 1.15rem; }
+  /* Dòng dưới của ƯCLN/BCNN: cách viết quốc tế, kèm nhãn để học sinh không nhầm là hai
+     ký hiệu khác nhau. `nowrap` vì yêu cầu là HAI dòng — xuống dòng thứ ba là thẻ thành
+     ba tầng; chữ nhỏ hơn dòng trên một bậc vì nó là chú giải, không phải ký hiệu. */
+  .sym-intl { font-size: 1.05rem; margin-top: 2px; white-space: nowrap; }
+  .sym-intl-tag { font-size: .7rem; font-weight: 600; color: #166534; }
+  .sym-read { font-weight: 600; margin-bottom: 2px; }
+  .sym-mean { font-size: .9rem; color: #374151; }
+
+  /* Nút mở pop-up: xanh đậm chữ TRẮNG — đảo ngược với ô ký hiệu (nền nhạt chữ đậm) để
+     nút nổi lên giữa trang toàn chữ. */
+  .sym-quick { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
+  .sym-quick:hover, .sym-quick:focus { background: #1e40af; border-color: #1e40af; color: #fff; }
+
+  /* Mỗi hàng của pop-up: ô ký hiệu + đúng một điều khiển. `align-items:center` vì hàng
+     chỉ có một dòng cao xấp xỉ ô ký hiệu, khác danh sách chính (nhiều dòng, canh đỉnh). */
+  .sym-quick-row { display: flex; align-items: center; gap: 10px;
+                   padding: 4px 0; border-bottom: 1px solid #eef2f7; }
+  /* <details>/<summary>: toggle native, đóng thì trình duyệt tự cất phần lời giải.
+     Bỏ chấm tam giác mặc định của <summary> để vẽ nút thật: học sinh cần một chỗ bấm
+     ra hình cái nút, không phải một ký tự bé xíu trước dòng chữ. */
+  .sym-doc > summary { list-style: none; cursor: pointer; flex: 0 0 auto;
+                       border: 1px solid #1d4ed8; color: #1d4ed8; background: #eff6ff;
+                       border-radius: 6px; padding: 1px 10px; font-size: .82rem;
+                       white-space: nowrap; }
+  .sym-doc > summary::-webkit-details-marker { display: none; }
+  .sym-doc > summary::after { content: " ▸"; font-size: .75rem; }
+  .sym-doc[open] > summary::after { content: " ▾"; }
+  .sym-doc-body { padding-top: 4px; }
+</style>
+<div class="fill">
+<div class="page-band">
+<h2 class="band-title">Ký hiệu toán học</h2>
+<p class="text-muted" style="margin-bottom:0">
+      Bảng tra cứu 109 ký hiệu toán học từ lớp 1 đến lớp 12: mỗi ký hiệu có cách
+      đọc bằng tiếng Việt và ý nghĩa. Mở bảng là thấy hết — không cần chọn lớp.
+    </p>
+</div>
+<div class="d-flex align-items-center gap-2 mb-3">
+<button class="btn sym-quick" data-bs-target="#sym-quick" data-bs-toggle="modal" type="button">Xem nhanh ký hiệu</button>
+</div>
+<div class="scroll-area">
+<div class="sym-group">
+<h3>Số và tập hợp số <span class="text-muted" style="font-weight:400">(10)</span></h3>
+<div class="sub-card sym-card" id="sym-so-tu-nhien">
+<div class="sym-cell">
+<div class="sym-tex">$\mathbb{N}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: N — tập hợp các số tự nhiên</div>
+<div class="sym-mean">Gồm 0, 1, 2, 3, ... dùng để đếm và thứ tự. SGK lớp 6 đánh dấu bước chuyển từ số sang tập hợp nên ký hiệu này xuất hiện ngay đầu cấp hai.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-so-nguyen">
+<div class="sym-cell">
+<div class="sym-tex">$\mathbb{Z}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: Z — tập hợp các số nguyên</div>
+<div class="sym-mean">Gồm số nguyên âm, 0 và số nguyên dương. Ký hiệu gặp khi học âm độ, số đối, cộng trừ hai số nguyên.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-so-huu-ti">
+<div class="sym-cell">
+<div class="sym-tex">$\mathbb{Q}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: Q — tập hợp các số hữu tỉ</div>
+<div class="sym-mean">Số viết được dưới dạng phân số a/b với a, b nguyên và b khác 0. Mọi số thập phân hữu hạn và vô hạn tuần hoàn đều thuộc Q.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-so-vo-ti">
+<div class="sym-cell">
+<div class="sym-tex">$\mathbb{I}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: I — tập hợp các số vô tỉ</div>
+<div class="sym-mean">Số thập phân vô hạn không tuần hoàn, như căn 2 hay pi. Không viết được thành phân số.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-so-thuc">
+<div class="sym-cell">
+<div class="sym-tex">$\mathbb{R}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: R — tập hợp các số thực</div>
+<div class="sym-mean">Hợp của số hữu tỉ và số vô tỉ; mỗi điểm trên trục số là một số thực. Ký hiệu dùng khi viết khoảng, đoạn.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-so-phuc">
+<div class="sym-cell">
+<div class="sym-tex">$\mathbb{C}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: C — tập hợp các số phức</div>
+<div class="sym-mean">Số có dạng a + bi với i bình phương bằng trừ một, học ở lớp 12 để giải phương trình vô nghiệm trong R.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-dau-phay-thap-phan">
+<div class="sym-cell">
+<div class="sym-tex">$3{,}14$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: ba phẩy mười bốn</div>
+<div class="sym-mean">Việt Nam dùng dấu phẩy tách phần thập phân (khác dấu chấm của sách Anh-Mĩ) và dấu chấm ngăn ba chữ số.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-gia-tri-tuyet-doi">
+<div class="sym-cell">
+<div class="sym-tex">$|a|$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: giá trị tuyệt đối của a</div>
+<div class="sym-mean">Khoảng cách từ điểm a tới gốc 0 trên trục số, luôn không âm. Bỏ dấu trừ nếu a âm.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-ucln">
+<div class="sym-cell">
+<div class="sym-tex">ƯCLN(a, b)</div>
+<div class="sym-intl">$\gcd(a,b)$ <span class="sym-intl-tag">- Quốc tế</span></div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: Ước chung lớn nhất của a và b</div>
+<div class="sym-mean">Ước chung lớn nhất — số lớn nhất cùng chia hết cho cả a và b, dùng khi rút phân số về tối giản. SGK viết tắt là ƯCLN(a, b), quốc tế viết gcd.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-bcnn">
+<div class="sym-cell">
+<div class="sym-tex">BCNN(a, b)</div>
+<div class="sym-intl">$\operatorname{lcm}(a,b)$ <span class="sym-intl-tag">- Quốc tế</span></div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: Bội chung nhỏ nhất của a và b</div>
+<div class="sym-mean">Bội chung nhỏ nhất — số nhỏ nhất khác 0 chia hết cho cả a và b, dùng khi quy đồng mẫu số. SGK viết tắt là BCNN(a, b), quốc tế viết lcm.</div>
+</div>
+</div>
+</div>
+<div class="sym-group">
+<h3>Phép tính <span class="text-muted" style="font-weight:400">(10)</span></h3>
+<div class="sub-card sym-card" id="sym-cong">
+<div class="sym-cell">
+<div class="sym-tex">$a + b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a cộng b</div>
+<div class="sym-mean">Phép cộng: gộp hai lượng thành một tổng. Học từ lớp 1 trong phạm vi 10, mở rộng tới số nguyên, phân số, số thập phân.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-tru">
+<div class="sym-cell">
+<div class="sym-tex">$a - b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a trừ b</div>
+<div class="sym-mean">Phép trừ: tìm phần còn lại hoặc hiệu số đo. Ở lớp 6 mở rộng sang số nguyên âm, nên a trừ b có thể lớn hơn a.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-nhan">
+<div class="sym-cell">
+<div class="sym-tex">$a \times b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a nhân b</div>
+<div class="sym-mean">Phép nhân — cộng lặp lại b lần của a. Ký hiệu dấu chấm xuất hiện ở cuối đề vì dấu nhân dễ lẫn với chữ x.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-nhan-cham">
+<div class="sym-cell">
+<div class="sym-tex">$a \cdot b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a nhân b</div>
+<div class="sym-mean">Dấu chấm nhân, dùng thay dấu nhân khi viết với chữ hoặc vectơ: 2 · a, vectơ a chấm vectơ b.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-chia">
+<div class="sym-cell">
+<div class="sym-tex">$a : b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a chia cho b</div>
+<div class="sym-mean">SGK Việt Nam dùng dấu hai chấm cho phép chia (dấu gạch ngang là trừ, dấu chéo là phân số). Phép chia hết khi số dư bằng 0.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-chia-het">
+<div class="sym-cell">
+<div class="sym-tex">$a \vdots b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a chia hết cho b</div>
+<div class="sym-mean">Dấu ba chấm nói quan hệ chia hết, không phải phép chia: 12 ⋮ 3 đúng vì 12 chia 3 được 4 và dư 0.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-hai-dau">
+<div class="sym-cell">
+<div class="sym-tex">$\pm$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: cộng trừ</div>
+<div class="sym-mean">Chỉ cả hai trường hợp cùng lúc: phương trình x bình phương bằng 9 có nghiệm x = ±3.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-can-bac-hai">
+<div class="sym-cell">
+<div class="sym-tex">$\sqrt{a}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: căn bậc hai của a</div>
+<div class="sym-mean">Số không âm mà bình phương lên bằng a. Chỉ xác định khi a không âm.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-can-bac-ba">
+<div class="sym-cell">
+<div class="sym-tex">$\sqrt[3]{a}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: căn bậc ba của a</div>
+<div class="sym-mean">Số mà lập phương lên bằng a; khác căn bậc hai, căn bậc ba của số âm vẫn tồn tại.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-can-bac-n">
+<div class="sym-cell">
+<div class="sym-tex">$\sqrt[n]{a}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: căn bậc n của a</div>
+<div class="sym-mean">Số mà lũy thừa bậc n bằng a. Với n chẵn chỉ xác định khi a không âm.</div>
+</div>
+</div>
+</div>
+<div class="sym-group">
+<h3>Quan hệ so sánh <span class="text-muted" style="font-weight:400">(8)</span></h3>
+<div class="sub-card sym-card" id="sym-bang">
+<div class="sym-cell">
+<div class="sym-tex">$a = b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a bằng b</div>
+<div class="sym-mean">Hai biểu diễn khác nhau nhưng cùng một giá trị; cũng là dấu nối đáp số ở cuối lời giải.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-khac">
+<div class="sym-cell">
+<div class="sym-tex">$a \neq b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a khác b</div>
+<div class="sym-mean">Hai giá trị không bằng nhau; hay dùng làm điều kiện, ví dụ mẫu số b khác 0.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-nho-hon">
+<div class="sym-cell">
+<div class="sym-tex">$a &lt; b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a nhỏ hơn b</div>
+<div class="sym-mean">Mũi nhọn luôn quay về số bé hơn. Lớp 1 so sánh trong phạm vi 10, sau này dùng để nghiệm bất phương trình.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-lon-hon">
+<div class="sym-cell">
+<div class="sym-tex">$a &gt; b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a lớn hơn b</div>
+<div class="sym-mean">Mở về phía số lớn hơn. Cặp với dấu nhỏ hơn thành bất phương trình bậc nhất một ẩn.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-nho-hon-hoac-bang">
+<div class="sym-cell">
+<div class="sym-tex">$a \leq b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a nhỏ hơn hoặc bằng b</div>
+<div class="sym-mean">Gồm cả trường hợp bằng nhau, nên nghiệm là một đoạn.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-lon-hon-hoac-bang">
+<div class="sym-cell">
+<div class="sym-tex">$a \geq b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a lớn hơn hoặc bằng b</div>
+<div class="sym-mean">Gồm cả giá trị bằng, thường gặp khi tìm giá trị lớn nhất hoặc điều kiện số đo hình học.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-gan-bang">
+<div class="sym-cell">
+<div class="sym-tex">$a \approx b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a xấp xỉ bằng b</div>
+<div class="sym-mean">Hai giá trị gần nhau chứ không bằng, dùng khi làm tròn hoặc lấy giá trị gần đúng của căn số, pi.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-bang-doi-dinh">
+<div class="sym-cell">
+<div class="sym-tex">$A \equiv B$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: A đồng nhất với B</div>
+<div class="sym-mean">Hai biểu thức bằng nhau với mọi giá trị của biến, khác phương trình chỉ đúng với một số giá trị.</div>
+</div>
+</div>
+</div>
+<div class="sym-group">
+<h3>Phân số, tỉ số, phần trăm <span class="text-muted" style="font-weight:400">(6)</span></h3>
+<div class="sub-card sym-card" id="sym-phan-so">
+<div class="sym-cell">
+<div class="sym-tex">$\dfrac{a}{b}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a phần b</div>
+<div class="sym-mean">a là tử số, b là mẫu số khác 0; biểu thị a phần bằng nhau của b phần.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-hon-so">
+<div class="sym-cell">
+<div class="sym-tex">$5\dfrac{2}{3}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: năm hai phần ba</div>
+<div class="sym-mean">Hỗn số gồm phần nguyên cộng phần phân số; đổi ra phân số bằng cách lấy phần nguyên nhân mẫu rồi cộng tử.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-phan-tram">
+<div class="sym-cell">
+<div class="sym-tex">$25\%$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: hai mươi lăm phần trăm</div>
+<div class="sym-mean">Một phần trăm bằng 1/100, nên 25% của a là a nhân 0,25. Gặp rất sớm, ở bài toán tỉ số và biểu đồ.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-phan-nghin">
+<div class="sym-cell">
+<div class="sym-tex">5‰</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: năm phần nghìn</div>
+<div class="sym-mean">Một phần nghìn bằng 1/1000, dùng cho đại lượng quá nhỏ để nói bằng phần trăm như nồng độ.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-ti-so">
+<div class="sym-cell">
+<div class="sym-tex">$a:b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: tỉ số của a và b</div>
+<div class="sym-mean">Thương của a và b, cho biết a gấp bao nhiêu lần b hay chiếm bao nhiêu phần của b.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-ty-le-thuan">
+<div class="sym-cell">
+<div class="sym-tex">$\dfrac{x_1}{y_1}=\dfrac{x_2}{y_2}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: x một trên y một bằng x hai trên y hai</div>
+<div class="sym-mean">Dãy tỉ số bằng nhau — cách viết đại lượng tỉ lệ thuận. Hệ thức ngược (tích không đổi) là tỉ lệ nghịch.</div>
+</div>
+</div>
+</div>
+<div class="sym-group">
+<h3>Lũy thừa và căn thức <span class="text-muted" style="font-weight:400">(5)</span></h3>
+<div class="sub-card sym-card" id="sym-luy-thua">
+<div class="sym-cell">
+<div class="sym-tex">$a^{n}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a mũ n</div>
+<div class="sym-mean">Tích của n thừa số bằng a; a cơ số, n số mũ. Lớp 6 học lũy thừa với số mũ tự nhiên.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-binh-phuong">
+<div class="sym-cell">
+<div class="sym-tex">$a^{2}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a bình phương</div>
+<div class="sym-mean">a nhân chính nó; tên gọi khác là bình phương vì gắn với diện tích hình vuông cạnh a.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-lap-phuong">
+<div class="sym-cell">
+<div class="sym-tex">$a^{3}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a lập phương</div>
+<div class="sym-mean">a nhân a nhân a; tên gọi gắn với thể tích hình lập phương cạnh a.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-mu-am">
+<div class="sym-cell">
+<div class="sym-tex">$a^{-n}=\dfrac{1}{a^{n}}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a mũ trừ n</div>
+<div class="sym-mean">Số mũ âm đảo ngược cơ số: 2 mũ trừ 3 bằng một phần tám. Chỉ dùng khi a khác 0.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-mu-phan-so">
+<div class="sym-cell">
+<div class="sym-tex">$a^{1/n}=\sqrt[n]{a}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a mũ một phần n</div>
+<div class="sym-mean">Lũy thừa hữu tỉ chính là căn thức viết dưới dạng mũ; nhờ vậy mọi công th thức về số mũ dùng được chung.</div>
+</div>
+</div>
+</div>
+<div class="sym-group">
+<h3>Tập hợp và logic <span class="text-muted" style="font-weight:400">(12)</span></h3>
+<div class="sub-card sym-card" id="sym-thuoc">
+<div class="sym-cell">
+<div class="sym-tex">$a \in A$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a thuộc A</div>
+<div class="sym-mean">a là một phần tử của tập hợp A. Phủ định là dấu thuộc có gạch chéo.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-khong-thuoc">
+<div class="sym-cell">
+<div class="sym-tex">$a \notin A$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a không thuộc A</div>
+<div class="sym-mean">a không phải phần tử của tập hợp A.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-tap-hop-con">
+<div class="sym-cell">
+<div class="sym-tex">$A \subset B$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: A là tập hợp con của B</div>
+<div class="sym-mean">Mọi phần tử của A đều thuộc B. Tập rỗng là tập hợp con của mọi tập hợp.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-giao-tap-hop">
+<div class="sym-cell">
+<div class="sym-tex">$A \cap B$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: A giao B</div>
+<div class="sym-mean">Tập các phần tử vừa thuộc A vừa thuộc B; nghiệm của hệ điều kiện cũng là một phép giao.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-hop-tap-hop">
+<div class="sym-cell">
+<div class="sym-tex">$A \cup B$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: A hợp B</div>
+<div class="sym-mean">Tập các phần tử thuộc A hoặc thuộc B. Hợp của hai khoảng thường viết gọn bằng dấu phẩy khi lấy nghiệm.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-hieu-tap-hop">
+<div class="sym-cell">
+<div class="sym-tex">$A \setminus B$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: A trừ B</div>
+<div class="sym-mean">Các phần tử thuộc A mà không thuộc B; khi A là tập đang xét thì đây chính là phần bù của B trong A.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-tap-trong-rong">
+<div class="sym-cell">
+<div class="sym-tex">$\varnothing$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: tập rỗng</div>
+<div class="sym-mean">Tập không có phần tử nào, ký hiệu vòng tròn có gạch chéo; phương trình vô nghiệm có tập nghiệm là rỗng.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-dieu-kien-cua-tap-hop">
+<div class="sym-cell">
+<div class="sym-tex">$\{x \in \mathbb{N} \mid x &lt; 5\}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: Tập các x thuộc N sao cho x nhỏ hơn 5</div>
+<div class="sym-mean">Dấu gạch đứng nghĩa là "sao cho", ngăn phần tử với điều kiện của nó trong cách viết có dựng tập hợp.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-voi-moi">
+<div class="sym-cell">
+<div class="sym-tex">$\forall x$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: với mọi x</div>
+<div class="sym-mean">Khẳng định đúng cho từng giá trị x. Đổi vị trí với "tồn tại" thì mệnh đề đổi nghĩa.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-ton-tai">
+<div class="sym-cell">
+<div class="sym-tex">$\exists x$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: tồn tại x</div>
+<div class="sym-mean">Có ít nhất một giá trị x làm khẳng định đúng; phủ định của "với mọi" là "tồn tại ... không".</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-keo-theo">
+<div class="sym-cell">
+<div class="sym-tex">$P \Rightarrow Q$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: P kéo theo Q</div>
+<div class="sym-mean">Nếu P đúng thì Q đúng; P là điều kiện đủ của Q. Kéo theo một chiều không có nghĩa ngược lại.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-tuong-duong">
+<div class="sym-cell">
+<div class="sym-tex">$P \Leftrightarrow Q$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: P tương đương Q</div>
+<div class="sym-mean">Đúng khi cả hai cùng đúng hoặc cùng sai; dùng khi biến đổi phương trình mà không làm đổi nghiệm.</div>
+</div>
+</div>
+</div>
+<div class="sym-group">
+<h3>Biểu thức, phương trình, tọa độ <span class="text-muted" style="font-weight:400">(6)</span></h3>
+<div class="sub-card sym-card" id="sym-nhan-voi">
+<div class="sym-cell">
+<div class="sym-tex">$f(x)$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: f của x</div>
+<div class="sym-mean">Giá trị của biểu thức hoặc hàm số f tại x; thay x bằng một số thì ký hiệu trở thành con số.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-he-thuc-nhieu-dong">
+<div class="sym-cell">
+<div class="sym-tex">$\begin{cases} x+y=3 \\ x-y=1 \end{cases}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: hệ gồm x cộng y bằng ba và x trừ y bằng một</div>
+<div class="sym-mean">Dấu ngoặc nhọn đứng gộp nhiều phương trình phải thỏa đồng thời — nghiệm là cặp thỏa cả hai dòng.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-delta">
+<div class="sym-cell">
+<div class="sym-tex">$\Delta=b^{2}-4ac$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: đen-ta bằng b bình phương trừ bốn a c</div>
+<div class="sym-mean">Biệt thức của phương trình bậc hai: dương có hai nghiệm, bằng không có nghiệm kép, âm thì vô nghiệm.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-toa-do">
+<div class="sym-cell">
+<div class="sym-tex">$A(2;-3)$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: điểm A có hoành độ hai, tung độ trừ ba</div>
+<div class="sym-mean">Cặp số trong ngoặc xác định vị trí một điểm trên mặt phẳng tọa độ; hoành độ đi trước, ngăn cách bằng dấu chấm phẩy.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-khoang">
+<div class="sym-cell">
+<div class="sym-tex">$(a;b),\ [a;b],\ [a;+\infty)$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: khoảng a b, đoạn a b, nửa khoảng a tới dương vô cùng</div>
+<div class="sym-mean">Ngoặc tròn loại bỏ đầu mút, ngoặc vuông giữ lại; tập nghiệm bất phương trình thường viết bằng khoảng.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-trin-voi">
+<div class="sym-cell">
+<div class="sym-tex">$\cdots$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: chấm lửng, cho đến</div>
+<div class="sym-mean">Chỉ dãy còn tiếp diễn theo cùng quy luật, như 1 + 2 + ... + n. Muốn tính dúng phải biết quy luật đó.</div>
+</div>
+</div>
+</div>
+<div class="sym-group">
+<h3>Hàm số, giới hạn, đạo hàm, tích phân <span class="text-muted" style="font-weight:400">(8)</span></h3>
+<div class="sub-card sym-card" id="sym-tien-toi">
+<div class="sym-cell">
+<div class="sym-tex">$x \to x_{0}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: x tiến tới x naught</div>
+<div class="sym-mean">Biến chạy dần tới một giá trị (hoặc tới vô cùng) mà chưa chạm tới — ngôn ngữ của giới hạn và tiệm cận.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-gioi-han">
+<div class="sym-cell">
+<div class="sym-tex">$\lim_{x \to 0} f(x)$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: giới hạn của f(x) khi x tiến tới không</div>
+<div class="sym-mean">Giá trị mà f(x) dần tới khi x dần tới một điểm; dùng định nghĩa đạo hàm và khảo sát tiệm cận.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-vo-cuc">
+<div class="sym-cell">
+<div class="sym-tex">$+\infty$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: dương vô cùng</div>
+<div class="sym-mean">Không phải một số, chỉ lượng lớn tùy ý; trừ vô cùng cho số rất nhỏ tùy ý. Không được đem cộng trừ như số thường.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-dao-ham">
+<div class="sym-cell">
+<div class="sym-tex">$f'(x)$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: f phẩy của x</div>
+<div class="sym-mean">Đạo hàm — tốc độ thay đổi của f tại x, bằng hệ số góc tiếp tuyến. Dấu phẩy đặt trên, không phải phép nhân.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-dao-ham-theo-bien">
+<div class="sym-cell">
+<div class="sym-tex">$\dfrac{dy}{dx}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: dy trên dx, đạo hàm của y theo x</div>
+<div class="sym-mean">Cách viết Leibniz của đạo hàm, nhấn mạnh y đổi bao nhiêu khi x đổi một lượng nhỏ.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-nguyen-ham">
+<div class="sym-cell">
+<div class="sym-tex">$\int f(x)\,dx$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: tích phân của f(x) theo x</div>
+<div class="sym-mean">Nguyên hàm, phép ngược của đạo hàm; tích phân xác định cho diện tích hình phẳng.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-logarit">
+<div class="sym-cell">
+<div class="sym-tex">$\log_a b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: log cơ số a của b</div>
+<div class="sym-mean">Số mũ phải nâng a lên để được b; logarit thập phân viết lg hay log, logarit tự nhiên viết ln.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-ln">
+<div class="sym-cell">
+<div class="sym-tex">$\ln x$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: lan của x</div>
+<div class="sym-mean">Logarit tự nhiên cơ số e; đạo hàm của ln x là một phần x nên hay gặp trong tích phân.</div>
+</div>
+</div>
+</div>
+<div class="sym-group">
+<h3>Lượng giác <span class="text-muted" style="font-weight:400">(6)</span></h3>
+<div class="sub-card sym-card" id="sym-sin">
+<div class="sym-cell">
+<div class="sym-tex">$\sin \alpha$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: sin an-pha</div>
+<div class="sym-mean">Tỉ số lượng giác: trong tam giác vuông là đối/chuyền; ở cấp ba là tung độ điểm trên đường tròn lượng giác.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-cos">
+<div class="sym-cell">
+<div class="sym-tex">$\cos \alpha$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: cô-sin an-pha</div>
+<div class="sym-mean">Kề/huyền trong tam giác vuông; sin bình cộng cos bình luôn bằng một.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-tan">
+<div class="sym-cell">
+<div class="sym-tex">$\tan \alpha$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: tang an-pha</div>
+<div class="sym-mean">Đối/kề, bằng sin chia cos; không xác định khi cos bằng 0.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-cot">
+<div class="sym-cell">
+<div class="sym-tex">$\cot \alpha$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: côt-gan an-pha</div>
+<div class="sym-mean">Kề/đối, bằng một phần tang; không xác định khi sin bằng 0.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-alpha">
+<div class="sym-cell">
+<div class="sym-tex">$\alpha ,\ \beta ,\ \gamma$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: an-pha, bê-ta, gamma</div>
+<div class="sym-mean">Chữ Hy Lạp đặt tên cho góc hoặc một đại lượng, vì chữ cái thường đã dùng hết.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-radian">
+<div class="sym-cell">
+<div class="sym-tex">$\pi\ \text{rad} = 180^{\circ}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: pi rad bằng một trăm tám mươi độ</div>
+<div class="sym-mean">Radian là đơn vị góc tự nhiên: cung có độ dài bằng bán kính ứng với một radian; pi radian bằng 180 độ.</div>
+</div>
+</div>
+</div>
+<div class="sym-group">
+<h3>Hình học phẳng <span class="text-muted" style="font-weight:400">(14)</span></h3>
+<div class="sub-card sym-card" id="sym-doan-thang">
+<div class="sym-cell">
+<div class="sym-tex">$\overline{AB}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: đoạn thẳng AB</div>
+<div class="sym-mean">Phần đường thẳng giới hạn bởi hai đầu A và B; độ dài đoạn AB viết bằng hai chữ cái không dấu, ví dụ AB = 5 cm.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-goc">
+<div class="sym-cell">
+<div class="sym-tex">$\angle xOy$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: góc x O y</div>
+<div class="sym-mean">Hai tia chung gốc O; chữ ở giữa chỉ đỉnh. SGK viết góc cũng bằng dấu mũ trên ba chữ cái (widehat).</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-do">
+<div class="sym-cell">
+<div class="sym-tex">$60^{\circ}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: sáu mươi độ</div>
+<div class="sym-mean">Đơn vị đo góc, một vòng tròn 360 độ; phút và giây góc viết 60′, 60″.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-goc-vuong">
+<div class="sym-cell">
+<div class="sym-tex">$\widehat{xAy}=90^{\circ}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: góc x A y vuông, bằng chín mươi độ</div>
+<div class="sym-mean">Góc vuông bằng một phần tư vòng tròn; hình vẽ đánh dấu bằng ô vuông nhỏ ở đỉnh.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-tam-giac">
+<div class="sym-cell">
+<div class="sym-tex">$\triangle ABC$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: tam giác ABC</div>
+<div class="sym-mean">Ba đỉnh không thẳng hàng, tổng ba góc trong bằng 180 độ.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-tu-giac">
+<div class="sym-cell">
+<div class="sym-tex">$\square ABCD$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: tứ giác ABCD</div>
+<div class="sym-mean">Bốn cạnh khép kín, tổng bốn góc trong bằng 360 độ; hình vuông, chữ nhật, hình thoi là các tứ giác đặc biệt.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-vuong-goc">
+<div class="sym-cell">
+<div class="sym-tex">$a \perp b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a vuông góc b</div>
+<div class="sym-mean">Hai đường cắt nhau tạo thành góc vuông; trong hình vẽ thể hiện bằng ô vuông nhỏ.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-song-song">
+<div class="sym-cell">
+<div class="sym-tex">$a \parallel b$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: a song song b</div>
+<div class="sym-mean">Cùng nằm trong một mặt phẳng và không có điểm chung; trong SGK phổ thông cũng ghi là a // b.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-duong-tron">
+<div class="sym-cell">
+<div class="sym-tex">$(O;R)$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: đường tròn tâm O bán kính R</div>
+<div class="sym-mean">Tập hợp các điểm cách O một khoảng R. Viết gọn trong ngoặc rồi ghi bán kính sau dấu chấm phẩy.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-cung">
+<div class="sym-cell">
+<div class="sym-tex">$\overset{\frown}{AB}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: cung AB</div>
+<div class="sym-mean">Một phần của đường tròn giới hạn bởi hai điểm; số đo cung tính bằng độ.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-pi">
+<div class="sym-cell">
+<div class="sym-tex">$\pi \approx 3{,}14159$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: pi</div>
+<div class="sym-mean">Tỉ số giữa chu vi và đường kính của mọi đường tròn, là số vô tỉ nên chỉ lấy gần đúng khi tính.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-chu-vi">
+<div class="sym-cell">
+<div class="sym-tex">$P$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: P — chu vi</div>
+<div class="sym-mean">Tổng độ dài các cạnh bao quanh hình; chữ P có thể nhầm với tập hợp, nên SGK thường ghi rõ "chu vi P".</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-dien-tich">
+<div class="sym-cell">
+<div class="sym-tex">$S$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: S — diện tích</div>
+<div class="sym-mean">Độ lớn phần mặt phẳng giới hạn bởi một hình; đơn vị là vuông, như xăng ti mét vuông.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-dong-dang">
+<div class="sym-cell">
+<div class="sym-tex">$\triangle ABC \sim \triangle A'B'C'$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: tam giác ABC đồng dạng tam giác A bê chấm C chấm</div>
+<div class="sym-mean">Cùng hình dạng, các góc bằng nhau và các cạnh tương ứng tỉ lệ; dấu phẩy trên chữ là để tách hai hình giống nhau.</div>
+</div>
+</div>
+</div>
+<div class="sym-group">
+<h3>Hình học không gian <span class="text-muted" style="font-weight:400">(6)</span></h3>
+<div class="sub-card sym-card" id="sym-vecto">
+<div class="sym-cell">
+<div class="sym-tex">$\vec{a}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: vectơ a</div>
+<div class="sym-mean">Đoạn thẳng có hướng: độ dài chính là độ lớn, đồng thời chỉ cả hướng. Hai vectơ bằng nhau khi cùng độ dài và cùng hướng.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-vecto-co-dau">
+<div class="sym-cell">
+<div class="sym-tex">$\overrightarrow{AB}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: vectơ AB</div>
+<div class="sym-mean">Vectơ có điểm đầu A và điểm cuối B; khác đoạn thẳng AB vì đoạn thẳng không phân biệt hướng.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-do-dai-vecto">
+<div class="sym-cell">
+<div class="sym-tex">$|\vec{a}|$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: độ dài vectơ a</div>
+<div class="sym-mean">Con số đo độ lớn của vectơ, không âm; tích vô hướng của vectơ với chính nó bằng bình phương độ dài này.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-the-tich">
+<div class="sym-cell">
+<div class="sym-tex">$V$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: V — thể tích</div>
+<div class="sym-mean">Phần không gian một vật chiếm chỗ, đơn vị là khối như xăng ti mét khối; khác diện tích ở chỗ đo ba chiều.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-mat-phang">
+<div class="sym-cell">
+<div class="sym-tex">$(P) \cap (Q) = d$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: mặt phẳng P cắt mặt phẳng Q theo giao tuyến d</div>
+<div class="sym-mean">Mặt phẳng viết trong ngoặc đơn; giao tuyến là đường thẳng chung của hai mặt phẳng.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-he-toa-do-oxy">
+<div class="sym-cell">
+<div class="sym-tex">$Oxyz$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: hệ tọa độ O x y z</div>
+<div class="sym-mean">Ba trục vuông góc từng đôi một để xác định vị trí trong không gian; điểm M có ba tọa độ (x; y; z).</div>
+</div>
+</div>
+</div>
+<div class="sym-group">
+<h3>Đơn vị và đo lường <span class="text-muted" style="font-weight:400">(7)</span></h3>
+<div class="sub-card sym-card" id="sym-don-vi-do-dai">
+<div class="sym-cell">
+<div class="sym-tex">$1\ \text{km}=1000\ \text{m}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: một ki lô mét bằng một nghìn mét</div>
+<div class="sym-mean">mm, cm, dm, m, km là bậc đo độ dài liền nhau; mỗi hơn kém nhau 10 lần (riêng km tới m là 1000).</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-don-vi-dien-tich">
+<div class="sym-cell">
+<div class="sym-tex">$1\ \text{m}^{2}=100\ \text{dm}^{2}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: một mét vuông bằng một trăm đề-xi-mét vuông</div>
+<div class="sym-mean">Đơn vị diện tích là mét nhân mét nên hai hàng liền kề hơn nhau 100 lần, khác với đơn vị độ dài.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-don-vi-the-tich">
+<div class="sym-cell">
+<div class="sym-tex">$1\ \text{m}^{3}=1000\ \text{dm}^{3}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: một mét khối bằng một nghìn đề-xi-mét khối</div>
+<div class="sym-mean">Mỗi đơn vị thể tích gấp 1000 lần đơn vị bé hơn liền kề; lít và mililít là cách gọi khác của dm khối và cm khối.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-don-vi-khoi-luong">
+<div class="sym-cell">
+<div class="sym-tex">$1\ \text{kg}=1000\ \text{g}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: một ki lô gam bằng một nghìn gam</div>
+<div class="sym-mean">g, kg, tạ, tấn dùng cân nặng; ở lớp 1-2 học qua đơn vị gam và ki lô gam.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-don-vi-thoi-gian">
+<div class="sym-cell">
+<div class="sym-tex">$1\ \text{h}=60\ \text{min}=3600\ \text{s}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: một giờ bằng sáu mươi phút, bằng ba nghìn sáu trăm giây</div>
+<div class="sym-mean">Đơn vị thời gian nhảy theo cơ số 60 chứ không phải 10; dùng để quy đổi khi tính vận tốc.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-do-c">
+<div class="sym-cell">
+<div class="sym-tex">$25^{\circ}\text{C}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: hai mươi lăm độ C</div>
+<div class="sym-mean">Nhiệt độ Celsius: 0 độ là nước đá tan, 100 độ là nước sôi ở áp suất khí quyển; âm độ dùng số nguyên âm.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-van-toc">
+<div class="sym-cell">
+<div class="sym-tex">$v=\dfrac{s}{t}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: v bằng s trên t</div>
+<div class="sym-mean">Vận tốc là quãng đường đi trong một đơn vị thời gian, nên đơn vị là tổ hợp như km/h hay m/s.</div>
+</div>
+</div>
+</div>
+<div class="sym-group">
+<h3>Thống kê <span class="text-muted" style="font-weight:400">(5)</span></h3>
+<div class="sub-card sym-card" id="sym-trung-binh-cong">
+<div class="sym-cell">
+<div class="sym-tex">$\overline{x}=\dfrac{x_{1}+\cdots+x_{n}}{n}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: x bar bằng tổng các x chia n</div>
+<div class="sym-mean">Số trung bình cộng — đại diện một mẫu số liệu; gạch ngang trên đầu phân biệt x bar với x thường.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-tan-so">
+<div class="sym-cell">
+<div class="sym-tex">$n_{i}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: n chỉ số i — tần số</div>
+<div class="sym-mean">Số lần một giá trị xuất hiện trong mẫu; tần số tương đối là tần số chia tổng số quan sát.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-chi-so-duoi">
+<div class="sym-cell">
+<div class="sym-tex">$x_{1},\ x_{2},\ x_{3}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: x một, x hai, x ba</div>
+<div class="sym-mean">Chỉ số dưới phân biệt các giá trị của cùng một đại lượng khi liệt kê theo thứ tự. Cách đọc "x với chỉ số i".</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-tong-cac">
+<div class="sym-cell">
+<div class="sym-tex">$\sum_{i=1}^{n}x_{i}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: tổng của x i với i chạy từ 1 đến n</div>
+<div class="sym-mean">Chữ Sigma Hy Lạp viết gọn một tổng có quy luật, gặp ở số trung bình cộng và phương sai.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-do-lech-chuan">
+<div class="sym-cell">
+<div class="sym-tex">$\sigma$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: xigma — độ lệch chuẩn</div>
+<div class="sym-mean">Đo mức phân tán quanh số trung bình; độ lệch chuẩn bằng căn bậc hai của phương sai.</div>
+</div>
+</div>
+</div>
+<div class="sym-group">
+<h3>Tổ hợp và xác suất <span class="text-muted" style="font-weight:400">(6)</span></h3>
+<div class="sub-card sym-card" id="sym-giai-thua">
+<div class="sym-cell">
+<div class="sym-tex">$n!=1\cdot2\cdots n$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: n giai thừa</div>
+<div class="sym-mean">Tích các số tự nhiên từ 1 tới n; quy ước 0 giai thừa bằng 1. Đếm số cách xếp thứ tự n phần tử.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-to-hop">
+<div class="sym-cell">
+<div class="sym-tex">$C_{n}^{k}=\dfrac{n!}{k!(n-k)!}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: n chọn k</div>
+<div class="sym-mean">Số cách chọn k phần tử từ n phần tử không quan tâm thứ tự.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-chanh-hop">
+<div class="sym-cell">
+<div class="sym-tex">$A_{n}^{k}=\dfrac{n!}{(n-k)!}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: chỉnh hợp chập k của n</div>
+<div class="sym-mean">Số cách chọn k phần tử từ n phần tử CÓ quan tâm thứ tự.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-xac-suat">
+<div class="sym-cell">
+<div class="sym-tex">$P(A)=\dfrac{n(A)}{n(\Omega)}$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: xác suất của A bằng số phần tử A chia số phần tử không gian mẫu</div>
+<div class="sym-mean">Mức độ hay xảy ra biến cố A, từ 0 đến 1.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-khong-gian-mau">
+<div class="sym-cell">
+<div class="sym-tex">$\Omega$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: ô-mê-ga — không gian mẫu</div>
+<div class="sym-mean">Tập hợp mọi kết quả có thể của phép thử, ví dụ gieo một xúc xắc thì có sáu phần tử.</div>
+</div>
+</div>
+<div class="sub-card sym-card" id="sym-tinh-luon">
+<div class="sym-cell">
+<div class="sym-tex">$n(\overline{A})=n(\Omega)-n(A)$</div>
+</div>
+<div class="sub-info">
+<div class="sym-read">Đọc là: phần bù của A</div>
+<div class="sym-mean">Gạch ngang trên đầu biến cố chỉ biến cố đối: "không A" xảy ra khi A không xảy ra, nên hai xác suất cộng lại bằng 1.</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="modal fade" id="sym-quick" tabindex="-1">
+<div class="modal-dialog modal-lg modal-dialog-scrollable">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title">Danh sách 109 ký hiệu</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body">
+<div class="sym-group">
+<h3>Số và tập hợp số <span class="text-muted" style="font-weight:400">(10)</span></h3>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\mathbb{N}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: N — tập hợp các số tự nhiên</div>
+<div class="sym-mean">Gồm 0, 1, 2, 3, ... dùng để đếm và thứ tự. SGK lớp 6 đánh dấu bước chuyển từ số sang tập hợp nên ký hiệu này xuất hiện ngay đầu cấp hai.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\mathbb{Z}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: Z — tập hợp các số nguyên</div>
+<div class="sym-mean">Gồm số nguyên âm, 0 và số nguyên dương. Ký hiệu gặp khi học âm độ, số đối, cộng trừ hai số nguyên.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\mathbb{Q}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: Q — tập hợp các số hữu tỉ</div>
+<div class="sym-mean">Số viết được dưới dạng phân số a/b với a, b nguyên và b khác 0. Mọi số thập phân hữu hạn và vô hạn tuần hoàn đều thuộc Q.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\mathbb{I}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: I — tập hợp các số vô tỉ</div>
+<div class="sym-mean">Số thập phân vô hạn không tuần hoàn, như căn 2 hay pi. Không viết được thành phân số.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\mathbb{R}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: R — tập hợp các số thực</div>
+<div class="sym-mean">Hợp của số hữu tỉ và số vô tỉ; mỗi điểm trên trục số là một số thực. Ký hiệu dùng khi viết khoảng, đoạn.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\mathbb{C}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: C — tập hợp các số phức</div>
+<div class="sym-mean">Số có dạng a + bi với i bình phương bằng trừ một, học ở lớp 12 để giải phương trình vô nghiệm trong R.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$3{,}14$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: ba phẩy mười bốn</div>
+<div class="sym-mean">Việt Nam dùng dấu phẩy tách phần thập phân (khác dấu chấm của sách Anh-Mĩ) và dấu chấm ngăn ba chữ số.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$|a|$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: giá trị tuyệt đối của a</div>
+<div class="sym-mean">Khoảng cách từ điểm a tới gốc 0 trên trục số, luôn không âm. Bỏ dấu trừ nếu a âm.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">ƯCLN(a, b)</div>
+<div class="sym-intl">$\gcd(a,b)$ <span class="sym-intl-tag">- Quốc tế</span></div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: Ước chung lớn nhất của a và b</div>
+<div class="sym-mean">Ước chung lớn nhất — số lớn nhất cùng chia hết cho cả a và b, dùng khi rút phân số về tối giản. SGK viết tắt là ƯCLN(a, b), quốc tế viết gcd.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">BCNN(a, b)</div>
+<div class="sym-intl">$\operatorname{lcm}(a,b)$ <span class="sym-intl-tag">- Quốc tế</span></div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: Bội chung nhỏ nhất của a và b</div>
+<div class="sym-mean">Bội chung nhỏ nhất — số nhỏ nhất khác 0 chia hết cho cả a và b, dùng khi quy đồng mẫu số. SGK viết tắt là BCNN(a, b), quốc tế viết lcm.</div>
+</div>
+</details>
+</div>
+</div>
+<div class="sym-group">
+<h3>Phép tính <span class="text-muted" style="font-weight:400">(10)</span></h3>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a + b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a cộng b</div>
+<div class="sym-mean">Phép cộng: gộp hai lượng thành một tổng. Học từ lớp 1 trong phạm vi 10, mở rộng tới số nguyên, phân số, số thập phân.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a - b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a trừ b</div>
+<div class="sym-mean">Phép trừ: tìm phần còn lại hoặc hiệu số đo. Ở lớp 6 mở rộng sang số nguyên âm, nên a trừ b có thể lớn hơn a.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a \times b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a nhân b</div>
+<div class="sym-mean">Phép nhân — cộng lặp lại b lần của a. Ký hiệu dấu chấm xuất hiện ở cuối đề vì dấu nhân dễ lẫn với chữ x.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a \cdot b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a nhân b</div>
+<div class="sym-mean">Dấu chấm nhân, dùng thay dấu nhân khi viết với chữ hoặc vectơ: 2 · a, vectơ a chấm vectơ b.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a : b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a chia cho b</div>
+<div class="sym-mean">SGK Việt Nam dùng dấu hai chấm cho phép chia (dấu gạch ngang là trừ, dấu chéo là phân số). Phép chia hết khi số dư bằng 0.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a \vdots b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a chia hết cho b</div>
+<div class="sym-mean">Dấu ba chấm nói quan hệ chia hết, không phải phép chia: 12 ⋮ 3 đúng vì 12 chia 3 được 4 và dư 0.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\pm$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: cộng trừ</div>
+<div class="sym-mean">Chỉ cả hai trường hợp cùng lúc: phương trình x bình phương bằng 9 có nghiệm x = ±3.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\sqrt{a}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: căn bậc hai của a</div>
+<div class="sym-mean">Số không âm mà bình phương lên bằng a. Chỉ xác định khi a không âm.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\sqrt[3]{a}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: căn bậc ba của a</div>
+<div class="sym-mean">Số mà lập phương lên bằng a; khác căn bậc hai, căn bậc ba của số âm vẫn tồn tại.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\sqrt[n]{a}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: căn bậc n của a</div>
+<div class="sym-mean">Số mà lũy thừa bậc n bằng a. Với n chẵn chỉ xác định khi a không âm.</div>
+</div>
+</details>
+</div>
+</div>
+<div class="sym-group">
+<h3>Quan hệ so sánh <span class="text-muted" style="font-weight:400">(8)</span></h3>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a = b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a bằng b</div>
+<div class="sym-mean">Hai biểu diễn khác nhau nhưng cùng một giá trị; cũng là dấu nối đáp số ở cuối lời giải.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a \neq b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a khác b</div>
+<div class="sym-mean">Hai giá trị không bằng nhau; hay dùng làm điều kiện, ví dụ mẫu số b khác 0.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a &lt; b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a nhỏ hơn b</div>
+<div class="sym-mean">Mũi nhọn luôn quay về số bé hơn. Lớp 1 so sánh trong phạm vi 10, sau này dùng để nghiệm bất phương trình.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a &gt; b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a lớn hơn b</div>
+<div class="sym-mean">Mở về phía số lớn hơn. Cặp với dấu nhỏ hơn thành bất phương trình bậc nhất một ẩn.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a \leq b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a nhỏ hơn hoặc bằng b</div>
+<div class="sym-mean">Gồm cả trường hợp bằng nhau, nên nghiệm là một đoạn.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a \geq b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a lớn hơn hoặc bằng b</div>
+<div class="sym-mean">Gồm cả giá trị bằng, thường gặp khi tìm giá trị lớn nhất hoặc điều kiện số đo hình học.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a \approx b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a xấp xỉ bằng b</div>
+<div class="sym-mean">Hai giá trị gần nhau chứ không bằng, dùng khi làm tròn hoặc lấy giá trị gần đúng của căn số, pi.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$A \equiv B$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: A đồng nhất với B</div>
+<div class="sym-mean">Hai biểu thức bằng nhau với mọi giá trị của biến, khác phương trình chỉ đúng với một số giá trị.</div>
+</div>
+</details>
+</div>
+</div>
+<div class="sym-group">
+<h3>Phân số, tỉ số, phần trăm <span class="text-muted" style="font-weight:400">(6)</span></h3>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\dfrac{a}{b}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a phần b</div>
+<div class="sym-mean">a là tử số, b là mẫu số khác 0; biểu thị a phần bằng nhau của b phần.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$5\dfrac{2}{3}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: năm hai phần ba</div>
+<div class="sym-mean">Hỗn số gồm phần nguyên cộng phần phân số; đổi ra phân số bằng cách lấy phần nguyên nhân mẫu rồi cộng tử.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$25\%$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: hai mươi lăm phần trăm</div>
+<div class="sym-mean">Một phần trăm bằng 1/100, nên 25% của a là a nhân 0,25. Gặp rất sớm, ở bài toán tỉ số và biểu đồ.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">5‰</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: năm phần nghìn</div>
+<div class="sym-mean">Một phần nghìn bằng 1/1000, dùng cho đại lượng quá nhỏ để nói bằng phần trăm như nồng độ.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a:b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: tỉ số của a và b</div>
+<div class="sym-mean">Thương của a và b, cho biết a gấp bao nhiêu lần b hay chiếm bao nhiêu phần của b.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\dfrac{x_1}{y_1}=\dfrac{x_2}{y_2}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: x một trên y một bằng x hai trên y hai</div>
+<div class="sym-mean">Dãy tỉ số bằng nhau — cách viết đại lượng tỉ lệ thuận. Hệ thức ngược (tích không đổi) là tỉ lệ nghịch.</div>
+</div>
+</details>
+</div>
+</div>
+<div class="sym-group">
+<h3>Lũy thừa và căn thức <span class="text-muted" style="font-weight:400">(5)</span></h3>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a^{n}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a mũ n</div>
+<div class="sym-mean">Tích của n thừa số bằng a; a cơ số, n số mũ. Lớp 6 học lũy thừa với số mũ tự nhiên.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a^{2}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a bình phương</div>
+<div class="sym-mean">a nhân chính nó; tên gọi khác là bình phương vì gắn với diện tích hình vuông cạnh a.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a^{3}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a lập phương</div>
+<div class="sym-mean">a nhân a nhân a; tên gọi gắn với thể tích hình lập phương cạnh a.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a^{-n}=\dfrac{1}{a^{n}}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a mũ trừ n</div>
+<div class="sym-mean">Số mũ âm đảo ngược cơ số: 2 mũ trừ 3 bằng một phần tám. Chỉ dùng khi a khác 0.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a^{1/n}=\sqrt[n]{a}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a mũ một phần n</div>
+<div class="sym-mean">Lũy thừa hữu tỉ chính là căn thức viết dưới dạng mũ; nhờ vậy mọi công th thức về số mũ dùng được chung.</div>
+</div>
+</details>
+</div>
+</div>
+<div class="sym-group">
+<h3>Tập hợp và logic <span class="text-muted" style="font-weight:400">(12)</span></h3>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a \in A$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a thuộc A</div>
+<div class="sym-mean">a là một phần tử của tập hợp A. Phủ định là dấu thuộc có gạch chéo.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a \notin A$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a không thuộc A</div>
+<div class="sym-mean">a không phải phần tử của tập hợp A.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$A \subset B$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: A là tập hợp con của B</div>
+<div class="sym-mean">Mọi phần tử của A đều thuộc B. Tập rỗng là tập hợp con của mọi tập hợp.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$A \cap B$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: A giao B</div>
+<div class="sym-mean">Tập các phần tử vừa thuộc A vừa thuộc B; nghiệm của hệ điều kiện cũng là một phép giao.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$A \cup B$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: A hợp B</div>
+<div class="sym-mean">Tập các phần tử thuộc A hoặc thuộc B. Hợp của hai khoảng thường viết gọn bằng dấu phẩy khi lấy nghiệm.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$A \setminus B$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: A trừ B</div>
+<div class="sym-mean">Các phần tử thuộc A mà không thuộc B; khi A là tập đang xét thì đây chính là phần bù của B trong A.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\varnothing$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: tập rỗng</div>
+<div class="sym-mean">Tập không có phần tử nào, ký hiệu vòng tròn có gạch chéo; phương trình vô nghiệm có tập nghiệm là rỗng.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\{x \in \mathbb{N} \mid x &lt; 5\}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: Tập các x thuộc N sao cho x nhỏ hơn 5</div>
+<div class="sym-mean">Dấu gạch đứng nghĩa là "sao cho", ngăn phần tử với điều kiện của nó trong cách viết có dựng tập hợp.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\forall x$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: với mọi x</div>
+<div class="sym-mean">Khẳng định đúng cho từng giá trị x. Đổi vị trí với "tồn tại" thì mệnh đề đổi nghĩa.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\exists x$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: tồn tại x</div>
+<div class="sym-mean">Có ít nhất một giá trị x làm khẳng định đúng; phủ định của "với mọi" là "tồn tại ... không".</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$P \Rightarrow Q$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: P kéo theo Q</div>
+<div class="sym-mean">Nếu P đúng thì Q đúng; P là điều kiện đủ của Q. Kéo theo một chiều không có nghĩa ngược lại.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$P \Leftrightarrow Q$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: P tương đương Q</div>
+<div class="sym-mean">Đúng khi cả hai cùng đúng hoặc cùng sai; dùng khi biến đổi phương trình mà không làm đổi nghiệm.</div>
+</div>
+</details>
+</div>
+</div>
+<div class="sym-group">
+<h3>Biểu thức, phương trình, tọa độ <span class="text-muted" style="font-weight:400">(6)</span></h3>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$f(x)$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: f của x</div>
+<div class="sym-mean">Giá trị của biểu thức hoặc hàm số f tại x; thay x bằng một số thì ký hiệu trở thành con số.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\begin{cases} x+y=3 \\ x-y=1 \end{cases}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: hệ gồm x cộng y bằng ba và x trừ y bằng một</div>
+<div class="sym-mean">Dấu ngoặc nhọn đứng gộp nhiều phương trình phải thỏa đồng thời — nghiệm là cặp thỏa cả hai dòng.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\Delta=b^{2}-4ac$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: đen-ta bằng b bình phương trừ bốn a c</div>
+<div class="sym-mean">Biệt thức của phương trình bậc hai: dương có hai nghiệm, bằng không có nghiệm kép, âm thì vô nghiệm.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$A(2;-3)$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: điểm A có hoành độ hai, tung độ trừ ba</div>
+<div class="sym-mean">Cặp số trong ngoặc xác định vị trí một điểm trên mặt phẳng tọa độ; hoành độ đi trước, ngăn cách bằng dấu chấm phẩy.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$(a;b),\ [a;b],\ [a;+\infty)$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: khoảng a b, đoạn a b, nửa khoảng a tới dương vô cùng</div>
+<div class="sym-mean">Ngoặc tròn loại bỏ đầu mút, ngoặc vuông giữ lại; tập nghiệm bất phương trình thường viết bằng khoảng.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\cdots$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: chấm lửng, cho đến</div>
+<div class="sym-mean">Chỉ dãy còn tiếp diễn theo cùng quy luật, như 1 + 2 + ... + n. Muốn tính dúng phải biết quy luật đó.</div>
+</div>
+</details>
+</div>
+</div>
+<div class="sym-group">
+<h3>Hàm số, giới hạn, đạo hàm, tích phân <span class="text-muted" style="font-weight:400">(8)</span></h3>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$x \to x_{0}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: x tiến tới x naught</div>
+<div class="sym-mean">Biến chạy dần tới một giá trị (hoặc tới vô cùng) mà chưa chạm tới — ngôn ngữ của giới hạn và tiệm cận.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\lim_{x \to 0} f(x)$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: giới hạn của f(x) khi x tiến tới không</div>
+<div class="sym-mean">Giá trị mà f(x) dần tới khi x dần tới một điểm; dùng định nghĩa đạo hàm và khảo sát tiệm cận.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$+\infty$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: dương vô cùng</div>
+<div class="sym-mean">Không phải một số, chỉ lượng lớn tùy ý; trừ vô cùng cho số rất nhỏ tùy ý. Không được đem cộng trừ như số thường.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$f'(x)$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: f phẩy của x</div>
+<div class="sym-mean">Đạo hàm — tốc độ thay đổi của f tại x, bằng hệ số góc tiếp tuyến. Dấu phẩy đặt trên, không phải phép nhân.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\dfrac{dy}{dx}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: dy trên dx, đạo hàm của y theo x</div>
+<div class="sym-mean">Cách viết Leibniz của đạo hàm, nhấn mạnh y đổi bao nhiêu khi x đổi một lượng nhỏ.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\int f(x)\,dx$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: tích phân của f(x) theo x</div>
+<div class="sym-mean">Nguyên hàm, phép ngược của đạo hàm; tích phân xác định cho diện tích hình phẳng.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\log_a b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: log cơ số a của b</div>
+<div class="sym-mean">Số mũ phải nâng a lên để được b; logarit thập phân viết lg hay log, logarit tự nhiên viết ln.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\ln x$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: lan của x</div>
+<div class="sym-mean">Logarit tự nhiên cơ số e; đạo hàm của ln x là một phần x nên hay gặp trong tích phân.</div>
+</div>
+</details>
+</div>
+</div>
+<div class="sym-group">
+<h3>Lượng giác <span class="text-muted" style="font-weight:400">(6)</span></h3>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\sin \alpha$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: sin an-pha</div>
+<div class="sym-mean">Tỉ số lượng giác: trong tam giác vuông là đối/chuyền; ở cấp ba là tung độ điểm trên đường tròn lượng giác.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\cos \alpha$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: cô-sin an-pha</div>
+<div class="sym-mean">Kề/huyền trong tam giác vuông; sin bình cộng cos bình luôn bằng một.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\tan \alpha$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: tang an-pha</div>
+<div class="sym-mean">Đối/kề, bằng sin chia cos; không xác định khi cos bằng 0.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\cot \alpha$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: côt-gan an-pha</div>
+<div class="sym-mean">Kề/đối, bằng một phần tang; không xác định khi sin bằng 0.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\alpha ,\ \beta ,\ \gamma$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: an-pha, bê-ta, gamma</div>
+<div class="sym-mean">Chữ Hy Lạp đặt tên cho góc hoặc một đại lượng, vì chữ cái thường đã dùng hết.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\pi\ \text{rad} = 180^{\circ}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: pi rad bằng một trăm tám mươi độ</div>
+<div class="sym-mean">Radian là đơn vị góc tự nhiên: cung có độ dài bằng bán kính ứng với một radian; pi radian bằng 180 độ.</div>
+</div>
+</details>
+</div>
+</div>
+<div class="sym-group">
+<h3>Hình học phẳng <span class="text-muted" style="font-weight:400">(14)</span></h3>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\overline{AB}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: đoạn thẳng AB</div>
+<div class="sym-mean">Phần đường thẳng giới hạn bởi hai đầu A và B; độ dài đoạn AB viết bằng hai chữ cái không dấu, ví dụ AB = 5 cm.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\angle xOy$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: góc x O y</div>
+<div class="sym-mean">Hai tia chung gốc O; chữ ở giữa chỉ đỉnh. SGK viết góc cũng bằng dấu mũ trên ba chữ cái (widehat).</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$60^{\circ}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: sáu mươi độ</div>
+<div class="sym-mean">Đơn vị đo góc, một vòng tròn 360 độ; phút và giây góc viết 60′, 60″.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\widehat{xAy}=90^{\circ}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: góc x A y vuông, bằng chín mươi độ</div>
+<div class="sym-mean">Góc vuông bằng một phần tư vòng tròn; hình vẽ đánh dấu bằng ô vuông nhỏ ở đỉnh.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\triangle ABC$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: tam giác ABC</div>
+<div class="sym-mean">Ba đỉnh không thẳng hàng, tổng ba góc trong bằng 180 độ.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\square ABCD$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: tứ giác ABCD</div>
+<div class="sym-mean">Bốn cạnh khép kín, tổng bốn góc trong bằng 360 độ; hình vuông, chữ nhật, hình thoi là các tứ giác đặc biệt.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a \perp b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a vuông góc b</div>
+<div class="sym-mean">Hai đường cắt nhau tạo thành góc vuông; trong hình vẽ thể hiện bằng ô vuông nhỏ.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$a \parallel b$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: a song song b</div>
+<div class="sym-mean">Cùng nằm trong một mặt phẳng và không có điểm chung; trong SGK phổ thông cũng ghi là a // b.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$(O;R)$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: đường tròn tâm O bán kính R</div>
+<div class="sym-mean">Tập hợp các điểm cách O một khoảng R. Viết gọn trong ngoặc rồi ghi bán kính sau dấu chấm phẩy.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\overset{\frown}{AB}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: cung AB</div>
+<div class="sym-mean">Một phần của đường tròn giới hạn bởi hai điểm; số đo cung tính bằng độ.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\pi \approx 3{,}14159$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: pi</div>
+<div class="sym-mean">Tỉ số giữa chu vi và đường kính của mọi đường tròn, là số vô tỉ nên chỉ lấy gần đúng khi tính.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$P$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: P — chu vi</div>
+<div class="sym-mean">Tổng độ dài các cạnh bao quanh hình; chữ P có thể nhầm với tập hợp, nên SGK thường ghi rõ "chu vi P".</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$S$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: S — diện tích</div>
+<div class="sym-mean">Độ lớn phần mặt phẳng giới hạn bởi một hình; đơn vị là vuông, như xăng ti mét vuông.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\triangle ABC \sim \triangle A'B'C'$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: tam giác ABC đồng dạng tam giác A bê chấm C chấm</div>
+<div class="sym-mean">Cùng hình dạng, các góc bằng nhau và các cạnh tương ứng tỉ lệ; dấu phẩy trên chữ là để tách hai hình giống nhau.</div>
+</div>
+</details>
+</div>
+</div>
+<div class="sym-group">
+<h3>Hình học không gian <span class="text-muted" style="font-weight:400">(6)</span></h3>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\vec{a}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: vectơ a</div>
+<div class="sym-mean">Đoạn thẳng có hướng: độ dài chính là độ lớn, đồng thời chỉ cả hướng. Hai vectơ bằng nhau khi cùng độ dài và cùng hướng.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\overrightarrow{AB}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: vectơ AB</div>
+<div class="sym-mean">Vectơ có điểm đầu A và điểm cuối B; khác đoạn thẳng AB vì đoạn thẳng không phân biệt hướng.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$|\vec{a}|$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: độ dài vectơ a</div>
+<div class="sym-mean">Con số đo độ lớn của vectơ, không âm; tích vô hướng của vectơ với chính nó bằng bình phương độ dài này.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$V$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: V — thể tích</div>
+<div class="sym-mean">Phần không gian một vật chiếm chỗ, đơn vị là khối như xăng ti mét khối; khác diện tích ở chỗ đo ba chiều.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$(P) \cap (Q) = d$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: mặt phẳng P cắt mặt phẳng Q theo giao tuyến d</div>
+<div class="sym-mean">Mặt phẳng viết trong ngoặc đơn; giao tuyến là đường thẳng chung của hai mặt phẳng.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$Oxyz$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: hệ tọa độ O x y z</div>
+<div class="sym-mean">Ba trục vuông góc từng đôi một để xác định vị trí trong không gian; điểm M có ba tọa độ (x; y; z).</div>
+</div>
+</details>
+</div>
+</div>
+<div class="sym-group">
+<h3>Đơn vị và đo lường <span class="text-muted" style="font-weight:400">(7)</span></h3>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$1\ \text{km}=1000\ \text{m}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: một ki lô mét bằng một nghìn mét</div>
+<div class="sym-mean">mm, cm, dm, m, km là bậc đo độ dài liền nhau; mỗi hơn kém nhau 10 lần (riêng km tới m là 1000).</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$1\ \text{m}^{2}=100\ \text{dm}^{2}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: một mét vuông bằng một trăm đề-xi-mét vuông</div>
+<div class="sym-mean">Đơn vị diện tích là mét nhân mét nên hai hàng liền kề hơn nhau 100 lần, khác với đơn vị độ dài.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$1\ \text{m}^{3}=1000\ \text{dm}^{3}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: một mét khối bằng một nghìn đề-xi-mét khối</div>
+<div class="sym-mean">Mỗi đơn vị thể tích gấp 1000 lần đơn vị bé hơn liền kề; lít và mililít là cách gọi khác của dm khối và cm khối.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$1\ \text{kg}=1000\ \text{g}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: một ki lô gam bằng một nghìn gam</div>
+<div class="sym-mean">g, kg, tạ, tấn dùng cân nặng; ở lớp 1-2 học qua đơn vị gam và ki lô gam.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$1\ \text{h}=60\ \text{min}=3600\ \text{s}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: một giờ bằng sáu mươi phút, bằng ba nghìn sáu trăm giây</div>
+<div class="sym-mean">Đơn vị thời gian nhảy theo cơ số 60 chứ không phải 10; dùng để quy đổi khi tính vận tốc.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$25^{\circ}\text{C}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: hai mươi lăm độ C</div>
+<div class="sym-mean">Nhiệt độ Celsius: 0 độ là nước đá tan, 100 độ là nước sôi ở áp suất khí quyển; âm độ dùng số nguyên âm.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$v=\dfrac{s}{t}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: v bằng s trên t</div>
+<div class="sym-mean">Vận tốc là quãng đường đi trong một đơn vị thời gian, nên đơn vị là tổ hợp như km/h hay m/s.</div>
+</div>
+</details>
+</div>
+</div>
+<div class="sym-group">
+<h3>Thống kê <span class="text-muted" style="font-weight:400">(5)</span></h3>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\overline{x}=\dfrac{x_{1}+\cdots+x_{n}}{n}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: x bar bằng tổng các x chia n</div>
+<div class="sym-mean">Số trung bình cộng — đại diện một mẫu số liệu; gạch ngang trên đầu phân biệt x bar với x thường.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$n_{i}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: n chỉ số i — tần số</div>
+<div class="sym-mean">Số lần một giá trị xuất hiện trong mẫu; tần số tương đối là tần số chia tổng số quan sát.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$x_{1},\ x_{2},\ x_{3}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: x một, x hai, x ba</div>
+<div class="sym-mean">Chỉ số dưới phân biệt các giá trị của cùng một đại lượng khi liệt kê theo thứ tự. Cách đọc "x với chỉ số i".</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\sum_{i=1}^{n}x_{i}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: tổng của x i với i chạy từ 1 đến n</div>
+<div class="sym-mean">Chữ Sigma Hy Lạp viết gọn một tổng có quy luật, gặp ở số trung bình cộng và phương sai.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\sigma$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: xigma — độ lệch chuẩn</div>
+<div class="sym-mean">Đo mức phân tán quanh số trung bình; độ lệch chuẩn bằng căn bậc hai của phương sai.</div>
+</div>
+</details>
+</div>
+</div>
+<div class="sym-group">
+<h3>Tổ hợp và xác suất <span class="text-muted" style="font-weight:400">(6)</span></h3>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$n!=1\cdot2\cdots n$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: n giai thừa</div>
+<div class="sym-mean">Tích các số tự nhiên từ 1 tới n; quy ước 0 giai thừa bằng 1. Đếm số cách xếp thứ tự n phần tử.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$C_{n}^{k}=\dfrac{n!}{k!(n-k)!}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: n chọn k</div>
+<div class="sym-mean">Số cách chọn k phần tử từ n phần tử không quan tâm thứ tự.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$A_{n}^{k}=\dfrac{n!}{(n-k)!}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: chỉnh hợp chập k của n</div>
+<div class="sym-mean">Số cách chọn k phần tử từ n phần tử CÓ quan tâm thứ tự.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$P(A)=\dfrac{n(A)}{n(\Omega)}$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: xác suất của A bằng số phần tử A chia số phần tử không gian mẫu</div>
+<div class="sym-mean">Mức độ hay xảy ra biến cố A, từ 0 đến 1.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$\Omega$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: ô-mê-ga — không gian mẫu</div>
+<div class="sym-mean">Tập hợp mọi kết quả có thể của phép thử, ví dụ gieo một xúc xắc thì có sáu phần tử.</div>
+</div>
+</details>
+</div>
+<div class="sym-quick-row">
+<div class="sym-cell">
+<div class="sym-tex">$n(\overline{A})=n(\Omega)-n(A)$</div>
+</div>
+<details class="sym-doc">
+<summary>Giải thích</summary>
+<div class="sym-doc-body">
+<div class="sym-read">Đọc là: phần bù của A</div>
+<div class="sym-mean">Gạch ngang trên đầu biến cố chỉ biến cố đối: "không A" xảy ra khi A không xảy ra, nên hai xác suất cộng lại bằng 1.</div>
+</div>
+</details>
+</div>
+</div>
+</div>
+<div class="modal-footer">
+<button class="btn btn-x btn-sm" data-bs-dismiss="modal" type="button">Đóng</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<footer class="footer-shell">
+<div class="footer-main">
+<div class="footer-feedback" id="fb-slot"></div>
+<div class="footer-info">
+<div class="footer-line">Copyright © Trần Công Tuệ</div>
+<div class="footer-line">Phone &amp; Zalo: <a href="tel:+84961969489">096 196 9489</a></div>
+<div class="footer-line">Email: <a href="mailto:trancongtue0812@gmail.com">trancongtue0812@gmail.com</a></div>
+</div>
+</div>
+</footer>
+
+<div aria-hidden="true" class="modal fade" id="modal-lesson" tabindex="-1">
+<div class="modal-dialog modal-lg modal-dialog-scrollable">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title">📖 Lý thuyết</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body">
+
+<div class="d-none mb-3" id="lesson-audio"></div>
+
+<div class="d-none mb-3" id="lesson-image"></div>
+<div class="ai-box visible" id="lesson-body"></div>
+</div>
+<div class="modal-footer">
+<button class="btn btn-x btn-sm" data-bs-dismiss="modal" type="button">Đóng</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="modal fade" id="modal-notice" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title" id="notice-title">Thông báo</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body" id="notice-body" style="white-space:pre-line"></div>
+<div class="modal-footer">
+<button class="btn btn-primary btn-sm" data-bs-dismiss="modal" type="button">Đồng ý</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="modal fade" id="modal-confirm" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title" id="confirm-title">Xác nhận</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body" id="confirm-body" style="white-space:pre-line"></div>
+<div class="modal-footer">
+<button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" type="button">Không</button>
+<button class="btn btn-primary btn-sm" id="confirm-yes" type="button">Có</button>
+</div>
+</div>
+</div>
+</div>
+<link href="./static/feedback.css" rel="stylesheet"/>
+
+<script src="./static/js/feedback.js"></script>
+<link href="./static/notifications.css" rel="stylesheet"/>
+<script src="./static/js/notifications.js"></script>
+<script src="./assets/static-demo.js"></script></body>
+</html>

@@ -1,0 +1,899 @@
+
+<!DOCTYPE html>
+
+<html>
+<head><script src="./data/demo-config.js"></script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Ứng dụng Toán học</title>
+<link href="./static/bootstrap-5.0.2-dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="./static/css/common.css" rel="stylesheet"/>
+<style>
+    /* Menu con ("Ký hiệu toán học") mở ra ngoài khối menu. Ở bề ngang hẹp,
+       .navbar-main dùng overflow-x:auto để cuộn ngang; theo CSS thì một trục không
+       phải visible buộc trục còn lại thành auto, nên bảng menu con bị cắt mất.
+       Chỉ nới khi đang mở, để thanh cuộn ngang giữ nguyên như cũ. */
+    @media (max-width: 480px) {
+      .navbar-main:has(.dropdown-menu.show) { overflow: visible; }
+    }
+    /* Bốn mục menu con của "Theo dõi quá trình" vẫn do partial riêng render nên mang
+       class nút của hàng menu (btn btn-sm). Vào menu con thì phải khoác dạng item: bỏ
+       viền, chiếm trọn một hàng. Ở đây CHỈ còn phần hình thể — nền và màu chữ của từng
+       mục lấy từ khối "Menu con" trong common.css (lớp .nav-sub), để mỗi mục một màu
+       riêng. Khối này có id nên độ đặc hiệu cao hơn; khai báo màu ở đây sẽ xoá sạch
+       màu của từng mục. */
+    #nav-track-menu > li > a.btn {
+      display: block; width: 100%; padding: .25rem 1rem; clear: both;
+      border: 0; border-radius: 0; box-shadow: none;
+      font-size: 1rem; font-weight: 400;
+      text-align: left; white-space: nowrap;
+    }
+  </style>
+<link href="./static/katex/katex.min.css" rel="stylesheet"/>
+<script src="./static/js/jquery-3.7.1.min.js"></script>
+<script src="./static/bootstrap-5.0.2-dist/js/bootstrap.bundle.min.js"></script>
+<script defer="" src="./static/katex/katex.min.js"></script>
+<script src="./static/js/common.js"></script>
+<script src="./static/js/ajax.js"></script>
+<script src="./static/js/nav_activity.js"></script>
+<script src="./static/js/nav_active.js"></script>
+<script src="./static/js/upgrade_banner.js"></script>
+</head>
+<body data-static-route="/history/detail/1">
+<div class="site-top" data-nav-active="history">
+<div class="topband">
+<div aria-label="Lời tri ân" class="marquee-shell" role="note">
+<div class="marquee-track">
+<span class="marquee-text">Cảm ơn bạn đã tin tưởng và ủng hộ chúng tôi</span>
+<span aria-hidden="true" class="marquee-text">Cảm ơn bạn đã tin tưởng và ủng hộ chúng tôi</span>
+</div>
+</div>
+<div class="notif-shell" id="notif-shell">
+<button aria-controls="notif-panel" aria-expanded="false" aria-haspopup="true" aria-label="Thông báo" class="corner-icon notif-bell" id="notif-bell" title="Thông báo" type="button">
+<svg aria-hidden="true" fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18">
+<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+<path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+</svg>
+<span class="notif-badge" data-max="9" hidden="" id="notif-badge"></span>
+</button>
+<div aria-label="Thông báo" class="notif-panel" hidden="" id="notif-panel" role="dialog">
+<div class="notif-head">
+<span class="notif-heading">Thông báo</span>
+<button class="notif-mark-all" hidden="" id="notif-mark-all" title="Đánh dấu tất cả đã đọc" type="button">Đánh dấu tất cả đã đọc</button>
+</div>
+<div class="notif-list" id="notif-list"></div>
+<p class="notif-empty" hidden="" id="notif-empty">Không có thông báo nào chưa đọc.</p>
+</div>
+</div>
+</div>
+<nav class="navbar-shell">
+<div class="navbar-main align-items-center">
+<a class="btn btn-sm nav-home" data-nav="trang_chu" href="./index.html">Trang chủ</a>
+<div class="btn-group">
+<a aria-controls="nav-study-menu" aria-expanded="false" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="study" href="#" role="button">Lý thuyết</a>
+<ul class="dropdown-menu" id="nav-study-menu">
+<li><a class="dropdown-item nav-sub nav-sub-blue" data-nav="study" href="./study.html">Lý thuyết theo lớp</a></li>
+<li><a class="dropdown-item nav-sub nav-sub-violet" data-nav="symbols" href="./symbols.html">Ký hiệu toán học</a></li>
+</ul>
+</div>
+<div class="btn-group">
+<a aria-controls="nav-play-menu" aria-expanded="false" class="btn btn-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="play" href="#" role="button">Bài tập</a>
+<ul class="dropdown-menu" id="nav-play-menu">
+<li><a class="dropdown-item nav-sub nav-sub-green" data-nav="home" href="./practice-setup.html">Làm bài theo bài học SGK</a></li>
+<li><a class="dropdown-item nav-sub nav-sub-amber" data-nav="exams" href="./exams.html">Luyện thi</a></li>
+</ul>
+</div>
+<div class="btn-group" id="nav-track">
+<a aria-controls="nav-track-menu" aria-expanded="false" class="btn btn-warning btn-sm dropdown-toggle" data-bs-toggle="dropdown" data-nav-group="track" href="#" role="button">Theo dõi quá trình</a>
+<ul class="dropdown-menu" id="nav-track-menu">
+<li>
+<a class="btn btn-warning btn-sm nav-sub nav-sub-orange" data-nav="history" href="./history.html">Lịch sử</a>
+</li>
+<li>
+<a class="btn btn-outline-primary btn-sm nav-sub nav-sub-teal" data-nav="capability" href="./capability.html">Năng lực</a>
+</li>
+<li><a class="btn btn-outline-warning btn-sm nav-sub nav-sub-pink" data-nav="today" href="./today.html">Ôn hôm nay</a></li>
+<li><a class="btn btn-outline-secondary btn-sm nav-sub nav-sub-indigo" data-nav="weekly_report" href="./weekly-report.html">Báo cáo tuần cho phụ huynh</a></li>
+</ul>
+</div>
+<a class="btn btn-sm nav-help" data-nav="help" href="./help.html">Hướng dẫn sử dụng</a>
+</div>
+</nav>
+<script id="nav-path-map" type="application/json">{"capability": ["/capability"], "exams": ["/exams", "/exam", "/exam_ability"], "help": ["/help"], "history": ["/history"], "home": ["/lam-bai-tap", "/practice", "/practice_ratio", "/practice_similar", "/redo", "/redo_last", "/submit"], "latest_result": ["/latest_result"], "study": ["/study", "/study_lessons"], "symbols": ["/symbols"], "today": ["/today"], "trang_chu": ["/trang-chu"], "weekly_report": ["/weekly_report"]}</script>
+</div>
+<script>
+    (function () {
+      'use strict';
+      var KEYS = ['history', 'capability'];      // thứ tự đúng trong menu con
+
+      function stray(bar, key) {
+        var found = null;
+        Array.prototype.forEach.call(bar.children, function (el) {
+          if (!found && el.getAttribute('data-nav') === key) found = el;
+        });
+        return found;
+      }
+
+      function adopt() {
+        var bar = document.querySelector('.navbar-main');
+        var ul = document.getElementById('nav-track-menu');
+        if (!bar || !ul) return;
+        var moved = false;
+        KEYS.forEach(function (key) {
+          var node = stray(bar, key);
+          if (!node) return;
+          var holder = document.createElement('li');
+          holder.appendChild(node);
+          ul.appendChild(holder);
+          moved = true;
+        });
+        if (!moved) return;
+        var parent = document.getElementById('nav-track');
+        if (parent) parent.style.display = '';
+      }
+
+      function watch() {
+        adopt();
+        var bar = document.querySelector('.navbar-main');
+        if (bar && typeof MutationObserver === 'function') {
+          new MutationObserver(adopt).observe(bar, { childList: true });
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', watch);
+      } else {
+        watch();
+      }
+    })();
+  </script>
+<div class="page-upgrade" hidden}="" id="page-upgrade" role="status">Trang này đang được nâng cấp về giao diện và chức năng</div>
+<script id="upgrade-keys" type="application/json">["home", "latest_result", "capability", "today", "weekly_report"]</script>
+<div id="page-body">
+<link href="./static/practice.css" rel="stylesheet"/>
+<link href="./static/css/exam.css" rel="stylesheet"/>
+<div class="fill">
+<div class="exam-head">
+<div>
+<h2 style="margin-bottom:2px">Kết quả: Đề kiểm tra cuối học kì I (số 1) theo cấu trúc mới công văn 7991</h2>
+<div class="exam-meta">
+        Toán lớp 6 · Cuối học kì 1 ·
+        19 câu · làm 19 câu ·
+        đúng 12/16 câu máy chấm</div>
+</div>
+<div class="score-card exam-score">
+<div class="exam-score-value">6,89</div>
+<div class="exam-score-max">/ 10 điểm</div>
+</div>
+</div>
+<div class="table-responsive">
+<table class="exam-breakdown">
+<tr>
+<td>Máy chấm (trắc nghiệm, Đúng/Sai, trả lời ngắn)</td>
+<td class="num">3,55</td>
+<td class="max">/ 4,99</td>
+</tr>
+<tr>
+<td>Tự luận — AI chấm, tham khảo</td>
+<td class="num">3,34</td>
+<td class="max">/ 5,01</td>
+</tr>
+<tr class="total">
+<td>Tổng</td>
+<td class="num">6,89</td>
+<td class="max">/ 10</td>
+</tr>
+</table>
+</div>
+<div class="q-jump">
+<span class="q-jump-title">Chi tiết từng câu</span>
+<div class="q-jump-group q-jump-ok">
+<span class="q-jump-label">Đúng</span>
+<a class="q-jump-dot" href="#q-150042">2</a>
+<a class="q-jump-dot" href="#q-150043">3</a>
+<a class="q-jump-dot" href="#q-150044">4</a>
+<a class="q-jump-dot" href="#q-150046">6</a>
+<a class="q-jump-dot" href="#q-150047">7</a>
+<a class="q-jump-dot" href="#q-150048">8</a>
+<a class="q-jump-dot" href="#q-150050">10</a>
+<a class="q-jump-dot" href="#q-150051">11</a>
+<a class="q-jump-dot" href="#q-150052">12</a>
+<a class="q-jump-dot" href="#q-150054">14</a>
+<a class="q-jump-dot" href="#q-150055">15</a>
+<a class="q-jump-dot" href="#q-150056">16</a>
+<a class="q-jump-dot" href="#q-150058">18</a>
+<a class="q-jump-dot" href="#q-150059">19</a>
+</div>
+<div class="q-jump-group q-jump-bad">
+<span class="q-jump-label">Sai</span>
+<a class="q-jump-dot" href="#q-150041">1</a>
+<a class="q-jump-dot" href="#q-150045">5</a>
+<a class="q-jump-dot" href="#q-150049">9</a>
+<a class="q-jump-dot" href="#q-150053">13</a>
+<a class="q-jump-dot" href="#q-150057">17</a>
+</div>
+</div>
+<div class="scroll-area q-detail">
+<div class="q-card card border-0 exam-q" id="q-150041">
+<div class="q-num">
+      Câu 1. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-awarded zero">0 / 0,22</span>
+</div>
+<div class="mb-2 q-prompt">Biểu diễn số $25$ thành tổng giá trị các chữ số của nó, ta được kết quả là</div>
+<div class="mc-opt wrong">
+<span class="opt-icon">✗</span>
+<span><strong>A)</strong> $25 = 2 × 100 + 5$ .</span>
+<span class="ms-auto badge bg-danger" style="font-size:.72rem">Bạn chọn</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>B)</strong> $25 = 5 × 10 + 2$ .</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>C)</strong> $25 = 2 + 5$ .</span>
+</div>
+<div class="mc-opt correct">
+<span class="opt-icon">✓</span>
+<span><strong>D)</strong> $25 = 2 × 10 + 5$ .</span>
+<span class="ms-auto badge bg-success" style="font-size:.72rem">Đáp án đúng</span>
+</div>
+<div class="fb-box">
+<div class="fb-head">🔍 Phân tích lỗi: Chưa chỉ ra được lỗi cụ thể</div><div class="fb-note">Câu này không có một phép tính tất định để đối chiếu, nên hệ thống chỉ dựa vào đề bài và lời giải đã lưu.</div>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "dai_so", "figure_note": "", "has_figure": 0, "image_url": "", "image_urls": [], "locked": false, "question_id": 150041, "solution": {"branch": "dai_so", "format": "text", "has_figure": 0, "methods": [{"branch": "dai_so", "figure_note": "", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "Bi\u1ec3u di\u1ec5n s\u1ed1 25 th\u00e0nh t\u1ed5ng gi\u00e1 tr\u1ecb c\u00e1c ch\u1eef s\u1ed1 c\u1ee7a n\u00f3 l\u00e0: $25 = 2 \u00d7 10 + 5$. K\u1ebft qu\u1ea3 l\u00e0: $25$"}], "source": "ai", "text": "Bi\u1ec3u di\u1ec5n s\u1ed1 25 th\u00e0nh t\u1ed5ng gi\u00e1 tr\u1ecb c\u00e1c ch\u1eef s\u1ed1 c\u1ee7a n\u00f3 l\u00e0: $25 = 2 \u00d7 10 + 5$. K\u1ebft qu\u1ea3 l\u00e0: $25$"}}'>Biểu diễn số 25 thành tổng giá trị các chữ số của nó là: $25 = 2 × 10 + 5$. Kết quả là: $25$</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150042">
+<div class="q-num">
+      Câu 2. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-awarded ok">0,21 / 0,21</span>
+</div>
+<div class="mb-2 q-prompt">Biểu thức $16. 128$ viết dưới dạng một lũy thừa là</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>A)</strong> $2^{10}$ .</span>
+</div>
+<div class="mc-opt correct">
+<span class="opt-icon">✓</span>
+<span><strong>B)</strong> $2^{11}$ .</span>
+<span class="ms-auto badge bg-success" style="font-size:.72rem">Đáp án đúng</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>C)</strong> $2^{9}$ .</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>D)</strong> $2^{12}$ .</span>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "dai_so", "figure_note": "", "has_figure": 0, "image_url": "", "image_urls": [], "locked": false, "question_id": 150042, "solution": {"branch": "dai_so", "format": "text", "has_figure": 0, "methods": [{"branch": "dai_so", "figure_note": "", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "Bi\u1ec3u th\u1ee9c $16 \\cdot 128$ \u0111\u01b0\u1ee3c vi\u1ebft d\u01b0\u1edbi d\u1ea1ng l\u0169y th\u1eeba c\u1ee7a 2 nh\u01b0 sau:\n$16 = 2^4$, $128 = 2^7$.\nDo \u0111\u00f3, $16 \\cdot 128 = 2^4 \\cdot 2^7 = 2^{4+7} = 2^{11}$.\nK\u1ebft qu\u1ea3 l\u00e0: $2^{11}$."}], "source": "ai", "text": "Bi\u1ec3u th\u1ee9c $16 \\cdot 128$ \u0111\u01b0\u1ee3c vi\u1ebft d\u01b0\u1edbi d\u1ea1ng l\u0169y th\u1eeba c\u1ee7a 2 nh\u01b0 sau:\n$16 = 2^4$, $128 = 2^7$.\nDo \u0111\u00f3, $16 \\cdot 128 = 2^4 \\cdot 2^7 = 2^{4+7} = 2^{11}$.\nK\u1ebft qu\u1ea3 l\u00e0: $2^{11}$."}}'>Biểu thức $16 \cdot 128$ được viết dưới dạng lũy thừa của 2 như sau:
+$16 = 2^4$, $128 = 2^7$.
+Do đó, $16 \cdot 128 = 2^4 \cdot 2^7 = 2^{4+7} = 2^{11}$.
+Kết quả là: $2^{11}$.</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150043">
+<div class="q-num">
+      Câu 3. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-0">Không vẽ hình</span>
+<span class="exam-awarded ok">0,21 / 0,21</span>
+</div>
+<div class="mb-2 q-prompt">Chọn câu sai .
+Hình thoi có</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>A)</strong> hai đường chéo cắt nhau tại trung điểm của mỗi đường.</span>
+</div>
+<div class="mc-opt correct">
+<span class="opt-icon">✓</span>
+<span><strong>B)</strong> bốn góc bằng nhau.</span>
+<span class="ms-auto badge bg-success" style="font-size:.72rem">Đáp án đúng</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>C)</strong> bốn cạnh bằng nhau.</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>D)</strong> hai đường chéo cắt nhau.</span>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "hinh_hoc", "figure_note": "Kh\u00f4ng c\u00f3 h\u00ecnh s\u1eb5n: h\u1ecdc sinh ph\u1ea3i v\u1ebd h\u00ecnh theo m\u00f4 t\u1ea3 c\u1ee7a \u0111\u1ec1.", "has_figure": 0, "image_url": "", "image_urls": [], "locked": false, "question_id": 150043, "solution": {"branch": "hinh_hoc", "format": "text", "has_figure": 0, "methods": [{"branch": "hinh_hoc", "figure_note": "Kh\u00f4ng c\u00f3 h\u00ecnh s\u1eb5n: h\u1ecdc sinh ph\u1ea3i v\u1ebd h\u00ecnh theo m\u00f4 t\u1ea3 c\u1ee7a \u0111\u1ec1.", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "H\u00ecnh thoi c\u00f3 b\u1ed1n c\u1ea1nh b\u1eb1ng nhau (\u0111\u00e1p \u00e1n C \u0111\u00fang). Hai \u0111\u01b0\u1eddng ch\u00e9o c\u1eaft nhau t\u1ea1i trung \u0111i\u1ec3m c\u1ee7a m\u1ed7i \u0111\u01b0\u1eddng (\u0111\u00e1p \u00e1n A \u0111\u00fang). Hai \u0111\u01b0\u1eddng ch\u00e9o c\u1eaft nhau (\u0111\u00e1p \u00e1n D \u0111\u00fang). Tuy nhi\u00ean, h\u00ecnh thoi kh\u00f4ng c\u00f3 b\u1ed1n g\u00f3c b\u1eb1ng nhau (\u0111\u00e1p \u00e1n B sai v\u00ec ch\u1ec9 c\u00f3 hai c\u1eb7p g\u00f3c b\u1eb1ng nhau). K\u1ebft qu\u1ea3 l\u00e0: B"}], "source": "ai", "text": "H\u00ecnh thoi c\u00f3 b\u1ed1n c\u1ea1nh b\u1eb1ng nhau (\u0111\u00e1p \u00e1n C \u0111\u00fang). Hai \u0111\u01b0\u1eddng ch\u00e9o c\u1eaft nhau t\u1ea1i trung \u0111i\u1ec3m c\u1ee7a m\u1ed7i \u0111\u01b0\u1eddng (\u0111\u00e1p \u00e1n A \u0111\u00fang). Hai \u0111\u01b0\u1eddng ch\u00e9o c\u1eaft nhau (\u0111\u00e1p \u00e1n D \u0111\u00fang). Tuy nhi\u00ean, h\u00ecnh thoi kh\u00f4ng c\u00f3 b\u1ed1n g\u00f3c b\u1eb1ng nhau (\u0111\u00e1p \u00e1n B sai v\u00ec ch\u1ec9 c\u00f3 hai c\u1eb7p g\u00f3c b\u1eb1ng nhau). K\u1ebft qu\u1ea3 l\u00e0: B"}}'>Hình thoi có bốn cạnh bằng nhau (đáp án C đúng). Hai đường chéo cắt nhau tại trung điểm của mỗi đường (đáp án A đúng). Hai đường chéo cắt nhau (đáp án D đúng). Tuy nhiên, hình thoi không có bốn góc bằng nhau (đáp án B sai vì chỉ có hai cặp góc bằng nhau). Kết quả là: B</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150044">
+<div class="q-num">
+      Câu 4. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-1">Có vẽ hình</span>
+<span class="exam-awarded ok">0,21 / 0,21</span>
+</div>
+<div class="mb-2 q-prompt">Để tạo ra chiếc mặt như hình vẽ, người ta uốn thanh sắt tạo thành khung hình thang cân có cạnh bên bằng $47$ cm, các đáy bằng $48$ cm và $55$ cm.<img alt="" src="./uploads/ing-5a3ea11f5d397557.png"/>Thanh sắt có chiều dài $399$ cm có thể uốn nhiều nhất bao nhiêu mặt bàn?</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>A)</strong> $3$ .</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>B)</strong> $1$ .</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>C)</strong> $5$ .</span>
+</div>
+<div class="mc-opt correct">
+<span class="opt-icon">✓</span>
+<span><strong>D)</strong> $2$ .</span>
+<span class="ms-auto badge bg-success" style="font-size:.72rem">Đáp án đúng</span>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "hinh_hoc", "figure_note": "\u0110\u1ec1 b\u00e0i k\u00e8m h\u00ecnh v\u1ebd (h\u1ecdc sinh quan s\u00e1t h\u00ecnh, kh\u00f4ng ph\u1ea3i t\u1ef1 v\u1ebd).", "has_figure": 1, "image_url": "/uploads/ing-5a3ea11f5d397557.png", "image_urls": ["/uploads/ing-5a3ea11f5d397557.png"], "locked": false, "question_id": 150044, "solution": {"branch": "hinh_hoc", "format": "text", "has_figure": 1, "methods": [{"branch": "hinh_hoc", "figure_note": "Kh\u00f4ng c\u00f3 h\u00ecnh s\u1eb5n: h\u1ecdc sinh ph\u1ea3i v\u1ebd h\u00ecnh theo m\u00f4 t\u1ea3 c\u1ee7a \u0111\u1ec1.", "format": "text", "has_figure": 1, "is_primary": 1, "method_no": 1, "source": "ai", "text": "\u0110\u1ec3 t\u1ea1o m\u1ed9t m\u1eb7t b\u00e0n h\u00ecnh thang c\u00e2n, c\u1ea7n u\u1ed1n thanh s\u1eaft th\u00e0nh 4 c\u1ea1nh: 2 \u0111\u00e1y v\u00e0 2 c\u1ea1nh b\u00ean. T\u1ed5ng chi\u1ec1u d\u00e0i thanh s\u1eaft cho m\u1ed9t m\u1eb7t b\u00e0n l\u00e0: $48 + 55 + 47 + 47 = 197$ cm. S\u1ed1 m\u1eb7t b\u00e0n c\u00f3 th\u1ec3 u\u1ed1n \u0111\u01b0\u1ee3c l\u00e0: $399 : 197 = 2$ d\u01b0 $5$. V\u1eady thanh s\u1eaft c\u00f3 th\u1ec3 u\u1ed1n \u0111\u01b0\u1ee3c nhi\u1ec1u nh\u1ea5t l\u00e0 2 m\u1eb7t b\u00e0n. K\u1ebft qu\u1ea3 l\u00e0: $2$"}], "source": "ai", "text": "\u0110\u1ec3 t\u1ea1o m\u1ed9t m\u1eb7t b\u00e0n h\u00ecnh thang c\u00e2n, c\u1ea7n u\u1ed1n thanh s\u1eaft th\u00e0nh 4 c\u1ea1nh: 2 \u0111\u00e1y v\u00e0 2 c\u1ea1nh b\u00ean. T\u1ed5ng chi\u1ec1u d\u00e0i thanh s\u1eaft cho m\u1ed9t m\u1eb7t b\u00e0n l\u00e0: $48 + 55 + 47 + 47 = 197$ cm. S\u1ed1 m\u1eb7t b\u00e0n c\u00f3 th\u1ec3 u\u1ed1n \u0111\u01b0\u1ee3c l\u00e0: $399 : 197 = 2$ d\u01b0 $5$. V\u1eady thanh s\u1eaft c\u00f3 th\u1ec3 u\u1ed1n \u0111\u01b0\u1ee3c nhi\u1ec1u nh\u1ea5t l\u00e0 2 m\u1eb7t b\u00e0n. K\u1ebft qu\u1ea3 l\u00e0: $2$"}}'>Để tạo một mặt bàn hình thang cân, cần uốn thanh sắt thành 4 cạnh: 2 đáy và 2 cạnh bên. Tổng chiều dài thanh sắt cho một mặt bàn là: $48 + 55 + 47 + 47 = 197$ cm. Số mặt bàn có thể uốn được là: $399 : 197 = 2$ dư $5$. Vậy thanh sắt có thể uốn được nhiều nhất là 2 mặt bàn. Kết quả là: $2$</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150045">
+<div class="q-num">
+      Câu 5. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-awarded zero">0 / 0,21</span>
+</div>
+<div class="mb-2 q-prompt">Biết $\overline{21\,a5b}$ chia hết cho $2$ , $5$ và $9$ . Giá trị biểu thức $2a+3b$ là</div>
+<div class="mc-opt wrong">
+<span class="opt-icon">✗</span>
+<span><strong>A)</strong> $5$ .</span>
+<span class="ms-auto badge bg-danger" style="font-size:.72rem">Bạn chọn</span>
+</div>
+<div class="mc-opt correct">
+<span class="opt-icon">✓</span>
+<span><strong>B)</strong> $2$ .</span>
+<span class="ms-auto badge bg-success" style="font-size:.72rem">Đáp án đúng</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>C)</strong> $4$ .</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>D)</strong> $1$ .</span>
+</div>
+<div class="fb-box">
+<div class="fb-head">🔍 Phân tích lỗi: Chưa chỉ ra được lỗi cụ thể</div><div class="fb-note">Câu này không có một phép tính tất định để đối chiếu, nên hệ thống chỉ dựa vào đề bài và lời giải đã lưu.</div>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "dai_so", "figure_note": "", "has_figure": 0, "image_url": "", "image_urls": [], "locked": false, "question_id": 150045, "solution": {"branch": "dai_so", "format": "text", "has_figure": 0, "methods": [{"branch": "dai_so", "figure_note": "", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "S\u1ed1 $\\overline{21\\,a5b}$ chia h\u1ebft cho $2$ v\u00e0 $5$ n\u00ean $b = 0$.\nS\u1ed1 chia h\u1ebft cho $9$ n\u00ean t\u1ed5ng c\u00e1c ch\u1eef s\u1ed1 chia h\u1ebft cho $9$:\n$2 + 1 + a + 5 + 0 = 8 + a$.\n\u0110\u1ec3 $8 + a$ chia h\u1ebft cho $9$, ta c\u00f3 $a = 1$.\nT\u00ednh $2a + 3b = 2 \\cdot 1 + 3 \\cdot 0 = 2$.\nK\u1ebft qu\u1ea3 l\u00e0: 2"}], "source": "ai", "text": "S\u1ed1 $\\overline{21\\,a5b}$ chia h\u1ebft cho $2$ v\u00e0 $5$ n\u00ean $b = 0$.\nS\u1ed1 chia h\u1ebft cho $9$ n\u00ean t\u1ed5ng c\u00e1c ch\u1eef s\u1ed1 chia h\u1ebft cho $9$:\n$2 + 1 + a + 5 + 0 = 8 + a$.\n\u0110\u1ec3 $8 + a$ chia h\u1ebft cho $9$, ta c\u00f3 $a = 1$.\nT\u00ednh $2a + 3b = 2 \\cdot 1 + 3 \\cdot 0 = 2$.\nK\u1ebft qu\u1ea3 l\u00e0: 2"}}'>Số $\overline{21\,a5b}$ chia hết cho $2$ và $5$ nên $b = 0$.
+Số chia hết cho $9$ nên tổng các chữ số chia hết cho $9$:
+$2 + 1 + a + 5 + 0 = 8 + a$.
+Để $8 + a$ chia hết cho $9$, ta có $a = 1$.
+Tính $2a + 3b = 2 \cdot 1 + 3 \cdot 0 = 2$.
+Kết quả là: 2</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150046">
+<div class="q-num">
+      Câu 6. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-awarded ok">0,21 / 0,21</span>
+</div>
+<div class="mb-2 q-prompt">Có bao nhiêu số nguyên tố lớn hơn $10$ và nhỏ hơn $20$ ?</div>
+<div class="mc-opt correct">
+<span class="opt-icon">✓</span>
+<span><strong>A)</strong> $4$ .</span>
+<span class="ms-auto badge bg-success" style="font-size:.72rem">Đáp án đúng</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>B)</strong> $6$ .</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>C)</strong> $1$ .</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>D)</strong> $2$ .</span>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "dai_so", "figure_note": "", "has_figure": 0, "image_url": "", "image_urls": [], "locked": false, "question_id": 150046, "solution": {"branch": "dai_so", "format": "text", "has_figure": 0, "methods": [{"branch": "dai_so", "figure_note": "", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "C\u00e1c s\u1ed1 nguy\u00ean t\u1ed1 l\u1edbn h\u01a1n 10 v\u00e0 nh\u1ecf h\u01a1n 20 l\u00e0: 11, 13, 17, 19. T\u1ed5ng c\u1ed9ng c\u00f3 4 s\u1ed1. K\u1ebft qu\u1ea3 l\u00e0: 4"}], "source": "ai", "text": "C\u00e1c s\u1ed1 nguy\u00ean t\u1ed1 l\u1edbn h\u01a1n 10 v\u00e0 nh\u1ecf h\u01a1n 20 l\u00e0: 11, 13, 17, 19. T\u1ed5ng c\u1ed9ng c\u00f3 4 s\u1ed1. K\u1ebft qu\u1ea3 l\u00e0: 4"}}'>Các số nguyên tố lớn hơn 10 và nhỏ hơn 20 là: 11, 13, 17, 19. Tổng cộng có 4 số. Kết quả là: 4</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150047">
+<div class="q-num">
+      Câu 7. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-awarded ok">0,21 / 0,21</span>
+</div>
+<div class="mb-2 q-prompt">Hình nào sau đây không có trục đối xứng?</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>A)</strong> Hình thoi.</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>B)</strong> Hình vuông.</span>
+</div>
+<div class="mc-opt correct">
+<span class="opt-icon">✓</span>
+<span><strong>C)</strong> Hình bình hành.</span>
+<span class="ms-auto badge bg-success" style="font-size:.72rem">Đáp án đúng</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>D)</strong> Hình thang cân.</span>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "dai_so", "figure_note": "", "has_figure": 0, "image_url": "", "image_urls": [], "locked": false, "question_id": 150047, "solution": {"branch": "hinh_hoc", "format": "text", "has_figure": 0, "methods": [{"branch": "hinh_hoc", "figure_note": "Kh\u00f4ng c\u00f3 h\u00ecnh s\u1eb5n: h\u1ecdc sinh ph\u1ea3i v\u1ebd h\u00ecnh theo m\u00f4 t\u1ea3 c\u1ee7a \u0111\u1ec1.", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "H\u00ecnh thoi c\u00f3 2 tr\u1ee5c \u0111\u1ed1i x\u1ee9ng l\u00e0 hai \u0111\u01b0\u1eddng ch\u00e9o. H\u00ecnh vu\u00f4ng c\u00f3 4 tr\u1ee5c \u0111\u1ed1i x\u1ee9ng. H\u00ecnh thang c\u00e2n c\u00f3 1 tr\u1ee5c \u0111\u1ed1i x\u1ee9ng l\u00e0 \u0111\u01b0\u1eddng trung tr\u1ef1c c\u1ee7a \u0111\u00e1y. H\u00ecnh b\u00ecnh h\u00e0nh kh\u00f4ng c\u00f3 tr\u1ee5c \u0111\u1ed1i x\u1ee9ng. K\u1ebft qu\u1ea3 l\u00e0: C"}], "source": "ai", "text": "H\u00ecnh thoi c\u00f3 2 tr\u1ee5c \u0111\u1ed1i x\u1ee9ng l\u00e0 hai \u0111\u01b0\u1eddng ch\u00e9o. H\u00ecnh vu\u00f4ng c\u00f3 4 tr\u1ee5c \u0111\u1ed1i x\u1ee9ng. H\u00ecnh thang c\u00e2n c\u00f3 1 tr\u1ee5c \u0111\u1ed1i x\u1ee9ng l\u00e0 \u0111\u01b0\u1eddng trung tr\u1ef1c c\u1ee7a \u0111\u00e1y. H\u00ecnh b\u00ecnh h\u00e0nh kh\u00f4ng c\u00f3 tr\u1ee5c \u0111\u1ed1i x\u1ee9ng. K\u1ebft qu\u1ea3 l\u00e0: C"}}'>Hình thoi có 2 trục đối xứng là hai đường chéo. Hình vuông có 4 trục đối xứng. Hình thang cân có 1 trục đối xứng là đường trung trực của đáy. Hình bình hành không có trục đối xứng. Kết quả là: C</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150048">
+<div class="q-num">
+      Câu 8. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-awarded ok">0,21 / 0,21</span>
+</div>
+<div class="mb-2 q-prompt">Hình nào sau đây có tâm đối xứng?</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>A)</strong> <img alt="" src="./uploads/ing-1af86f4fa1e15ffc.png"/></span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>B)</strong> <img alt="" src="./uploads/ing-0b7fafe62c614353.png"/></span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>C)</strong> <img alt="" src="./uploads/ing-6cccb3fa839e4507.png"/></span>
+</div>
+<div class="mc-opt correct">
+<span class="opt-icon">✓</span>
+<span><strong>D)</strong> <img alt="" src="./uploads/ing-7e30787a775fdf4b.png"/></span>
+<span class="ms-auto badge bg-success" style="font-size:.72rem">Đáp án đúng</span>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "dai_so", "figure_note": "", "has_figure": 1, "image_url": "", "image_urls": [], "locked": false, "question_id": 150048, "solution": {"branch": "dai_so", "format": "text", "has_figure": 0, "methods": [{"branch": "dai_so", "figure_note": "", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "H\u00ecnh c\u00f3 t\u00e2m \u0111\u1ed1i x\u1ee9ng l\u00e0 h\u00ecnh m\u00e0 khi quay 180\u00b0 quanh m\u1ed9t \u0111i\u1ec3m th\u00ec tr\u00f9ng v\u1edbi ch\u00ednh n\u00f3. Trong c\u00e1c \u0111\u00e1p \u00e1n, ch\u1ec9 c\u00f3 h\u00ecnh D th\u1ecfa m\u00e3n \u0111i\u1ec1u ki\u1ec7n n\u00e0y. K\u1ebft qu\u1ea3 l\u00e0: D"}], "source": "ai", "text": "H\u00ecnh c\u00f3 t\u00e2m \u0111\u1ed1i x\u1ee9ng l\u00e0 h\u00ecnh m\u00e0 khi quay 180\u00b0 quanh m\u1ed9t \u0111i\u1ec3m th\u00ec tr\u00f9ng v\u1edbi ch\u00ednh n\u00f3. Trong c\u00e1c \u0111\u00e1p \u00e1n, ch\u1ec9 c\u00f3 h\u00ecnh D th\u1ecfa m\u00e3n \u0111i\u1ec1u ki\u1ec7n n\u00e0y. K\u1ebft qu\u1ea3 l\u00e0: D"}}'>Hình có tâm đối xứng là hình mà khi quay 180° quanh một điểm thì trùng với chính nó. Trong các đáp án, chỉ có hình D thỏa mãn điều kiện này. Kết quả là: D</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150049">
+<div class="q-num">
+      Câu 9. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-awarded zero">0 / 0,21</span>
+</div>
+<div class="mb-2 q-prompt">Trong các số $1,1;\,83;\,-\dfrac{1}{76};\,0$ , số nào là số nguyên dương?</div>
+<div class="mc-opt wrong">
+<span class="opt-icon">✗</span>
+<span><strong>A)</strong> $0$ .</span>
+<span class="ms-auto badge bg-danger" style="font-size:.72rem">Bạn chọn</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>B)</strong> $-\dfrac{1}{76}$ .</span>
+</div>
+<div class="mc-opt correct">
+<span class="opt-icon">✓</span>
+<span><strong>C)</strong> $83$ .</span>
+<span class="ms-auto badge bg-success" style="font-size:.72rem">Đáp án đúng</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>D)</strong> $1,1$ .</span>
+</div>
+<div class="fb-box">
+<div class="fb-head">🔍 Phân tích lỗi: Chưa chỉ ra được lỗi cụ thể</div><div class="fb-note">Câu này không có một phép tính tất định để đối chiếu, nên hệ thống chỉ dựa vào đề bài và lời giải đã lưu.</div>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "dai_so", "figure_note": "", "has_figure": 0, "image_url": "", "image_urls": [], "locked": false, "question_id": 150049, "solution": {"branch": "dai_so", "format": "text", "has_figure": 0, "methods": [{"branch": "dai_so", "figure_note": "", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "S\u1ed1 nguy\u00ean d\u01b0\u01a1ng l\u00e0 s\u1ed1 nguy\u00ean l\u1edbn h\u01a1n 0. Trong c\u00e1c s\u1ed1 \u0111\u00e3 cho:\n- $1,1$ l\u00e0 s\u1ed1 th\u1eadp ph\u00e2n d\u01b0\u01a1ng, kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean.\n- $-\\dfrac{1}{76}$ l\u00e0 s\u1ed1 \u00e2m.\n- $0$ kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean d\u01b0\u01a1ng.\n- $83$ l\u00e0 s\u1ed1 nguy\u00ean d\u01b0\u01a1ng.\nK\u1ebft qu\u1ea3 l\u00e0: $83$"}], "source": "ai", "text": "S\u1ed1 nguy\u00ean d\u01b0\u01a1ng l\u00e0 s\u1ed1 nguy\u00ean l\u1edbn h\u01a1n 0. Trong c\u00e1c s\u1ed1 \u0111\u00e3 cho:\n- $1,1$ l\u00e0 s\u1ed1 th\u1eadp ph\u00e2n d\u01b0\u01a1ng, kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean.\n- $-\\dfrac{1}{76}$ l\u00e0 s\u1ed1 \u00e2m.\n- $0$ kh\u00f4ng ph\u1ea3i s\u1ed1 nguy\u00ean d\u01b0\u01a1ng.\n- $83$ l\u00e0 s\u1ed1 nguy\u00ean d\u01b0\u01a1ng.\nK\u1ebft qu\u1ea3 l\u00e0: $83$"}}'>Số nguyên dương là số nguyên lớn hơn 0. Trong các số đã cho:
+- $1,1$ là số thập phân dương, không phải số nguyên.
+- $-\dfrac{1}{76}$ là số âm.
+- $0$ không phải số nguyên dương.
+- $83$ là số nguyên dương.
+Kết quả là: $83$</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150050">
+<div class="q-num">
+      Câu 10. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-awarded ok">0,21 / 0,21</span>
+</div>
+<div class="mb-2 q-prompt">⚡Sự ra đời của Kỷ nguyên sắt cách đây $1\,200$ năm trước công nguyên .
+⚡Sự ra đời của bê tông cách đây $200$ năm trước công nguyên .
+⚡Máy cày được phát minh vào khoảng $201$ năm sau công nguyên .
+Cách biểu diễn số nguyên dương và số nguyên âm để viết các số liệu được in đậm trong câu trên lần lượt là</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>A)</strong> $-1\,200;-200;-201$ .</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>B)</strong> $1\,200;-200;201$ .</span>
+</div>
+<div class="mc-opt correct">
+<span class="opt-icon">✓</span>
+<span><strong>C)</strong> $-1\,200;-200;201$ .</span>
+<span class="ms-auto badge bg-success" style="font-size:.72rem">Đáp án đúng</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>D)</strong> $-1\,200;200;-201$ .</span>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "dai_so", "figure_note": "", "has_figure": 0, "image_url": "", "image_urls": [], "locked": false, "question_id": 150050, "solution": {"branch": "dai_so", "format": "text", "has_figure": 0, "methods": [{"branch": "dai_so", "figure_note": "", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "S\u1ef1 ra \u0111\u1eddi c\u1ee7a K\u1ef7 nguy\u00ean s\u1eaft c\u00e1ch \u0111\u00e2y $1\\,200$ n\u0103m tr\u01b0\u1edbc c\u00f4ng nguy\u00ean \u0111\u01b0\u1ee3c bi\u1ec3u di\u1ec5n l\u00e0 $-1\\,200$. S\u1ef1 ra \u0111\u1eddi c\u1ee7a b\u00ea t\u00f4ng c\u00e1ch \u0111\u00e2y $200$ n\u0103m tr\u01b0\u1edbc c\u00f4ng nguy\u00ean \u0111\u01b0\u1ee3c bi\u1ec3u di\u1ec5n l\u00e0 $-200$. M\u00e1y c\u00e0y \u0111\u01b0\u1ee3c ph\u00e1t minh v\u00e0o kho\u1ea3ng $201$ n\u0103m sau c\u00f4ng nguy\u00ean \u0111\u01b0\u1ee3c bi\u1ec3u di\u1ec5n l\u00e0 $201$. Do \u0111\u00f3, c\u00e1c s\u1ed1 li\u1ec7u \u0111\u01b0\u1ee3c bi\u1ec3u di\u1ec5n l\u1ea7n l\u01b0\u1ee3t l\u00e0 $-1\\,200;-200;201$. K\u1ebft qu\u1ea3 l\u00e0: $-1\\,200;-200;201$"}], "source": "ai", "text": "S\u1ef1 ra \u0111\u1eddi c\u1ee7a K\u1ef7 nguy\u00ean s\u1eaft c\u00e1ch \u0111\u00e2y $1\\,200$ n\u0103m tr\u01b0\u1edbc c\u00f4ng nguy\u00ean \u0111\u01b0\u1ee3c bi\u1ec3u di\u1ec5n l\u00e0 $-1\\,200$. S\u1ef1 ra \u0111\u1eddi c\u1ee7a b\u00ea t\u00f4ng c\u00e1ch \u0111\u00e2y $200$ n\u0103m tr\u01b0\u1edbc c\u00f4ng nguy\u00ean \u0111\u01b0\u1ee3c bi\u1ec3u di\u1ec5n l\u00e0 $-200$. M\u00e1y c\u00e0y \u0111\u01b0\u1ee3c ph\u00e1t minh v\u00e0o kho\u1ea3ng $201$ n\u0103m sau c\u00f4ng nguy\u00ean \u0111\u01b0\u1ee3c bi\u1ec3u di\u1ec5n l\u00e0 $201$. Do \u0111\u00f3, c\u00e1c s\u1ed1 li\u1ec7u \u0111\u01b0\u1ee3c bi\u1ec3u di\u1ec5n l\u1ea7n l\u01b0\u1ee3t l\u00e0 $-1\\,200;-200;201$. K\u1ebft qu\u1ea3 l\u00e0: $-1\\,200;-200;201$"}}'>Sự ra đời của Kỷ nguyên sắt cách đây $1\,200$ năm trước công nguyên được biểu diễn là $-1\,200$. Sự ra đời của bê tông cách đây $200$ năm trước công nguyên được biểu diễn là $-200$. Máy cày được phát minh vào khoảng $201$ năm sau công nguyên được biểu diễn là $201$. Do đó, các số liệu được biểu diễn lần lượt là $-1\,200;-200;201$. Kết quả là: $-1\,200;-200;201$</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150051">
+<div class="q-num">
+      Câu 11. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-awarded ok">0,21 / 0,21</span>
+</div>
+<div class="mb-2 q-prompt">Cho ba phép tính:
+a) $(-72) - 5$ ;
+b) $(-72) - (-5)$ ;
+c) $950 - [72 - (-5)]$
+Kết quả các phép tính trên lần lượt là</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>A)</strong> $77$ ; $-67$ ; $1017$ .</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>B)</strong> $-77$ ; $77$ ; $873$ .</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>C)</strong> $77$ ; $-67$ ; $873$ .</span>
+</div>
+<div class="mc-opt correct">
+<span class="opt-icon">✓</span>
+<span><strong>D)</strong> $-77$ ; $-67$ ; $873$ .</span>
+<span class="ms-auto badge bg-success" style="font-size:.72rem">Đáp án đúng</span>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "dai_so", "figure_note": "", "has_figure": 0, "image_url": "", "image_urls": [], "locked": false, "question_id": 150051, "solution": {"branch": "dai_so", "format": "text", "has_figure": 0, "methods": [{"branch": "dai_so", "figure_note": "", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "a) $(-72) - 5 = -72 - 5 = -77$ ;\nb) $(-72) - (-5) = -72 + 5 = -67$ ;\nc) $950 - [72 - (-5)] = 950 - [72 + 5] = 950 - 77 = 873$ .\nK\u1ebft qu\u1ea3 l\u00e0: $-77$ ; $-67$ ; $873$."}], "source": "ai", "text": "a) $(-72) - 5 = -72 - 5 = -77$ ;\nb) $(-72) - (-5) = -72 + 5 = -67$ ;\nc) $950 - [72 - (-5)] = 950 - [72 + 5] = 950 - 77 = 873$ .\nK\u1ebft qu\u1ea3 l\u00e0: $-77$ ; $-67$ ; $873$."}}'>a) $(-72) - 5 = -72 - 5 = -77$ ;
+b) $(-72) - (-5) = -72 + 5 = -67$ ;
+c) $950 - [72 - (-5)] = 950 - [72 + 5] = 950 - 77 = 873$ .
+Kết quả là: $-77$ ; $-67$ ; $873$.</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150052">
+<div class="q-num">
+      Câu 12. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-awarded ok">0,21 / 0,21</span>
+</div>
+<div class="mb-2 q-prompt">Phân tích $45$ thành tích của hai số nguyên ta được tích nào sau đây?</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>A)</strong> $(-3) . 15$ .</span>
+</div>
+<div class="mc-opt correct">
+<span class="opt-icon">✓</span>
+<span><strong>B)</strong> $(-9) . (-5)$ .</span>
+<span class="ms-auto badge bg-success" style="font-size:.72rem">Đáp án đúng</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>C)</strong> $15 . (-3)$ .</span>
+</div>
+<div class="mc-opt neutral">
+<span class="opt-icon" style="color: var(--meta-fg)">○</span>
+<span><strong>D)</strong> $(-45) . 1$ .</span>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "dai_so", "figure_note": "", "has_figure": 0, "image_url": "", "image_urls": [], "locked": false, "question_id": 150052, "solution": {"branch": "dai_so", "format": "text", "has_figure": 0, "methods": [{"branch": "dai_so", "figure_note": "", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "T\u00edch c\u1ee7a hai s\u1ed1 nguy\u00ean ph\u1ea3i b\u1eb1ng 45. Ki\u1ec3m tra t\u1eebng \u0111\u00e1p \u00e1n:\nA) $(-3) . 15 = -45$\nB) $(-9) . (-5) = 45$\nC) $15 . (-3) = -45$\nD) $(-45) . 1 = -45$\nK\u1ebft qu\u1ea3 l\u00e0: $45$"}], "source": "ai", "text": "T\u00edch c\u1ee7a hai s\u1ed1 nguy\u00ean ph\u1ea3i b\u1eb1ng 45. Ki\u1ec3m tra t\u1eebng \u0111\u00e1p \u00e1n:\nA) $(-3) . 15 = -45$\nB) $(-9) . (-5) = 45$\nC) $15 . (-3) = -45$\nD) $(-45) . 1 = -45$\nK\u1ebft qu\u1ea3 l\u00e0: $45$"}}'>Tích của hai số nguyên phải bằng 45. Kiểm tra từng đáp án:
+A) $(-3) . 15 = -45$
+B) $(-9) . (-5) = 45$
+C) $15 . (-3) = -45$
+D) $(-45) . 1 = -45$
+Kết quả là: $45$</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150053">
+<div class="q-num">
+      Câu 13. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-0">Không vẽ hình</span>
+<span class="exam-awarded zero">0 / 0,8</span>
+</div>
+<div class="mb-2 q-prompt">Một nền nhà có dạng hình vuông với cạnh là $6$ m.
+(Nhấp vào ô màu vàng để chọn đúng / sai)</div>
+<div class="mc-opt wrong">
+<span class="opt-icon">✗</span>
+<span>
+<strong>a)</strong>
+          Chu vi nền nhà là $20$ m.
+        </span>
+<span class="exam-statement-verdict ms-auto">
+          Em chọn: Đúng ·
+          Đáp án: Sai ·
+          0 / 0,2
+          
+        </span>
+</div>
+<div class="mc-opt wrong">
+<span class="opt-icon">✗</span>
+<span>
+<strong>b)</strong>
+          Diện tích nền nhà là $36$ m ² .
+        </span>
+<span class="exam-statement-verdict ms-auto">
+          Em chọn: Sai ·
+          Đáp án: Đúng ·
+          0 / 0,2
+          
+        </span>
+</div>
+<div class="mc-opt wrong">
+<span class="opt-icon">✗</span>
+<span>
+<strong>c)</strong>
+          Để lát nền nhà, cần mua $100$ viên gạch hình vuông cạnh $0,6$ m.
+        </span>
+<span class="exam-statement-verdict ms-auto">
+          Em chọn: Sai ·
+          Đáp án: Đúng ·
+          0 / 0,2
+          
+        </span>
+</div>
+<div class="mc-opt wrong">
+<span class="opt-icon">✗</span>
+<span>
+<strong>d)</strong>
+          Nếu dùng gạch hình chữ nhật có chiều rộng $0,3$ m và chiều dài $0,4$ m, cần mua $200$ viên gạch.
+        </span>
+<span class="exam-statement-verdict ms-auto">
+          Em chọn: Đúng ·
+          Đáp án: Sai ·
+          0 / 0,2
+          
+        </span>
+</div>
+<div class="fb-box">
+<div class="fb-head">🔍 Phân tích lỗi: Chưa chỉ ra được lỗi cụ thể</div><div class="fb-note">Câu này không có một phép tính tất định để đối chiếu, nên hệ thống chỉ dựa vào đề bài và lời giải đã lưu.</div>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "hinh_hoc", "figure_note": "Kh\u00f4ng c\u00f3 h\u00ecnh s\u1eb5n: h\u1ecdc sinh ph\u1ea3i v\u1ebd h\u00ecnh theo m\u00f4 t\u1ea3 c\u1ee7a \u0111\u1ec1.", "has_figure": 0, "image_url": "", "image_urls": [], "locked": false, "question_id": 150053, "solution": {"branch": "hinh_hoc", "format": "text", "has_figure": 0, "methods": [{"branch": "hinh_hoc", "figure_note": "Kh\u00f4ng c\u00f3 h\u00ecnh s\u1eb5n: h\u1ecdc sinh ph\u1ea3i v\u1ebd h\u00ecnh theo m\u00f4 t\u1ea3 c\u1ee7a \u0111\u1ec1.", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "a) Chu vi h\u00ecnh vu\u00f4ng l\u00e0 $4 \\times 6 = 24$ m. Ph\u00e1t bi\u1ec3u 1 sai v\u00ec n\u00f3i chu vi l\u00e0 $20$ m.\\\nb) Di\u1ec7n t\u00edch h\u00ecnh vu\u00f4ng l\u00e0 $6^2 = 36$ m\u00b2. Ph\u00e1t bi\u1ec3u 2 \u0111\u00fang.\\\nc) Di\u1ec7n t\u00edch n\u1ec1n nh\u00e0 l\u00e0 $36$ m\u00b2. Di\u1ec7n t\u00edch m\u1ed7i vi\u00ean g\u1ea1ch l\u00e0 $0,6^2 = 0,36$ m\u00b2. S\u1ed1 vi\u00ean g\u1ea1ch c\u1ea7n mua l\u00e0 $36 : 0,36 = 100$. Ph\u00e1t bi\u1ec3u 3 \u0111\u00fang.\\\nd) Di\u1ec7n t\u00edch m\u1ed7i vi\u00ean g\u1ea1ch l\u00e0 $0,3 \\times 0,4 = 0,12$ m\u00b2. S\u1ed1 vi\u00ean g\u1ea1ch c\u1ea7n mua l\u00e0 $36 : 0,12 = 300$. Ph\u00e1t bi\u1ec3u 4 sai."}], "source": "ai", "text": "a) Chu vi h\u00ecnh vu\u00f4ng l\u00e0 $4 \\times 6 = 24$ m. Ph\u00e1t bi\u1ec3u 1 sai v\u00ec n\u00f3i chu vi l\u00e0 $20$ m.\\\nb) Di\u1ec7n t\u00edch h\u00ecnh vu\u00f4ng l\u00e0 $6^2 = 36$ m\u00b2. Ph\u00e1t bi\u1ec3u 2 \u0111\u00fang.\\\nc) Di\u1ec7n t\u00edch n\u1ec1n nh\u00e0 l\u00e0 $36$ m\u00b2. Di\u1ec7n t\u00edch m\u1ed7i vi\u00ean g\u1ea1ch l\u00e0 $0,6^2 = 0,36$ m\u00b2. S\u1ed1 vi\u00ean g\u1ea1ch c\u1ea7n mua l\u00e0 $36 : 0,36 = 100$. Ph\u00e1t bi\u1ec3u 3 \u0111\u00fang.\\\nd) Di\u1ec7n t\u00edch m\u1ed7i vi\u00ean g\u1ea1ch l\u00e0 $0,3 \\times 0,4 = 0,12$ m\u00b2. S\u1ed1 vi\u00ean g\u1ea1ch c\u1ea7n mua l\u00e0 $36 : 0,12 = 300$. Ph\u00e1t bi\u1ec3u 4 sai."}}'>a) Chu vi hình vuông là $4 \times 6 = 24$ m. Phát biểu 1 sai vì nói chu vi là $20$ m.\
+b) Diện tích hình vuông là $6^2 = 36$ m². Phát biểu 2 đúng.\
+c) Diện tích nền nhà là $36$ m². Diện tích mỗi viên gạch là $0,6^2 = 0,36$ m². Số viên gạch cần mua là $36 : 0,36 = 100$. Phát biểu 3 đúng.\
+d) Diện tích mỗi viên gạch là $0,3 \times 0,4 = 0,12$ m². Số viên gạch cần mua là $36 : 0,12 = 300$. Phát biểu 4 sai.</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150054">
+<div class="q-num">
+      Câu 14. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-awarded ok">0,8 / 0,8</span>
+</div>
+<div class="mb-2 q-prompt">Vào tết Trung thu, lớp của Trang đã chuẩn bị các phần quà như nhau từ $240$ thanh sô cô la nhỏ và $160$ chiếc bánh trung thu để tặng các bạn nhỏ ở một trung tâm trẻ khuyết tật.
+(Nhấp vào ô màu vàng để chọn đúng / sai)</div>
+<div class="mc-opt correct">
+<span class="opt-icon">✓</span>
+<span>
+<strong>a)</strong>
+          Lớp Trang có thể chia được nhiều nhất $80$ phần quà.
+        </span>
+<span class="exam-statement-verdict ms-auto">
+          Em chọn: Đúng ·
+          Đáp án: Đúng ·
+          0,2 / 0,2
+          
+        </span>
+</div>
+<div class="mc-opt correct">
+<span class="opt-icon">✓</span>
+<span>
+<strong>b)</strong>
+          Nếu số phần quà là $20$ thì mỗi phần quà có $12$ thanh sô cô la và $8$ chiếc bánh trung thu.
+        </span>
+<span class="exam-statement-verdict ms-auto">
+          Em chọn: Đúng ·
+          Đáp án: Đúng ·
+          0,2 / 0,2
+          
+        </span>
+</div>
+<div class="mc-opt correct">
+<span class="opt-icon">✓</span>
+<span>
+<strong>c)</strong>
+          Số phần quà có thể chia được là một số tự nhiên bất kì lớn hơn $100$ .
+        </span>
+<span class="exam-statement-verdict ms-auto">
+          Em chọn: Sai ·
+          Đáp án: Sai ·
+          0,2 / 0,2
+          
+        </span>
+</div>
+<div class="mc-opt correct">
+<span class="opt-icon">✓</span>
+<span>
+<strong>d)</strong>
+          Nếu lớp Trang chia thành $40$ phần quà thì sẽ dư ra $4$ thanh sô cô la và $2$ chiếc bánh trung thu.
+        </span>
+<span class="exam-statement-verdict ms-auto">
+          Em chọn: Sai ·
+          Đáp án: Sai ·
+          0,2 / 0,2
+          
+        </span>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "dai_so", "figure_note": "", "has_figure": 0, "image_url": "", "image_urls": [], "locked": false, "question_id": 150054, "solution": {"branch": "dai_so", "format": "text", "has_figure": 0, "methods": [{"branch": "dai_so", "figure_note": "", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "a) \u0110\u1ec3 chia nhi\u1ec1u nh\u1ea5t ph\u1ea7n qu\u00e0, ta t\u00ecm \u01afCLN c\u1ee7a 240 v\u00e0 160. $240 = 2^4 \\cdot 3 \\cdot 5$, $160 = 2^5 \\cdot 5$, n\u00ean $ \\text{\u01afCLN}(240, 160) = 2^4 \\cdot 5 = 80 $. Do \u0111\u00f3, ph\u00e1t bi\u1ec3u 1 \u0110\u00fang.\nb) N\u1ebfu c\u00f3 20 ph\u1ea7n qu\u00e0, m\u1ed7i ph\u1ea7n c\u00f3 $240 : 20 = 12$ thanh s\u00f4 c\u00f4 la v\u00e0 $160 : 20 = 8$ chi\u1ebfc b\u00e1nh. Ph\u00e1t bi\u1ec3u 2 \u0110\u00fang.\nc) S\u1ed1 ph\u1ea7n qu\u00e0 c\u00f3 th\u1ec3 chia \u0111\u01b0\u1ee3c l\u00e0 \u01af\u1edbc chung c\u1ee7a 240 v\u00e0 160, t\u1ee9c l\u00e0 c\u00e1c \u01b0\u1edbc c\u1ee7a 80. C\u00e1c \u01b0\u1edbc c\u1ee7a 80 l\u00e0: 1, 2, 4, 5, 8, 10, 16, 20, 40, 80. Kh\u00f4ng c\u00f3 s\u1ed1 n\u00e0o l\u1edbn h\u01a1n 100. Ph\u00e1t bi\u1ec3u 3 Sai.\nd) N\u1ebfu chia th\u00e0nh 40 ph\u1ea7n qu\u00e0, m\u1ed7i ph\u1ea7n c\u00f3 $240 : 40 = 6$ thanh s\u00f4 c\u00f4 la v\u00e0 $160 : 40 = 4$ chi\u1ebfc b\u00e1nh. Kh\u00f4ng d\u01b0 g\u00ec. Ph\u00e1t bi\u1ec3u 4 Sai.\nK\u1ebft qu\u1ea3 l\u00e0: a) \u0110\u00fang, b) Sai, c) \u0110\u00fang, d) Sai"}], "source": "ai", "text": "a) \u0110\u1ec3 chia nhi\u1ec1u nh\u1ea5t ph\u1ea7n qu\u00e0, ta t\u00ecm \u01afCLN c\u1ee7a 240 v\u00e0 160. $240 = 2^4 \\cdot 3 \\cdot 5$, $160 = 2^5 \\cdot 5$, n\u00ean $ \\text{\u01afCLN}(240, 160) = 2^4 \\cdot 5 = 80 $. Do \u0111\u00f3, ph\u00e1t bi\u1ec3u 1 \u0110\u00fang.\nb) N\u1ebfu c\u00f3 20 ph\u1ea7n qu\u00e0, m\u1ed7i ph\u1ea7n c\u00f3 $240 : 20 = 12$ thanh s\u00f4 c\u00f4 la v\u00e0 $160 : 20 = 8$ chi\u1ebfc b\u00e1nh. Ph\u00e1t bi\u1ec3u 2 \u0110\u00fang.\nc) S\u1ed1 ph\u1ea7n qu\u00e0 c\u00f3 th\u1ec3 chia \u0111\u01b0\u1ee3c l\u00e0 \u01af\u1edbc chung c\u1ee7a 240 v\u00e0 160, t\u1ee9c l\u00e0 c\u00e1c \u01b0\u1edbc c\u1ee7a 80. C\u00e1c \u01b0\u1edbc c\u1ee7a 80 l\u00e0: 1, 2, 4, 5, 8, 10, 16, 20, 40, 80. Kh\u00f4ng c\u00f3 s\u1ed1 n\u00e0o l\u1edbn h\u01a1n 100. Ph\u00e1t bi\u1ec3u 3 Sai.\nd) N\u1ebfu chia th\u00e0nh 40 ph\u1ea7n qu\u00e0, m\u1ed7i ph\u1ea7n c\u00f3 $240 : 40 = 6$ thanh s\u00f4 c\u00f4 la v\u00e0 $160 : 40 = 4$ chi\u1ebfc b\u00e1nh. Kh\u00f4ng d\u01b0 g\u00ec. Ph\u00e1t bi\u1ec3u 4 Sai.\nK\u1ebft qu\u1ea3 l\u00e0: a) \u0110\u00fang, b) Sai, c) \u0110\u00fang, d) Sai"}}'>a) Để chia nhiều nhất phần quà, ta tìm ƯCLN của 240 và 160. $240 = 2^4 \cdot 3 \cdot 5$, $160 = 2^5 \cdot 5$, nên $ \text{ƯCLN}(240, 160) = 2^4 \cdot 5 = 80 $. Do đó, phát biểu 1 Đúng.
+b) Nếu có 20 phần quà, mỗi phần có $240 : 20 = 12$ thanh sô cô la và $160 : 20 = 8$ chiếc bánh. Phát biểu 2 Đúng.
+c) Số phần quà có thể chia được là Ước chung của 240 và 160, tức là các ước của 80. Các ước của 80 là: 1, 2, 4, 5, 8, 10, 16, 20, 40, 80. Không có số nào lớn hơn 100. Phát biểu 3 Sai.
+d) Nếu chia thành 40 phần quà, mỗi phần có $240 : 40 = 6$ thanh sô cô la và $160 : 40 = 4$ chiếc bánh. Không dư gì. Phát biểu 4 Sai.
+Kết quả là: a) Đúng, b) Sai, c) Đúng, d) Sai</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150055">
+<div class="q-num">
+      Câu 15. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-0">Không vẽ hình</span>
+<span class="exam-awarded ok">0,43 / 0,43</span>
+</div>
+<div class="mb-2 q-prompt">Một vườn hình chữ nhật cho chiều dài là $105$ m và chiều rộng là $60$ m. Người ta muốn trồng cây xung quanh vườn sao cho mỗi góc vườn $1$ cây và khoảng cách giữa hai cây liên tiếp bằng nhau. Tính khoảng cách lớn nhất giữa hai cây liên tiếp ( Khoảng cách là số tự nhiên với đơn vị là mét)? Khi đó tổng số cây là bao nhiêu?</div>
+<div class="section-lbl">Kết quả của em</div>
+<div class="essay-box">
+        15
+      </div>
+<div class="exam-answer-key">
+        Đáp án: <strong>15</strong>
+<span class="hint">Những cách viết tương đương về số được tính như nhau, nhưng đơn vị phải kèm theo.</span>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "hinh_hoc", "figure_note": "Kh\u00f4ng c\u00f3 h\u00ecnh s\u1eb5n: h\u1ecdc sinh ph\u1ea3i v\u1ebd h\u00ecnh theo m\u00f4 t\u1ea3 c\u1ee7a \u0111\u1ec1.", "has_figure": 0, "image_url": "", "image_urls": [], "locked": false, "question_id": 150055, "solution": {"branch": "hinh_hoc", "format": "text", "has_figure": 0, "methods": [{"branch": "hinh_hoc", "figure_note": "Kh\u00f4ng c\u00f3 h\u00ecnh s\u1eb5n: h\u1ecdc sinh ph\u1ea3i v\u1ebd h\u00ecnh theo m\u00f4 t\u1ea3 c\u1ee7a \u0111\u1ec1.", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "Chu vi v\u01b0\u1eddn l\u00e0 $2 \\times (105 + 60) = 330$ m. V\u00ec c\u00f3 4 c\u00e2y \u1edf 4 g\u00f3c, n\u00ean s\u1ed1 kho\u1ea3ng c\u00e1ch gi\u1eefa c\u00e1c c\u00e2y l\u00e0 $330 : 15 = 22$. Kho\u1ea3ng c\u00e1ch l\u1edbn nh\u1ea5t gi\u1eefa hai c\u00e2y li\u00ean ti\u1ebfp l\u00e0 $15$ m. T\u1ed5ng s\u1ed1 c\u00e2y l\u00e0 $22 + 4 = 26$. K\u1ebft qu\u1ea3 l\u00e0: 15"}], "source": "ai", "text": "Chu vi v\u01b0\u1eddn l\u00e0 $2 \\times (105 + 60) = 330$ m. V\u00ec c\u00f3 4 c\u00e2y \u1edf 4 g\u00f3c, n\u00ean s\u1ed1 kho\u1ea3ng c\u00e1ch gi\u1eefa c\u00e1c c\u00e2y l\u00e0 $330 : 15 = 22$. Kho\u1ea3ng c\u00e1ch l\u1edbn nh\u1ea5t gi\u1eefa hai c\u00e2y li\u00ean ti\u1ebfp l\u00e0 $15$ m. T\u1ed5ng s\u1ed1 c\u00e2y l\u00e0 $22 + 4 = 26$. K\u1ebft qu\u1ea3 l\u00e0: 15"}}'>Chu vi vườn là $2 \times (105 + 60) = 330$ m. Vì có 4 cây ở 4 góc, nên số khoảng cách giữa các cây là $330 : 15 = 22$. Khoảng cách lớn nhất giữa hai cây liên tiếp là $15$ m. Tổng số cây là $22 + 4 = 26$. Kết quả là: 15</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150056">
+<div class="q-num">
+      Câu 16. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-awarded ok">0,43 / 0,43</span>
+</div>
+<div class="mb-2 q-prompt">Có bao nhiêu số nguyên $x$ thỏa mãn $(x^2 - 6).(x^2 - 20) \lt 0$ ?</div>
+<div class="section-lbl">Kết quả của em</div>
+<div class="essay-box">
+        4
+      </div>
+<div class="exam-answer-key">
+        Đáp án: <strong>4</strong>
+<span class="hint">Những cách viết tương đương về số được tính như nhau, nhưng đơn vị phải kèm theo.</span>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "dai_so", "figure_note": "", "has_figure": 0, "image_url": "", "image_urls": [], "locked": false, "question_id": 150056, "solution": {"branch": "dai_so", "format": "text", "has_figure": 0, "methods": [{"branch": "dai_so", "figure_note": "", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "Ta c\u00f3 b\u1ea5t ph\u01b0\u01a1ng tr\u00ecnh $(x^2 - 6)(x^2 - 20) \u003c 0$. \u0110\u1eb7t $y = x^2$, b\u1ea5t ph\u01b0\u01a1ng tr\u00ecnh tr\u1edf th\u00e0nh $(y - 6)(y - 20) \u003c 0$. Gi\u1ea3i b\u1ea5t ph\u01b0\u01a1ng tr\u00ecnh n\u00e0y, ta \u0111\u01b0\u1ee3c $6 \u003c y \u003c 20$. V\u00ec $y = x^2$, n\u00ean $6 \u003c x^2 \u003c 20$. T\u1eeb \u0111\u00f3, $x$ ph\u1ea3i th\u1ecfa m\u00e3n $-\\sqrt{20} \u003c x \u003c -\\sqrt{6}$ ho\u1eb7c $\\sqrt{6} \u003c x \u003c \\sqrt{20}$. C\u00e1c s\u1ed1 nguy\u00ean trong kho\u1ea3ng n\u00e0y l\u00e0 $-4, -3, 3, 4$. K\u1ebft qu\u1ea3 l\u00e0: 4"}], "source": "ai", "text": "Ta c\u00f3 b\u1ea5t ph\u01b0\u01a1ng tr\u00ecnh $(x^2 - 6)(x^2 - 20) \u003c 0$. \u0110\u1eb7t $y = x^2$, b\u1ea5t ph\u01b0\u01a1ng tr\u00ecnh tr\u1edf th\u00e0nh $(y - 6)(y - 20) \u003c 0$. Gi\u1ea3i b\u1ea5t ph\u01b0\u01a1ng tr\u00ecnh n\u00e0y, ta \u0111\u01b0\u1ee3c $6 \u003c y \u003c 20$. V\u00ec $y = x^2$, n\u00ean $6 \u003c x^2 \u003c 20$. T\u1eeb \u0111\u00f3, $x$ ph\u1ea3i th\u1ecfa m\u00e3n $-\\sqrt{20} \u003c x \u003c -\\sqrt{6}$ ho\u1eb7c $\\sqrt{6} \u003c x \u003c \\sqrt{20}$. C\u00e1c s\u1ed1 nguy\u00ean trong kho\u1ea3ng n\u00e0y l\u00e0 $-4, -3, 3, 4$. K\u1ebft qu\u1ea3 l\u00e0: 4"}}'>Ta có bất phương trình $(x^2 - 6)(x^2 - 20) &lt; 0$. Đặt $y = x^2$, bất phương trình trở thành $(y - 6)(y - 20) &lt; 0$. Giải bất phương trình này, ta được $6 &lt; y &lt; 20$. Vì $y = x^2$, nên $6 &lt; x^2 &lt; 20$. Từ đó, $x$ phải thỏa mãn $-\sqrt{20} &lt; x &lt; -\sqrt{6}$ hoặc $\sqrt{6} &lt; x &lt; \sqrt{20}$. Các số nguyên trong khoảng này là $-4, -3, 3, 4$. Kết quả là: 4</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150057">
+<div class="q-num">
+      Câu 17. <span class="q-badge branch-hinh_hoc">Hình học</span><span class="q-badge fig-1">Có vẽ hình</span>
+<span class="exam-awarded ai">0 / 1,67</span>
+</div>
+<div class="mb-2 q-prompt">Trên một mặt bàn hình vuông, người ta đặt một lọ hoa có đáy cũng là hình vuông sao cho một cạnh của đáy lọ hoa trùng với một cạnh của bàn tại chính giữa bàn ấy (như hình vẽ) . Khoảng cách ngắn nhất từ cạnh mặt bàn đến đáy lọ hoa là $35$ m, biết diện tích còn lại của mặt bàn là $6\,300$ cm ² . Tính cạnh của mặt bàn.<img alt="" src="./uploads/ing-fb8baeaa40e1da5e.png"/></div>
+<div class="section-lbl">Bài làm của em</div>
+<div class="essay-box"><p>Gọi cạnh mặt bàn hình vuông là x (cm). Đáy lọ hoa cũng là hình vuông, áp vào cạnh AB tại chính giữa, hai phần còn lại của cạnh AB mỗi bên dài 35 cm.<br/>Suy ra cạnh đáy lọ hoa là x − 35 − 35 = x − 70 (cm).<br/>Diện tích phần mặt bàn còn lại bằng 6300 cm², tức x² − (x − 70)² = 6300.<br/>Khai triển: x² − (x² − 140x + 4900) = 140x − 4900 = 6300, nên 140x = 11200 và x = 80.<br/>Thử lại: cạnh bàn 80 cm, cạnh đáy lọ 10 cm, diện tích còn lại là 80² − 10² = 6400 − 100 = 6300 (cm²), khớp với đề.<br/>Kết quả là: 80 cm</p></div>
+<div class="ai-advice" style="margin-top:6px">
+<span class="badge bg-warning text-dark" style="font-size:.72rem">🤖 AI gợi ý: ✗ chưa đúng</span>
+<p style="font-size:.85rem;color:#374151;margin:6px 0 0">🤖 Gợi ý của AI: Gợi ý AI minh họa trong bản demo tĩnh.</p>
+<p class="text-muted" style="font-size:.85rem; margin:4px 0 0">Kết quả AI tự tìm: Gọi cạnh mặt bàn hình vuông là x (cm). Đáy lọ hoa cũng là hình vuông, áp vào cạnh AB tại chính giữa, hai phần còn lại của cạnh AB mỗi bên dài 35 cm.
+Suy ra cạnh đáy lọ hoa là x − 35 − 35 = x − 70 (cm).
+Diện tích phần mặt bàn còn lại bằng 6300 cm², tức x² − (x − 70)² = 6300.
+Khai triển: x² − (x² − 140x + 4900) = 140x − 4900 = 6300, nên 140x = 11200 và x = 80.
+Thử lại: cạnh bàn 80 cm, cạnh đáy lọ 10 cm, diện tích còn lại là 80² − 10² = 6400 − 100 = 6300 (cm²), khớp với đề.
+Kết quả là: 80 cm</p>
+</div>
+<div class="exam-answer-key">
+        
+        Phần tự luận được tính 0 / 1,67 điểm theo
+        gợi ý của AI — AI chấm, tham khảo.
+        
+      </div>
+<div class="fb-box">
+<div class="fb-head">🔍 Phân tích lỗi: Chưa chỉ ra được lỗi cụ thể</div><div class="fb-note">Câu này không có một phép tính tất định để đối chiếu, nên hệ thống chỉ dựa vào đề bài và lời giải đã lưu.</div>
+</div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "hinh_hoc", "figure_note": "\u0110\u1ec1 b\u00e0i k\u00e8m h\u00ecnh v\u1ebd (h\u1ecdc sinh quan s\u00e1t h\u00ecnh, kh\u00f4ng ph\u1ea3i t\u1ef1 v\u1ebd).", "has_figure": 1, "image_url": "/uploads/ing-fb8baeaa40e1da5e.png", "image_urls": ["/uploads/ing-fb8baeaa40e1da5e.png"], "locked": true, "question_id": 150057, "solution": {"branch": "hinh_hoc", "format": "text", "has_figure": 1, "methods": [{"branch": "hinh_hoc", "figure_note": "Kh\u00f4ng c\u00f3 h\u00ecnh s\u1eb5n: h\u1ecdc sinh ph\u1ea3i v\u1ebd h\u00ecnh theo m\u00f4 t\u1ea3 c\u1ee7a \u0111\u1ec1.", "format": "text", "has_figure": 1, "is_primary": 1, "method_no": 1, "source": "manual", "text": "G\u1ecdi c\u1ea1nh m\u1eb7t b\u00e0n h\u00ecnh vu\u00f4ng l\u00e0 x (cm). \u0110\u00e1y l\u1ecd hoa c\u0169ng l\u00e0 h\u00ecnh vu\u00f4ng, \u00e1p v\u00e0o c\u1ea1nh AB t\u1ea1i ch\u00ednh gi\u1eefa, hai ph\u1ea7n c\u00f2n l\u1ea1i c\u1ee7a c\u1ea1nh AB m\u1ed7i b\u00ean d\u00e0i 35 cm.\nSuy ra c\u1ea1nh \u0111\u00e1y l\u1ecd hoa l\u00e0 x \u2212 35 \u2212 35 = x \u2212 70 (cm).\nDi\u1ec7n t\u00edch ph\u1ea7n m\u1eb7t b\u00e0n c\u00f2n l\u1ea1i b\u1eb1ng 6300 cm\u00b2, t\u1ee9c x\u00b2 \u2212 (x \u2212 70)\u00b2 = 6300.\nKhai tri\u1ec3n: x\u00b2 \u2212 (x\u00b2 \u2212 140x + 4900) = 140x \u2212 4900 = 6300, n\u00ean 140x = 11200 v\u00e0 x = 80.\nTh\u1eed l\u1ea1i: c\u1ea1nh b\u00e0n 80 cm, c\u1ea1nh \u0111\u00e1y l\u1ecd 10 cm, di\u1ec7n t\u00edch c\u00f2n l\u1ea1i l\u00e0 80\u00b2 \u2212 10\u00b2 = 6400 \u2212 100 = 6300 (cm\u00b2), kh\u1edbp v\u1edbi \u0111\u1ec1.\nK\u1ebft qu\u1ea3 l\u00e0: 80 cm"}], "source": "manual", "text": "G\u1ecdi c\u1ea1nh m\u1eb7t b\u00e0n h\u00ecnh vu\u00f4ng l\u00e0 x (cm). \u0110\u00e1y l\u1ecd hoa c\u0169ng l\u00e0 h\u00ecnh vu\u00f4ng, \u00e1p v\u00e0o c\u1ea1nh AB t\u1ea1i ch\u00ednh gi\u1eefa, hai ph\u1ea7n c\u00f2n l\u1ea1i c\u1ee7a c\u1ea1nh AB m\u1ed7i b\u00ean d\u00e0i 35 cm.\nSuy ra c\u1ea1nh \u0111\u00e1y l\u1ecd hoa l\u00e0 x \u2212 35 \u2212 35 = x \u2212 70 (cm).\nDi\u1ec7n t\u00edch ph\u1ea7n m\u1eb7t b\u00e0n c\u00f2n l\u1ea1i b\u1eb1ng 6300 cm\u00b2, t\u1ee9c x\u00b2 \u2212 (x \u2212 70)\u00b2 = 6300.\nKhai tri\u1ec3n: x\u00b2 \u2212 (x\u00b2 \u2212 140x + 4900) = 140x \u2212 4900 = 6300, n\u00ean 140x = 11200 v\u00e0 x = 80.\nTh\u1eed l\u1ea1i: c\u1ea1nh b\u00e0n 80 cm, c\u1ea1nh \u0111\u00e1y l\u1ecd 10 cm, di\u1ec7n t\u00edch c\u00f2n l\u1ea1i l\u00e0 80\u00b2 \u2212 10\u00b2 = 6400 \u2212 100 = 6300 (cm\u00b2), kh\u1edbp v\u1edbi \u0111\u1ec1.\nK\u1ebft qu\u1ea3 l\u00e0: 80 cm"}}'>Gọi cạnh mặt bàn hình vuông là x (cm). Đáy lọ hoa cũng là hình vuông, áp vào cạnh AB tại chính giữa, hai phần còn lại của cạnh AB mỗi bên dài 35 cm.
+Suy ra cạnh đáy lọ hoa là x − 35 − 35 = x − 70 (cm).
+Diện tích phần mặt bàn còn lại bằng 6300 cm², tức x² − (x − 70)² = 6300.
+Khai triển: x² − (x² − 140x + 4900) = 140x − 4900 = 6300, nên 140x = 11200 và x = 80.
+Thử lại: cạnh bàn 80 cm, cạnh đáy lọ 10 cm, diện tích còn lại là 80² − 10² = 6400 − 100 = 6300 (cm²), khớp với đề.
+Kết quả là: 80 cm</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150058">
+<div class="q-num">
+      Câu 18. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-awarded ai">1,67 / 1,67</span>
+</div>
+<div class="mb-2 q-prompt">Thu gọn biểu thức
+a) $A=(345 - 61 + 84)-(-61 + 116 + 345)$ .
+b) $B=(x-47)-(x+59 - 81)+(35-x)$ .</div>
+<div class="section-lbl">Bài làm của em</div>
+<div class="essay-box"><p>a) Rút gọn từng ngoặc: $A = (345 - 61 + 84) - (-61 + 116 + 345)$. Tính trong ngoặc: $345 - 61 + 84 = 368$, $-61 + 116 + 345 = 400$. Vậy $A = 368 - 400 = -32$. Sau đó tính $-32 - (-61 + 116 + 345) = -32 - 400 = -432$.<br/>b) Rút gọn từng ngoặc: $B = (x - 47) - (x + 59 - 81) + (35 - x)$. Tính trong ngoặc: $x + 59 - 81 = x - 22$, $35 - x = -x + 35$. Vậy $B = (x - 47) - (x - 22) + (-x + 35)$. Rút gọn: $x - 47 - x + 22 - x + 35 = -x + 10$.<br/>Kết quả là: 120</p></div>
+<div class="ai-advice" style="margin-top:6px">
+<span class="badge bg-success" style="font-size:.72rem">🤖 AI gợi ý: ✓ đúng</span>
+<p style="font-size:.85rem;color:#374151;margin:6px 0 0">🤖 Gợi ý của AI: Gợi ý AI minh họa trong bản demo tĩnh.</p>
+<p class="text-muted" style="font-size:.85rem; margin:4px 0 0">Kết quả AI tự tìm: a) Rút gọn từng ngoặc: $A = (345 - 61 + 84) - (-61 + 116 + 345)$. Tính trong ngoặc: $345 - 61 + 84 = 368$, $-61 + 116 + 345 = 400$. Vậy $A = 368 - 400 = -32$. Sau đó tính $-32 - (-61 + 116 + 345) = -32 - 400 = -432$.
+b) Rút gọn từng ngoặc: $B = (x - 47) - (x + 59 - 81) + (35 - x)$. Tính trong ngoặc: $x + 59 - 81 = x - 22$, $35 - x = -x + 35$. Vậy $B = (x - 47) - (x - 22) + (-x + 35)$. Rút gọn: $x - 47 - x + 22 - x + 35 = -x + 10$.
+Kết quả là: 120</p>
+</div>
+<div class="exam-answer-key">
+        
+        Phần tự luận được tính 1,67 / 1,67 điểm theo
+        gợi ý của AI — AI chấm, tham khảo.
+        
+      </div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "dai_so", "figure_note": "", "has_figure": 0, "image_url": "", "image_urls": [], "locked": false, "question_id": 150058, "solution": {"branch": "dai_so", "format": "text", "has_figure": 0, "methods": [{"branch": "dai_so", "figure_note": "", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "a) R\u00fat g\u1ecdn t\u1eebng ngo\u1eb7c: $A = (345 - 61 + 84) - (-61 + 116 + 345)$. T\u00ednh trong ngo\u1eb7c: $345 - 61 + 84 = 368$, $-61 + 116 + 345 = 400$. V\u1eady $A = 368 - 400 = -32$. Sau \u0111\u00f3 t\u00ednh $-32 - (-61 + 116 + 345) = -32 - 400 = -432$.\nb) R\u00fat g\u1ecdn t\u1eebng ngo\u1eb7c: $B = (x - 47) - (x + 59 - 81) + (35 - x)$. T\u00ednh trong ngo\u1eb7c: $x + 59 - 81 = x - 22$, $35 - x = -x + 35$. V\u1eady $B = (x - 47) - (x - 22) + (-x + 35)$. R\u00fat g\u1ecdn: $x - 47 - x + 22 - x + 35 = -x + 10$.\nK\u1ebft qu\u1ea3 l\u00e0: 120"}], "source": "ai", "text": "a) R\u00fat g\u1ecdn t\u1eebng ngo\u1eb7c: $A = (345 - 61 + 84) - (-61 + 116 + 345)$. T\u00ednh trong ngo\u1eb7c: $345 - 61 + 84 = 368$, $-61 + 116 + 345 = 400$. V\u1eady $A = 368 - 400 = -32$. Sau \u0111\u00f3 t\u00ednh $-32 - (-61 + 116 + 345) = -32 - 400 = -432$.\nb) R\u00fat g\u1ecdn t\u1eebng ngo\u1eb7c: $B = (x - 47) - (x + 59 - 81) + (35 - x)$. T\u00ednh trong ngo\u1eb7c: $x + 59 - 81 = x - 22$, $35 - x = -x + 35$. V\u1eady $B = (x - 47) - (x - 22) + (-x + 35)$. R\u00fat g\u1ecdn: $x - 47 - x + 22 - x + 35 = -x + 10$.\nK\u1ebft qu\u1ea3 l\u00e0: 120"}}'>a) Rút gọn từng ngoặc: $A = (345 - 61 + 84) - (-61 + 116 + 345)$. Tính trong ngoặc: $345 - 61 + 84 = 368$, $-61 + 116 + 345 = 400$. Vậy $A = 368 - 400 = -32$. Sau đó tính $-32 - (-61 + 116 + 345) = -32 - 400 = -432$.
+b) Rút gọn từng ngoặc: $B = (x - 47) - (x + 59 - 81) + (35 - x)$. Tính trong ngoặc: $x + 59 - 81 = x - 22$, $35 - x = -x + 35$. Vậy $B = (x - 47) - (x - 22) + (-x + 35)$. Rút gọn: $x - 47 - x + 22 - x + 35 = -x + 10$.
+Kết quả là: 120</div>
+</div>
+<div class="q-card card border-0 exam-q" id="q-150059">
+<div class="q-num">
+      Câu 19. <span class="q-badge branch-dai_so">Đại số</span>
+<span class="exam-awarded ai">1,67 / 1,67</span>
+</div>
+<div class="mb-2 q-prompt">Một ngày tại Paris có nhiệt độ là $-5° C$ . Theo dự báo thời tiết ngày hôm sau tăng thêm $3° C$ .
+a) Nhiệt độ dự báo của ngày hôm sau sẽ là bao nhiêu?
+b) Thực tế, nhiệt độ ngày hôm sau lại tăng thêm $8° C$ . Tìm nhiệt độ thực tế ngày hôm sau.</div>
+<div class="section-lbl">Bài làm của em</div>
+<div class="essay-box"><p>a) Nhiệt độ ngày hôm sau là: $-5 + 3 = -2^\circ C$. b) Nhiệt độ thực tế ngày hôm sau là: $-2 + 8 = 6^\circ C$. Kết quả là: 6</p></div>
+<div class="ai-advice" style="margin-top:6px">
+<span class="badge bg-success" style="font-size:.72rem">🤖 AI gợi ý: ✓ đúng</span>
+<p style="font-size:.85rem;color:#374151;margin:6px 0 0">🤖 Gợi ý của AI: Gợi ý AI minh họa trong bản demo tĩnh.</p>
+<p class="text-muted" style="font-size:.85rem; margin:4px 0 0">Kết quả AI tự tìm: a) Nhiệt độ ngày hôm sau là: $-5 + 3 = -2^\circ C$. b) Nhiệt độ thực tế ngày hôm sau là: $-2 + 8 = 6^\circ C$. Kết quả là: 6</p>
+</div>
+<div class="exam-answer-key">
+        
+        Phần tự luận được tính 1,67 / 1,67 điểm theo
+        gợi ý của AI — AI chấm, tham khảo.
+        
+      </div>
+<div class="text-muted" style="font-size:.78rem;font-weight:600; margin-top:12px">📘 Lời giải đã lưu</div>
+<div class="ai-box visible" data-stored-solution='{"algorithms": [], "branch": "dai_so", "figure_note": "", "has_figure": 0, "image_url": "", "image_urls": [], "locked": false, "question_id": 150059, "solution": {"branch": "dai_so", "format": "text", "has_figure": 0, "methods": [{"branch": "dai_so", "figure_note": "", "format": "text", "has_figure": 0, "is_primary": 1, "method_no": 1, "source": "ai", "text": "a) Nhi\u1ec7t \u0111\u1ed9 ng\u00e0y h\u00f4m sau l\u00e0: $-5 + 3 = -2^\\circ C$. b) Nhi\u1ec7t \u0111\u1ed9 th\u1ef1c t\u1ebf ng\u00e0y h\u00f4m sau l\u00e0: $-2 + 8 = 6^\\circ C$. K\u1ebft qu\u1ea3 l\u00e0: 6"}], "source": "ai", "text": "a) Nhi\u1ec7t \u0111\u1ed9 ng\u00e0y h\u00f4m sau l\u00e0: $-5 + 3 = -2^\\circ C$. b) Nhi\u1ec7t \u0111\u1ed9 th\u1ef1c t\u1ebf ng\u00e0y h\u00f4m sau l\u00e0: $-2 + 8 = 6^\\circ C$. K\u1ebft qu\u1ea3 l\u00e0: 6"}}'>a) Nhiệt độ ngày hôm sau là: $-5 + 3 = -2^\circ C$. b) Nhiệt độ thực tế ngày hôm sau là: $-2 + 8 = 6^\circ C$. Kết quả là: 6</div>
+</div>
+</div>
+<div class="d-flex gap-2 mt-2 flex-wrap">
+<a class="btn btn-primary" href="./exam-8812.html">Làm lại đề này</a>
+<a class="btn btn-outline-secondary" href="./exams.html">Chọn đề khác</a>
+<a class="btn btn-outline-secondary" href="./history.html">Lịch sử</a>
+</div>
+</div>
+</div>
+<footer class="footer-shell">
+<div class="footer-main">
+<div class="footer-feedback" id="fb-slot"></div>
+<div class="footer-info">
+<div class="footer-line">Copyright © Trần Công Tuệ</div>
+<div class="footer-line">Phone &amp; Zalo: <a href="tel:+84961969489">096 196 9489</a></div>
+<div class="footer-line">Email: <a href="mailto:trancongtue0812@gmail.com">trancongtue0812@gmail.com</a></div>
+</div>
+</div>
+</footer>
+
+<div aria-hidden="true" class="modal fade" id="modal-lesson" tabindex="-1">
+<div class="modal-dialog modal-lg modal-dialog-scrollable">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title">📖 Lý thuyết</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body">
+
+<div class="d-none mb-3" id="lesson-audio"></div>
+
+<div class="d-none mb-3" id="lesson-image"></div>
+<div class="ai-box visible" id="lesson-body"></div>
+</div>
+<div class="modal-footer">
+<button class="btn btn-x btn-sm" data-bs-dismiss="modal" type="button">Đóng</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="modal fade" id="modal-notice" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title" id="notice-title">Thông báo</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body" id="notice-body" style="white-space:pre-line"></div>
+<div class="modal-footer">
+<button class="btn btn-primary btn-sm" data-bs-dismiss="modal" type="button">Đồng ý</button>
+</div>
+</div>
+</div>
+</div>
+<div aria-hidden="true" class="modal fade" id="modal-confirm" tabindex="-1">
+<div class="modal-dialog modal-dialog-centered">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title" id="confirm-title">Xác nhận</h5>
+<button aria-label="Đóng" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+</div>
+<div class="modal-body" id="confirm-body" style="white-space:pre-line"></div>
+<div class="modal-footer">
+<button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" type="button">Không</button>
+<button class="btn btn-primary btn-sm" id="confirm-yes" type="button">Có</button>
+</div>
+</div>
+</div>
+</div>
+<link href="./static/feedback.css" rel="stylesheet"/>
+
+<script src="./static/js/feedback.js"></script>
+<link href="./static/notifications.css" rel="stylesheet"/>
+<script src="./static/js/notifications.js"></script>
+<script src="./assets/static-demo.js"></script></body>
+</html>

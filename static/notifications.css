@@ -1,0 +1,113 @@
+/* ==========================================================================
+   notifications.css — chuông thông báo + bảng tin kiểu Facebook ở dải trên cùng
+
+   Bảng tin nằm trong .site-top (position:fixed, z-index 1030 trong common.css) nên nó
+   tự nổi trên cột nội dung; không cần z-index riêng cho chuông, chỉ cần .notif-shell là
+   `position: relative` để bảng Absolute theo đúng ô chuông.
+
+   Mọi ô trong .topband là flex item: dải chữ chạy chiếm phần còn lại nên chuông phải
+   `flex: 0 0 auto` — cùng luật với .corner-icon mà test ở
+   test_routes_auth.CellCornerIconsTest giữ.
+
+   `.notif-list` là một trong số ít khối được cuộn trong lòng (danh sách 20 tin dài hơn
+   chiều cao bảng): nó có trần cao tính bằng px, không bằng vh, và có tên trong
+   BOUNDED_SCROLLER_SELORS của guard một-vùng-cuộn trong tests/test_templates.py.
+  ========================================================================== */
+
+.notif-shell {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+}
+
+/* Badge đếm tin chưa đọc: ô tròn nhỏ đè góc trên phải cái chuông. */
+.notif-badge {
+  position: absolute;
+  top: 3px; right: 3px;
+  min-width: 16px; height: 16px;
+  padding: 0 4px;
+  display: flex; align-items: center; justify-content: center;
+  background: #b91c1c; color: #fff;
+  border-radius: 999px;
+  font-size: .6875rem; font-weight: 700; line-height: 1;
+}
+/* Chuông có tin thì chữ trong badge đã đủ báo hiệu — không thêm animation, máy này
+   còn chạy model trên CPU. */
+
+.notif-panel {
+  position: absolute;
+  top: 100%; right: 0;
+  width: min(360px, 92vw);
+  display: flex; flex-direction: column;
+  background: #fff; color: #1e293b;
+  border: 1px solid #cbd5e1; border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, .25);
+  overflow: hidden;
+}
+
+.notif-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 10px 12px;
+  background: #f1f5f9; border-bottom: 1px solid #cbd5e1;
+}
+.notif-heading { font-weight: 700; font-size: 1rem; }
+/* Lối "đọc hết" là chữ xanh nhỏ kiểu Facebook, nhưng đủ cao để bấm (28 px + đệm). */
+.notif-mark-all {
+  flex: 0 0 auto;
+  background: none; border: 0; padding: 4px 2px;
+  color: #1d4ed8; font: inherit; font-size: .8125rem; font-weight: 600;
+  cursor: pointer; text-decoration: underline;
+}
+.notif-mark-all:hover, .notif-mark-all:focus { color: #0b3d91; }
+
+.notif-list {
+  max-height: 380px;
+  overflow-y: auto;
+}
+.notif-empty {
+  margin: 0; padding: 14px 12px;
+  color: #475569; font-size: .875rem;
+}
+
+/* Một hàng = icon tròn + hai dòng chữ, giống bảng tin của Facebook. Bấm vào hàng là
+   mở trang đích (`<a>` nên ajax.js lo việc đổi trang). */
+.notif-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  min-height: 48px; padding: 8px 12px;
+  background: #eff6ff;                 /* tin chưa đọc: xanh nhạt */
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b; text-decoration: none;
+  cursor: pointer;
+}
+.notif-item:last-child { border-bottom: 0; }
+.notif-item:hover, .notif-item:focus { background: #dbeafe; }
+
+.notif-icon {
+  flex: 0 0 auto;
+  width: 32px; height: 32px; margin-top: 2px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: #475569; color: #fff;
+  font-size: .875rem; font-weight: 700; line-height: 1;
+}
+.notif-icon-graded { background: #15803d; }        /* chấm xong */
+.notif-icon-grade_failed { background: #b91c1c; }  /* chấm chưa được */
+.notif-icon-feature_update { background: #1d4ed8; }
+.notif-icon-new_bank { background: #7e22ce; }
+.notif-icon-feedback_reply { background: #0f766e; }
+.notif-icon-feature_update, .notif-icon-new_bank, .notif-icon-feedback_reply { font-size: .625rem; }
+
+.notif-body { display: flex; flex-direction: column; min-width: 0; }
+.notif-item-title {
+  font-size: .875rem;
+  /* Chữ xuống dòng trong hàng, không cắt: tiêu đề mang tên đề thi, dài ngắn khác nhau. */
+  white-space: normal; overflow-wrap: anywhere;
+}
+.notif-item-body {
+  margin-top: 4px;
+  color: #334155;
+  font-size: .8125rem;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.notif-item-time { margin-top: 2px; color: #475569; font-size: .75rem; }

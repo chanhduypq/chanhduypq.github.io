@@ -1,0 +1,1185 @@
+/* ==========================================================================
+   common.css — các style dùng chung cho nhiều trang
+   ========================================================================== */
+
+/* ---- Layout: MỘT nguồn độ rộng duy nhất ----
+   #page-body (base.html) là cột nội dung của mọi trang, .navbar-main là cột menu;
+   cả hai dùng chung --page-width nên lề trái phải không đổi khi chuyển trang.
+   Không file CSS theo trang nào được đặt max-width cho body nữa. */
+:root { --page-width: 1100px; }
+
+/* ---- Layout cố định: chỉ banner + menu dính đỉnh ----
+   --fixed-top do common.js đo bằng thật (menu tự xuống dòng theo bề ngang); giá trị ở
+   đây chỉ là dự phòng khi JS chưa chạy.
+   --fixed-bottom VẪN còn dùng dù footer không dính đáy nữa: nó là sàn chiều cao của cột
+   nội dung (#page-body) để trang ngắn vẫn đẩy footer xuống sát đáy trình duyệt. Footer là khối thường nằm cuối tài liệu — muốn xem phải cuộn tới hết
+   trang, đổi lại không còn chuyện footer che mất bài hay mép dưới với tới không nổi. */
+:root { --fixed-top: 74px; --fixed-bottom: 60px; }
+
+/* Ba mặt nền phải khác nhau để phân biệt vùng: menu trắng, nền trang xám nhạt,
+   footer xám đậm. Các khối nội dung (card, .q, .ai-box) có nền riêng nên vẫn nổi.
+   padding-top (chứ không margin-top) là chỗ cho .site-top dính đỉnh: margin của con
+   đầu tiên có thể tràn qua body rồi sụp thành khoảng trống sai, padding thì không. */
+body { background: #f1f5f9; padding-top: var(--fixed-top); }
+
+/* Mặt nền thứ tư: "sân khấu" của vùng nội dung dài (danh sách bài học SGK, danh sách
+   đề, bảng câu hỏi). Trước đây vùng này cùng xám với nền trang nên không phân biệt
+   được với tiêu đề/tab/khung lọc bên trên. Xanh nhạt đủ xa cả nền trang (dE 11.9)
+   lẫn card trắng đặt trên nó (dE 16.2), mà vẫn sáng nên chữ đậm đọc rõ. */
+:root { --panel-bg: #cfe0f3; --panel-border: #b6d1ec; }
+
+/* Màu chữ phụ DÙNG CHUNG (dòng đếm, chú thích, nhãn nhỏ). Các xám hay dùng trước
+   đây hết rõ khi nằm trực tiếp trên panel (#6b7280 chỉ 3.59:1, #6c757d của
+   Bootstrap 3.49:1, #9ca3af 1.89:1 — đều dưới mức đọc tối thiểu 4.5:1). #475569
+   đạt 5.63:1 trên panel và vẫn ổn trên nền trắng/nền trang, nên mọi trang — kể cả
+   style riêng trong template — lấy cùng một biến này thay vì tự chọn mã màu. */
+:root { --meta-fg: #475569; }
+
+/* ---- Năm vùng thông tin, mỗi vùng một màu ----
+   Trong cùng một câu hỏi có năm thứ khác loại: đề bài, phương án/trả lời, hình vẽ,
+   lời giải và phân tích lỗi. Tô nền theo loại để người đọc nhận ra đang nhìn thứ gì mà
+   không phải đọc nhãn. Bảng màu đã đo (CIE76 + WCAG):
+     - chữ trên nền của chính nó đạt 7.53–8.42:1, tức vượt mức AAA cho chữ nhỏ;
+       đặt cả năm màu chữ đó trên nền trắng hay sân khấu --panel-bg vẫn đạt 6.45:1 trở
+       lên, nên dòng chữ nào rò ra ngoài khối tint (ô bảng đã kẻ trắng) vẫn đọc rõ;
+     - năm nền cách nhau ít nhất 11.7 dE nên không cặp nào lẫn vào nhau;
+     - so với các màu đã có trước đây: nền "lời giải" cách ô phương án ĐÚNG (#dcfce7)
+       12.4 dE — khối lời giải không bị đọc nhầm thành đáp án; ô điền số của lớp 1–3
+       (#fffbeb) cách nền "đề bài" 28.6 dE. */
+:root {
+  --zone-ask-bg:  #d4dcff; --zone-ask-fg:  #312e81; --zone-ask-bd:  #a5b4fc;
+  --zone-opt-bg:  #bbf7fd; --zone-opt-fg:  #164e63; --zone-opt-bd:  #67e8f9;
+  --zone-fig-bg:  #ffe2bf; --zone-fig-fg:  #7c2d12; --zone-fig-bd:  #fdba74;
+  --zone-sol-bg:  #b4f9ea; --zone-sol-fg:  #134e4a; --zone-sol-bd:  #5eead4;
+  --zone-err-bg:  #f8dcff; --zone-err-fg:  #701a75; --zone-err-bd:  #f0abfc;
+}
+
+/* ---- Mỗi tab một sắc (yêu cầu 4 của đợt đổi giao diện) ----
+   Trang có nhiều tab phải tự nói được "đang đứng ở tab nào". Sáu hue chia theo THỨ TỰ
+   tab nên mọi dải tab đều có ngay quy luật, thêm/bớt tab không phải sửa CSS:
+     - nút tab chưa chọn: nền nhạt hue của nó -> cả dải tab hiện ra các màu khác nhau
+       trước khi bấm, chứ không phải một hàng chữ xám như trước;
+     - nút đang chọn: nền đậm hơn cùng hue + chữ đậm + gạch chân đậm, nói rõ con trỏ;
+     - khung nội dung: wash cùng hue (mức 100, sáng hơn nền đậm của nút) + dải mép trái
+       đậm, nên vùng làm việc đổi màu khi chuyển tab.
+   Số đã đo (CIE76 + WCAG): sáu nền nút đang chọn cách nhau ít nhất 15.8 dE; chữ trên
+   nút đạt 5.82–9.02:1; wash mức 100 giữ chữ phụ --meta-fg đạt 6.21:1 trở lên và vẫn
+   cách giấy trắng 11.6–23.2 dE nên card trắng nổi lên rõ. Tab thứ 7 quay lại hue 1.
+   Vì sao wash dùng mức 100 chứ không nhạt hơn: wash nhạt mức 50 chỉ cách giấy trắng
+   ~4.6 dE, còn yếu hơn đúng sân khấu --panel-bg mà nó thay ở trang nhiều tab. */
+:root {
+  --tab-1-bg: #d7e6fc; --tab-1-on: #a8caf6; --tab-1-fg: #1e3a8a; --tab-1-bd: #2563eb; --tab-1-wash: #dbeafe;
+  --tab-2-bg: #e2f7e9; --tab-2-on: #bbf7d0; --tab-2-fg: #14532d; --tab-2-bd: #16a34a; --tab-2-wash: #dcfce7;
+  --tab-3-bg: #fdf1d6; --tab-3-on: #fde68a; --tab-3-fg: #78350f; --tab-3-bd: #d97706; --tab-3-wash: #fef3c7;
+  --tab-4-bg: #fce4ef; --tab-4-on: #fbcfe8; --tab-4-fg: #831843; --tab-4-bd: #db2777; --tab-4-wash: #fce7f3;
+  --tab-5-bg: #ece6fc; --tab-5-on: #d9ccfb; --tab-5-fg: #4c1d95; --tab-5-bd: #7c3aed; --tab-5-wash: #ede9fe;
+  --tab-6-bg: #d9f6fb; --tab-6-on: #a5f3fc; --tab-6-fg: #155e75; --tab-6-bd: #0891b2; --tab-6-wash: #cffafe;
+}
+
+/* Gán năm biến hue theo số thứ tự. Nút tab và khung nội dung đi theo cùng một số nên
+   hue của nút luôn khớp hue của khung nó mở ra. */
+.nav-tabs > li:nth-of-type(6n+1), .tab-content > .tab-pane:nth-of-type(6n+1) { --tb: var(--tab-1-bg); --to: var(--tab-1-on); --tf: var(--tab-1-fg); --td: var(--tab-1-bd); --tw: var(--tab-1-wash); }
+.nav-tabs > li:nth-of-type(6n+2), .tab-content > .tab-pane:nth-of-type(6n+2) { --tb: var(--tab-2-bg); --to: var(--tab-2-on); --tf: var(--tab-2-fg); --td: var(--tab-2-bd); --tw: var(--tab-2-wash); }
+.nav-tabs > li:nth-of-type(6n+3), .tab-content > .tab-pane:nth-of-type(6n+3) { --tb: var(--tab-3-bg); --to: var(--tab-3-on); --tf: var(--tab-3-fg); --td: var(--tab-3-bd); --tw: var(--tab-3-wash); }
+.nav-tabs > li:nth-of-type(6n+4), .tab-content > .tab-pane:nth-of-type(6n+4) { --tb: var(--tab-4-bg); --to: var(--tab-4-on); --tf: var(--tab-4-fg); --td: var(--tab-4-bd); --tw: var(--tab-4-wash); }
+.nav-tabs > li:nth-of-type(6n+5), .tab-content > .tab-pane:nth-of-type(6n+5) { --tb: var(--tab-5-bg); --to: var(--tab-5-on); --tf: var(--tab-5-fg); --td: var(--tab-5-bd); --tw: var(--tab-5-wash); }
+.nav-tabs > li:nth-of-type(6n+6), .tab-content > .tab-pane:nth-of-type(6n+6) { --tb: var(--tab-6-bg); --to: var(--tab-6-on); --tf: var(--tab-6-fg); --td: var(--tab-6-bd); --tw: var(--tab-6-wash); }
+
+.nav-tabs > li > .nav-link {
+  background: var(--tb, #f1f5f9); color: var(--tf, #1e293b);
+  border: 1px solid transparent; border-radius: 8px 8px 0 0;
+}
+.nav-tabs > li > .nav-link:hover, .nav-tabs > li > .nav-link:focus {
+  background: var(--to, #e2e8f0); color: var(--tf, #1e293b); border-color: var(--td, #cbd5e1);
+}
+.nav-tabs > li > .nav-link.active,
+.nav-tabs > li > .nav-link[aria-selected="true"] {
+  background: var(--to, #e2e8f0); color: var(--tf, #1e293b); font-weight: 700;
+  border-color: var(--td, #cbd5e1); box-shadow: inset 0 -3px 0 var(--td, #64748b);
+}
+
+/* Khung nội dung của tab Bootstrap: mép trái đậm nói "đây là phần của nút đang gạch". */
+.tab-content > .tab-pane {
+  background: var(--tw, transparent); border-left: 4px solid var(--td, transparent);
+  border-radius: 0 8px 8px 0; padding: 10px 12px;
+}
+
+/* Ba nhóm tab không theo khuôn .nav-tabs + .tab-pane thì phải gọi thẳng tên khối:
+   - popup "Tạo câu hỏi" (/admin_topics): hai bảng .aq-pane, tô đúng hue của hai nút
+     phía trên (id đã định sẵn thứ tự nên không cần đếm theo vị trí);
+   - trang Quản lý câu hỏi: dải tab là LIÊN KẾT tải lại trang, không có bảng nội dung
+     nào hết, nên "vùng của tab" ở đây là hai khối cố định ngay dưới dải (khung bộ lọc
+     và dải tiêu đề bảng dính). Tô theo tab đang sáng thì vừa đổi tab là cả trang đổi
+     màu, và hue nói luôn đang xem kho "theo bài học SGK" hay "theo đề thi".
+   Rule này phải thắng nền trắng mà admin_questions.css (nạp SAU file này) đặt cho
+   .qfilter-box/.qhead-overlay, nên :has() + ~ được dùng thay vì chọn một class đơn. */
+.aq-pane {
+  background: var(--tw, transparent); border-left: 4px solid var(--td, transparent);
+  border-radius: 0 8px 8px 0; padding: 10px 12px;
+}
+#aq-pane-manual { --tw: var(--tab-1-wash); --td: var(--tab-1-bd); }
+#aq-pane-ai { --tw: var(--tab-2-wash); --td: var(--tab-2-bd); }
+
+.qtabs:has(> li:nth-of-type(1) > .nav-link.active) ~ .qfilter-box {
+  background: var(--tab-1-wash); border-left: 4px solid var(--tab-1-bd);
+}
+.qtabs:has(> li:nth-of-type(2) > .nav-link.active) ~ .qfilter-box {
+  background: var(--tab-2-wash); border-left: 4px solid var(--tab-2-bd);
+}
+/* Dải tiêu đề bảng CHỈ đổi nền, không thêm mép trái: nó là bản sao nằm ngoài vùng cuộn
+   của <thead> và phải thẳng cột với bảng bên dưới theo từng px (#616/#692), thêm 3px
+   viền là lệch cột. */
+.qtabs:has(> li:nth-of-type(1) > .nav-link.active) ~ .qhead-overlay { background: var(--tab-1-wash); }
+.qtabs:has(> li:nth-of-type(2) > .nav-link.active) ~ .qhead-overlay { background: var(--tab-2-wash); }
+
+/* Tài liệu cuộn dọc BÌNH THƯỜNG. Trước đây `html { overflow-y: hidden }` khóa cuộn ở
+   tầng tài liệu để mọi thứ cuộn trong lòng cột (#page-body là position:fixed). Bỏ footer
+   dính đáy thì không còn lý do giữ: footer nằm cuối trang nên trang phải cuộn tới nó được.
+   Thanh cuộn ngang không bị đụng tới. */
+
+/* Ảnh, video, trình phát tiếng không được rộng hơn chỗ nó đứng. Trước đây chỉ
+   `.q-prompt img` và `.q-figure-img` có trần, còn phương án (từ #829d một phương án có
+   thể CHỈ LÀ ảnh), lời giải, bài làm CKEditor và góp ý thì không. Đo 11-23 trên cửa sổ
+   503 px: ảnh 900 px đặt vào `.mc-opt` tràn tới mép 945 px và cột nội dung cắt mất —
+   học sinh không thấy phần bên phải bức tranh. Đặt một luật ở tầng tài liệu thay vì
+   liệt kê từng khối, để khối chữ thêm sau này không phải nhớ. */
+img, video, audio { max-width: 100%; }
+
+.site-top {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1030;
+  background: #fff;
+}
+
+/* Cột nội dung nằm trong dòng chảy bình thường: nội dung dài thì ĐẨY CẢ TRANG cuộn,
+   footer đi theo xuống cuối trang. Khoảng trống đỉnh do body chừa bằng --fixed-top
+   (banner/menu vẫn dính đỉnh), không phải bằng inset nữa.
+   min-height là mức sàn để trang NGẮN vẫn đủ cao: đỉnh (var(--fixed-top)) + cột + footer
+   (var(--fixed-bottom)) đúng bằng 100vh, nhờ footer đứng sát đáy trình duyệt chứ không
+   lơ lửng giữa màn hình. 100vh trên mobile dài hơn chỗ thật một chút (thanh địa chỉ),
+   nhưng ở đây hậu quả chỉ là footer thấp hơn đáy vài chục px chứ không phải nội dung bị
+   che như khi cột từng `position: fixed` theo phép tính vh.
+   width + margin auto: cột vẫn rộng --page-width và thẳng hàng menu.
+   display:flex cột dọc là bệ cho .fill/.scroll-area bên dưới. */
+#page-body {
+  width: min(var(--page-width), 100%);
+  margin: 0 auto;
+  padding: 16px;
+  min-height: calc(100vh - var(--fixed-top) - var(--fixed-bottom));
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Hai trang làm bài vẫn giữ cột cao đúng một màn hình ----
+   Trang thi (#exam-form) và trang luyện tập (.q-wrap.scroll-area) không cuộn theo nội
+   dung: mỗi lúc chỉ hiện MỘT câu, và static/js/question_pager.js đo `clientHeight` của
+   vùng đọc rồi co câu bằng `zoom` cho vừa khít (#692/#835 — "không phải kéo lên kéo
+   xuống"). Muốn phép đo đó còn nghĩa thì vùng đọc phải cao đúng chỗ trống còn lại, tức
+   cột nội dung phải có CHIỀU CAO XÁC ĐỊNH; cột tự cao theo nội dung thì vùng đọc phồng
+   bằng luôn câu hỏi, pager kết luận "vừa rồi" và không bao giờ co.
+   Vì sao `height: calc(100vh - var(--fixed-top))` chứ không trừ luôn --fixed-bottom như
+   `inset` cũ: footer không còn chiếm đáy nữa nên phần đó trả về cho bài làm — vùng đọc
+   rộng thêm đúng bằng chiều cao footer, muốn xem footer thì tài liệu cuộn thêm cỡ đó.
+   Dùng :has() vì cột nội dung nằm trong base.html, template của trang không thêm class
+   lên nó được; đây cũng là cách common.css chọn cho các dải tab ở trên. */
+#page-body:has(#exam-form),
+#page-body:has(.q-wrap.scroll-area) {
+  height: calc(100vh - var(--fixed-top));
+  overflow-y: auto;
+}
+
+/* ---- Khối nội dung dài: .scroll-area / .fill ----
+   Trang đánh dấu khối danh sách dài (câu hỏi, bảng, danh mục) bằng .scroll-area để nó
+   lấy mặt nền riêng (xem rule bên dưới) và .fill khoác lên khối trung gian giữa
+   #page-body và .scroll-area (div gốc của mảnh, <form>).
+   Từ đợt bỏ footer dính đáy, mặc định là TÀI LIỆU cuộn: #page-body cao theo nội dung nên
+   hai lớp flex này không còn tạo thanh cuộn lồng nhau — danh sách dài thì trang dài theo.
+   Ngoại lệ đúng hai trang làm bài (rule `:has()` ngay trên) giữ cột cao một màn hình nên
+   .scroll-area vẫn là vùng cuộn riêng, đúng như thiết kế ban đầu.
+   min-height:0 là mấu chốt của mọi vùng cuộn: mặc nhiên con flex không co nhỏ hơn nội dung
+   của nó, nên ở trang có cột cao xác định mà bỏ min-height:0 thì .scroll-area bị nới ra
+   đúng bằng chiều dài danh sách và không cuộn gì. */
+.fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Công thức KaTeX không được tạo thanh cuộn ma.
+   `.katex .katex-mathml` là một span `position:absolute` 1x1 px (chữ dành cho trình đọc màn
+   hình) mà KaTeX 0.16 KHÔNG đặt định vị cho `.katex`, nên hộp chứa của nó là tổ tiên gần nhất
+   CÓ định vị — thường là không có ai, tức tính theo cả trang. Một phần tử absolute mà hộp chứa
+   đứng ngoài kẻ cắt thì không bị cắt và vẫn tính vào chiều cao cuộn của kẻ cắt đó. Đo trên
+   /study (1.083 bài học, đúng 2 tên có công thức): `#page-body.scrollHeight` 88.801 px trong
+   khi nội dung thật 201 px — một thanh cuộn đứng thứ hai xuất hiện chỉ vì hai span ẩn.
+   `.katex { position: relative }` trả hộp chứa về chính công thức: span 1 px nằm gọn trong ô
+   của nó, bị kẻ cắt gần nhất (vùng cuộn trên hai trang làm bài, hoặc tài liệu ở mọi trang
+   khác) cắt luôn. Giữ rule này bất kể ai đổi layout cột. */
+.katex { position: relative; }
+
+/* Vùng dài được tô mặt nền riêng để người dùng thấy ngay danh sách/bảng nằm ở
+   đâu và cuộn ở đâu. Ngoại lệ: .card-body (trang chủ) đã là mặt nền trắng của
+   chính card, chồng thêm panel chỉ tạo khung lồng khung. */
+.scroll-area:not(.card-body) {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+/* Bản hồng của cùng mặt nền đó, chọn bằng lớp .panel-pink khi một trang cần vùng
+   danh sách nổi bật khác hẳn các vùng khác (trang Học tập: bài học là thứ học sinh
+   nhìn lâu nhất). Vẫn một biến màu đặt ở đây, không trang nào tự viết mã màu riêng —
+   nếu mỗi trang tự tô thì panel mỗi trang một sắc và không còn là một quy ước.
+   Hồng #fce7f3 giữ nguyên phần chữ tối --meta-fg (6,4:1) nên không phải đổi màu chữ. */
+.scroll-area.panel-pink {
+  background: #fce7f3;
+  border-color: #fbcfe8;
+}
+
+/* Chữ phụ (.text-muted, .empty-state) có thể nằm ngay trên nền panel, không có
+   card trắng phía sau, nên phải dùng đúng màu chữ phụ chung --meta-fg. */
+.text-muted { color: var(--meta-fg) !important; }
+
+/* ---- Dải tiêu đề đỏ của Trang chủ và ba trang tra cứu (Luyện thi, Ký hiệu toán học,
+       Học tập) ----
+   Những trang này mở đầu bằng một khối chữ nói trang đó dùng để làm gì. Nền đỏ chữ
+   trắng làm khối ấy trả lời câu hỏi "mình đang ở trang nào, để làm gì" bằng màu thay
+   vì bằng đọc. Lấy #b42318 (đỏ thẫm) chứ không lấy #dc2626 của nút "Đóng": đây là đoạn
+   chữ dài phải đọc lâu, trắng trên #dc2626 chỉ 4,83:1 còn trên #b42318 được 6,57:1
+   (AA cho chữ nhỏ, AAA cho tiêu đề 1,5rem). Rule .text-muted ở trên có !important nên
+   rule đè lên cũng phải nêu !important, nếu không mô tả vẫn ra xám trên đỏ.
+   Trên ba trang tra cứu khối nằm trực tiếp trong .fill nên đã được flex-shrink:0 giữ
+   nguyên chiều cao; riêng Trang chủ nó nằm trong .scroll-area. */
+.page-band {
+  background: #b42318; color: #fff;
+  border-radius: 12px; padding: 12px 16px; margin-bottom: 14px;
+}
+/* h1 đi kèm vì Trang chủ mở đầu bằng tên ứng dụng trong dải này. */
+.page-band h1, .page-band h2, .page-band h3 { color: #fff; margin-bottom: 4px; }
+.page-band .text-muted { color: #fff !important; }
+/* Tên ở đầu dải canh giữa (Trang chủ, Luyện thi, Ký hiệu toán học, Học tập): dòng chữ
+   đó là một cái tít ngắn, đứng giữa dải thì nhận ra ngay lúc mở trang. Chỉ tiêu đề — đoạn
+   mô tả dài dưới nó vẫn canh trái vì nhiều dòng chữ dài canh giữa rất khó đọc. */
+.band-title { text-align: center; }
+
+/* ---- Băng "đang nâng cấp" đầu trang (#872) ----
+   Admin bật cho từng trang ở Cài đặt → tab "Giao diện". Markup nằm trong base.html NGAY
+   TRƯỚC #page-body, tức ngoài cột nội dung: một lượt AJAX đổi trang chỉ thay bên trong
+   #page-body nên dải này không bị xoá theo, và vì đứng ngoài .fill/.scroll-area nó không
+   phải khối flex nào co giãn — chiều cao của nó không ảnh hưởng phép đo của question_pager.
+   Đỏ lấy đúng #b42318 đã đo ở .page-band (trắng trên nền đó 6,57:1) thay vì mở mã đỏ thứ
+   hai; chữ canh giữa vì đây là MỘT dòng thông báo, không phải đoạn mô tả dài. */
+.page-upgrade {
+  background: #b42318; color: #fff;
+  width: min(var(--page-width), 100%); margin: 8px auto; padding: 12px 16px;
+  border-radius: 12px; text-align: center; font-weight: 600;
+}
+/* Bootstrap reboot đã có `[hidden]{display:none!important}`, nêu lại theo đúng cách
+   .q-pager và .grade-theme làm: base.html có trang nạp thiếu bootstrap thì dải ẩn vẫn ẩn. */
+.page-upgrade[hidden] { display: none; }
+
+/* ---- Dải form lọc xanh (trang Học tập) ----
+   Ngay cạnh dải tiêu đề đỏ là ô chọn lớp + ô tìm bài học. Hai vùng cạnh nhau mà cùng
+   nền thì không phân biệt được vùng nào để làm gì, nên vùng lọc nhận nền xanh lơ với
+   viền đậm. .card của Bootstrap đặt nền trắng bằng `.card` (0,1,0) — độ đặc hiệu
+   ngang nhau nên thắng nhờ common.css nạp SAU bootstrap trong base/head.html (cùng
+   cơ chế như .btn-x). Hai ô bên trong phân biệt bằng màu riêng, đặt ở study.html vì đó
+   là trang duy nhất có cả ô chọn lẫn ô gõ. */
+.filter-band {
+  background: #bfdbfe; border: 1px solid #2563eb; color: #1e3a8a;
+}
+.filter-band .form-label { color: #1e3a8a; }
+
+/* ---- Nút lọc: kính lúp thay cho chữ "Lọc" ----
+   Cùng một hành động (áp bộ lọc) mà trang thì ghi "Lọc", trang thì ghi "Tìm", trang thì
+   tự nộp khi đổi ô chọn — chữ dài ngắn khác nhau làm hàng nút không nhận ra nhau. Biểu
+   tượng kính lúp là ký hiệu tìm kiếm đã quen, ngắn hơn và không phụ thuộc tiếng Việt.
+   Vẽ bằng mask nên tô theo currentColor (trắng trên .btn-primary, giống hệt dấu ✕ của
+   nút "Đóng"), không phải kèm thẻ <svg> ở 7 chỗ. min-width đúng bằng bề ngang nút "Lọc"
+   cũ (chữ 4 ký tự + padding) để mất chữ mà không mất cỡ bấm. */
+.btn-filter { min-width: 44px; }
+.btn-filter::before {
+  content: ""; display: inline-block; width: 1em; height: 1em; vertical-align: -.125em;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.075.093.107l3.85 3.849a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.107-.09zM5.5 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z'/%3e%3c/svg%3e") no-repeat center / contain;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.075.093.107l3.85 3.849a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.107-.09zM5.5 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z'/%3e%3c/svg%3e") no-repeat center / contain;
+}
+
+/* Liên kết thường và chữ nút outline cũng nằm trực tiếp trên panel: Bootstrap đặt
+   #0d6efd (3.35:1) và #6c757d (3.49:1) — dưới mức đọc rõ. Lấy chính màu hover đậm
+   sẵn có của Bootstrap làm màu thường nên bảng chữ không đổi tông, chỉ đủ tương phản
+   (4.79:1 và 5.63:1 trên panel). Nút có màu riêng (.btn-*) không bị đụng tới. */
+a { color: #0a58ca; }
+a:hover { color: #084298; }
+.btn-outline-secondary { color: #475569; }
+
+/* Chữ <code> (tên bảng, tên mô hình) Bootstrap 5.0 đặt hồng #d63384 cứng trong rules
+   (không có biến --bs-code-color ở bản này): 4.42:1 trên nền trắng nhưng chỉ 3.35:1
+   trên panel. Lấy hồng đậm hơn cùng tông nên mọi mặt nền đều đủ đọc
+   (panel 6.31:1, tím nhạt trong khung AI 6.55:1, trắng 7.78:1). */
+code { color: #9b1c5c; }
+
+/* Mọi khối KHÁC trong cột flex (tiêu đề, hàng nút, palette, khung lọc .qfilter) phải
+   giữ nguyên chiều cao của chính nó. Đây là chỗ nguy hiểm: một khối có overflow:auto
+   được phép co xuống 0 (min-height:0 như .scroll-area ở trên), nên khi danh sách dài
+   chiếm hết chỗ, khung lọc bị ép còn vài px và gần như biến mất. Ngoại lệ duy nhất là
+   .fill/.scroll-area — chính nó phải co để phần còn lại cuộn được. */
+#page-body > :not(.fill):not(.scroll-area),
+.fill > :not(.fill):not(.scroll-area) { flex-shrink: 0; }
+
+/* Mức sàn cho BẢNG dài ở trang quản trị (.tbl-wrap): các khối đứng như khung lọc đang
+   mở hay dải phân trang không co lại, nên trên cửa sổ thấp cột flex từng ép vùng bảng
+   xuống ~25px — người quản lý gần như không thấy câu hỏi nào. 220px (~2 hàng) là sàn;
+   khi chỗ không đủ thì #page-body tự cuộn, thà phải cuộn còn hơn mất vùng làm việc. */
+.tbl-wrap.scroll-area { min-height: 220px; }
+
+/* Cùng bệnh, cùng thuốc cho khung nội dung của tab (.tab-content.scroll-area — trang
+   Luyện thi và trang Cài đặt): nó cũng là .scroll-area nên được phép co xuống 0, và ở
+   cửa sổ thấp từng bị ép còn 24px — tức cả danh sách đề biến mất sau một dải màu. */
+.tab-content.scroll-area { min-height: 220px; }
+
+/* In thì bỏ hết mọi trần chiều cao: trang giấy dài bao nhiêu cũng in hết,
+   không bị cắt còn một màn hình như trên máy. */
+@media print {
+  html, body { overflow: visible; }
+  #page-body { height: auto; min-height: 0; display: block; overflow: visible; }
+  /* Hai trang làm bài bị chặn chiều cao bằng selector đặc hiệu HƠN (`:has()` ở trên), nên
+     luật in phải lặp lại đúng bộ chọn đó — ghi mỗi `#page-body` thì không thắng nổi. */
+  #page-body:has(#exam-form),
+  #page-body:has(.q-wrap.scroll-area) { height: auto; overflow: visible; }
+  .fill, .scroll-area { display: block; flex: none; min-height: 0; overflow: visible; }
+  .tbl-wrap.scroll-area { min-height: 0; }
+  .q-detail.scroll-area { min-height: 0; }
+}
+
+/* ---- Nhãn "đang cập nhật" của bài học chưa có nội dung ----
+   Bài học SGK chưa có chữ lẫn ảnh SGK thì mọi trang (Học tập, Năng lực, Quản lý bài học SGK) đều
+   đặt cái NHÃN này thay cho nút lý thuyết: hệ thống không tự soạn bài, nên không có chỗ
+   nào để bấm và chờ.
+   Nền xanh ĐẬM #1e3a8a chứ không phải #0d6efd của .btn-primary, để chữ trắng này không
+   giống một nút bấm — cạnh nó vẫn còn nút "📖 Mở lý thuyết" xanh nhạt hơn. */
+.lesson-soon {
+  display: inline-flex; align-items: center; border-radius: 8px;
+  padding: 5px 10px; font-size: .82rem; font-weight: 600; line-height: 1.25;
+  background: #1e3a8a; color: #fff;
+}
+
+/* ---- Badge loại bài ---- */
+.mode-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.85rem; padding: 4px 12px; border-radius: 20px;
+  font-weight: 600; margin-bottom: 12px;
+}
+.mode-badge.trac_nghiem { background: #dbeafe; color: #1d4ed8; }
+.mode-badge.tu_luan     { background: #fef9c3; color: #854d0e; }
+.mode-badge.ca_hai      { background: #dcfce7; color: #166534; }
+.mode-badge.dung_sai    { background: #ede9fe; color: #5b21b6; }
+
+/* ---- Badge nhánh Toán: Đại số / Hình học + có-không vẽ hình ---- */
+.q-badge {
+  display: inline-block; font-size: .85rem; font-weight: 600;
+  padding: 3px 10px; border-radius: 12px; margin: 0 4px 4px 0;
+  background: #f3f4f6; color: #4b5563; white-space: nowrap;
+}
+.q-badge.branch-dai_so  { background: #e0e7ff; color: #3730a3; }
+.q-badge.branch-hinh_hoc{ background: #ccfbf1; color: #115e59; }
+.q-badge.fig-1          { background: #fef3c7; color: #92400e; }
+.q-badge.fig-0          { background: #f3f4f6; color: #6b7280; }
+.q-badge-soft {
+  display: inline-block; font-size: .85rem; padding: 3px 10px;
+  border-radius: 10px; background: #f9fafb; color: #6b7280;
+  border: 1px solid #e5e7eb; margin: 0 4px 4px 0;
+}
+
+/* ---- Danh sách nhiều cách giải của một câu hỏi (trang Quản lý câu hỏi) ---- */
+.solution-methods {
+  margin: 6px 0 10px; padding: 8px 10px;
+  border: 1px solid var(--zone-sol-bd); border-radius: 10px;
+  background: var(--zone-sol-bg); color: var(--zone-sol-fg);
+}
+.sol-method + .sol-method { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e5e7eb; }
+.sol-method-head { display: flex; align-items: center; flex-wrap: wrap; font-size: .9rem; }
+.sol-method-body {
+  /* la .ai-box nen tu co font/mau/nen — o day chi keo sat duoi hang tieu de */
+  margin-top: 6px;
+}
+
+/* ---- Khối hình vẽ của đề và lời giải ----
+   Nền cam = "đây là vùng hình"; khối hình thuộc lời giải chỉ khác ở viền màu lời giải.
+   Ảnh bên trong giữ nền trắng: tranh scan giấy lên nền tint thì mất nét, mà học sinh
+   cần đọc rõ từng đường kẻ. */
+.q-figure {
+  margin: 10px 0; padding: 10px 12px;
+  border: 1px dashed var(--zone-fig-bd); border-radius: 10px;
+  background: var(--zone-fig-bg); color: var(--zone-fig-fg);
+}
+.q-figure-solution { border-style: solid; border-color: var(--zone-sol-bd); }
+.q-figure-title { font-size: .9rem; font-weight: 700; color: var(--zone-fig-fg); margin-bottom: 6px; }
+.q-figure-img { max-width: 100%; height: auto; border-radius: 8px; background: #fff; display: block; }
+/* Nhiều hình của cùng một đề (bài nối cột, mỗi ý một tranh) xếp thành dải ngang và tự
+   xuống dòng khi hẹp: học sinh thấy chúng đồng thời thay vì phải cuộn qua từng ảnh
+   full-width. `flex-basis` 220px là mức một tranh vẫn đọc rõ trên điện thoại. */
+.q-figure-imgs { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+.q-figure-imgs .q-figure-img { flex: 1 1 220px; max-height: 320px; object-fit: contain; }
+/* Chữ ghi chú nằm TRÊN nền cam của khối hình: xám #6b7280 chỉ 3.89:1 ở đó nên dùng
+   màu chữ chung --meta-fg (6.09:1), vẫn nhạt hơn tiêu đề mà đọc được. */
+.q-figure-note { font-size: .9rem; color: var(--meta-fg); margin-top: 6px; font-style: italic; }
+
+/* ---- Khối lời giải đã lưu ---- */
+.solution-box {
+  border: 1px solid var(--zone-sol-bd); border-radius: 8px;
+  background: var(--zone-sol-bg); color: var(--zone-sol-fg);
+  padding: 10px 12px; margin: 4px 0 6px; font-size: .92rem;
+  white-space: pre-wrap; word-break: break-word;
+}
+
+/* ---- Question block (làm bài) ---- */
+.question-block {
+  border: 1px solid #e5e7eb; border-radius: 10px;
+  padding: 16px; margin: 16px 0; background: #fff;
+}
+.question-block .q-number { font-weight: 700; color: #374151; margin-bottom: 8px; }
+/* Đề bài nhiều dòng (bảng, các ý của khối "Chọn đáp án đúng", ô trống kề nhau) phải giữ
+   được ngắt dòng: `pre-line` bảo lưu ký tự xuống dòng nhưng vẫn nén khoảng trắng thừa,
+   nên dòng không bị kéo giãn vô hạn khi trích nguồn có thụt đầu dòng.
+   Nền tím than = vùng "đề bài": trên mọi trang làm bài/kết quả, khối chữ đầu tiên của
+   một câu luôn tô màu này nên học sinh tìm được câu hỏi mà không cần đọc số câu. */
+.q-prompt {
+  white-space: pre-line;
+  background: var(--zone-ask-bg); color: var(--zone-ask-fg);
+  border: 1px solid var(--zone-ask-bd); border-radius: 8px;
+  padding: 10px 12px; margin-bottom: 10px;
+}
+/* Ảnh inline trong đề bài: giữ nguyên vị trí giữa câu chữ (nối cột, mỗi ý một tranh) và
+   chỉ chặn kích thước tràn khung. `max-height` đủ để nhiều ảnh nhỏ tự xếp cạnh nhau trên
+   một hàng vì <img> nội tuyến không buộc xuống dòng; ảnh lớn vẫn được toàn bề ngang. */
+.q-prompt img { max-width: 100%; max-height: 360px; height: auto; border-radius: 6px;
+                background: #fff; vertical-align: middle; }
+
+/* ---- Trắc nghiệm options ----
+   Nền xanh lơ = vùng "phương án / câu trả lời của em": áp cho cả ô chọn A–D, ý Đúng/Sai
+   và ô tự luận, tức mọi thứ học sinh ĐIỀN hay CHỌN mang một màu duy nhất, khác hẳn màu
+   đề bài bên trên và màu lời giải bên dưới. Không viền + không đổi margin để giữ nguyên
+   hình thể hàng phương án (trang làm bài đã căn theo cỡ chữ ở #692). */
+.opt label { cursor: pointer; }
+.opt { border-radius: 6px; padding: 9px 10px; font-size: 1.02rem;
+       background: var(--zone-opt-bg); color: var(--zone-opt-fg); }
+.opt:hover { background: var(--zone-opt-bd); }
+/* Cả HÀNG phương án trắc nghiệm là một ô bấm, không chỉ hòn radio và mấy chữ. <label>
+   nội tuyến chỉ rộng đúng bằng phần chữ bên trong, nên khoảng trắng còn lại của hàng
+   không phải mục tiêu bấm: rê chuột vào mép phải dòng đáp án vẫn là mũi tên, bấm vào
+   đó không chọn gì. `display:block` + `margin` âm kéo label ra sát viền `.opt`, rồi
+   `padding` dương trả lại đúng chỗ chữ từng đứng (lệch 9px 10px) — hình thể hàng phương
+   án không đổi một pixel mà cả dòng thành nhãn của hòn radio bên trong nó.
+   `.opt > label` (label TRỰC TIẾP) là bắt buộc: câu Đúng/Sai nhúng hai nhãn Đúng/Sai
+   trong `.tf-pick`, cho khối hoá label ở hàng đó thì khoảng trống cuối dòng thành ô
+   "Đúng" và học sinh bấm nhầm ý.
+   `.opt:has(> label)` riêng cho con trỏ: trình duyệt nào chưa hiểu `:has()` thì mọi thứ
+   như cũ (mũi tên ở phần trống), chưa bao giờ hiện con trỏ tay ở nơi bấm không ăn. */
+.opt > label { display: block; cursor: pointer; margin: -9px -10px; padding: 9px 10px; }
+.opt:has(> label) { cursor: pointer; }
+/* Hòn radio/checkbox bên cạnh mỗi phương án: trình duyệt vẽ cỡ ~13px, nhỏ hơn hẳn chữ
+   1.02rem nên rất dễ bấm hụt, nhất là bằng ngón tay. Đặt 20px để cỡ bấm tương xứng với
+   dòng chữ; cộng padding 9px 10px của .opt thì cả hàng phương án thành một vùng bấm
+   cao ~40px. Luật áp cho cả hai ô Đúng/Sai của câu nhiều ý. */
+.opt input[type=radio], .opt input[type=checkbox],
+.exam-statement-pick input[type=radio] { width: 20px; height: 20px; vertical-align: middle; }
+/* Phương án CÓ ẢNH (một tranh cho mỗi ý a–d): xếp HAI cột. Bổn cũ một cột đặt bốn tranh
+   liên tiếp ~140px = ~560px, cao hơn bất kỳ vùng đọc nào nên không bao giờ thấy đủ bốn
+   phương án mà không kéo — đúng thứ trang làm bài phải hiển thị cùng lúc. Hai cột thì
+   phần chữ của mỗi phương án vẫn nguyên cỡ chữ, chỉ bớt một hàng. `:has()` giới hạn luật
+   vào câu thật sự có tranh; trình duyệt nào chưa hiểu :has() thì mọi thứ như cũ.
+   `:not(.q-hidden)` là BẮT BUỘC: `.question-block:has(.opt img)` đặc hiệu hơn `.q-hidden`
+   (static/practice.css) nên thiếu nó thì câu bị pager ẩn vẫn bày ra dưới câu đang làm,
+   thành hai câu một lúc và vùng đọc phải kéo. */
+.question-block:not(.q-hidden):has(.opt img) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+                                               gap: 0 12px; }
+.question-block:not(.q-hidden):has(.opt img) > :not(.opt) { grid-column: 1 / -1; }
+
+/* ---- Tự luận ---- */
+.essay-box {
+  width: 100%; min-height: 90px; border: 1px solid var(--zone-opt-bd); border-radius: 8px;
+  background: var(--zone-opt-bg); color: var(--zone-opt-fg);
+  padding: 10px; font-size: 1rem; resize: vertical; font-family: inherit;
+  transition: border-color .15s;
+}
+.essay-box:focus {
+  outline: none; border-color: var(--zone-opt-fg);
+  box-shadow: 0 0 0 3px rgba(22,78,99,.18);
+}
+.essay-label { font-size: 0.9rem; color: #6b7280; margin-bottom: 4px; display: block; }
+
+/* ---- Split layout (cả hai) ---- */
+.split-row { display: flex; gap: 16px; }
+.split-row .split-mc    { flex: 0 0 46%; }
+.split-row .split-sep   { width: 1px; background: #e5e7eb; flex-shrink: 0; }
+.split-row .split-essay { flex: 1; min-width: 0; }
+
+/* ---- Actions ---- */
+.actions { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* Thanh nút hành động (Làm bài / Nộp bài…) bám góc trên-phải, ngay dưới banner/menu,
+   nổi trên nội dung để học sinh luôn thấy nút dù đề dài phải cuộn (xem #page-body).
+   Nền mờ + đổ bóng cho nút đọc được khi trôi qua thẻ câu hỏi. z-index dưới modal
+   (Bootstrap 1055) để hộp thoại vẫn phủ lên được. Màn hẹp (<700px) thì thanh trở về
+   dòng thường — xem media query ngay dưới đây. */
+.actions-fixed {
+  position: fixed;
+  top: calc(var(--fixed-top) + 12px);
+  right: 16px;
+  z-index: 1040;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .9);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, .12);
+}
+
+/* Từ 700px trở xuống KHÔNG còn khe trống bên phải để thanh nút nổi lên (exam.css chỉ
+   chừa chỗ từ 700px), nên ở màn hẹp nó che mất tiêu đề, đồng hồ đếm ngược và ô chọn.
+   Vì thanh này luôn là phần tử cuối của form, bỏ position:fixed trả nó về dòng thường
+   là đủ: nó nằm ngay dưới vùng câu hỏi, vẫn thấy mà không che gì. Nút đặt tối thiểu
+   44px theo khuyến nghị bấm bằng ngón tay.
+
+   `order: -1` sửa tiếp chỗ hở của bản "dòng thường" ấy: để cuối form thì trên cửa sổ
+   thấp, tổng các khối (thanh điều hướng + trần `min-height` của vùng đọc + thanh nút)
+   cao hơn cột nội dung, nút "Nộp bài" rơi xuống dưới mép cột và phải cuộn mới tới —
+   đo ở 680x600 mất 25px của nút cao 44px, phần bị cắt đúng chỗ footer dính đáy che
+   (footer đã về cuối tài liệu từ #853, song nút nằm sát đáy cột thì vẫn phải cuộn).
+   Dời thanh lên đứng TRƯỚC vùng câu
+   hỏi thì nút ở đầu cột, luôn thấy không cần cuộn; `order` vẫn giữ nó trong dòng nên
+   nó chiếm chỗ chứ không phủ lên câu hỏi (sticky/fixed đã đo thử: che phương án).
+   `.q-pager` order -2 để thứ tự đọc vẫn là điều hướng câu -> Nộp bài -> câu hỏi. */
+@media (max-width: 699px) {
+  .actions-fixed { position: static; justify-content: flex-start; background: #fff;
+                   box-shadow: none; border-radius: 0; padding: 8px 0 0; order: -1; }
+  .q-pager { order: -2; }
+  .actions-fixed .btn { min-height: 44px; font-size: 1rem; }
+}
+
+/* ---- Phản hồi khi rê chuột (hover) cho mọi menu / button ----
+   Bootstrap 5 chỉ đổi màu nền/viền khi hover nên khá nhẹ. Giữ nguyên bảng màu ấy,
+   thêm đổ bóng và nhấc lên một chút để người dùng biết con trỏ đang ở trên nút.
+   Bỏ hiệu ứng ở trạng thái đang mở / đang bấm (.active, .show, :active) để nút
+   không "nảy" khi vừa bấm xổ menu. */
+@media (prefers-reduced-motion: no-preference) {
+  .btn, .dropdown-item {
+    transition: color .15s ease-in-out, background-color .15s ease-in-out,
+                border-color .15s ease-in-out, box-shadow .15s ease-in-out,
+                transform .15s ease-in-out;
+  }
+}
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 .25rem .6rem rgba(15, 23, 42, .18);
+}
+.btn:active, .btn.active, .show > .btn.dropdown-toggle { transform: none; box-shadow: none; }
+/* Nút là một hàng trong menu con thì không nhấc (sẽ lệch các hàng), chỉ đổi nền như
+   mặc định của Bootstrap. */
+.dropdown-menu .btn:hover { transform: none; box-shadow: none; }
+/* Hàng menu con: vệt nền xanh nhạt cho dòng đang trỏ tới. */
+.dropdown-item:hover, .dropdown-item:focus { background-color: #eef2ff; color: #1d4ed8; }
+
+/* ---- Menu con: mỗi mục một nền + một màu chữ riêng ----
+   Ba menu cha ("Lý thuyết", "Bài tập", "Theo dõi quá trình") có 2-4 mục cùng nền trắng,
+   phải đọc hết chữ mới biết mình đang trỏ vào đâu. Mỗi mục mang một lớp màu: nền nhạt +
+   chữ đậm cùng tông, mọi cặp đều đọc được: nền thường đạt từ 6,3:1, nền lúc rê chuột từ
+   4,9:1 (luật của repo là >= 4,5:1).
+   Không tô theo thứ tự (`:nth-child`): admin bật/tắt từng mục ở trang "Giao diện" và
+   static/js/nav_activity.js chèn mục "Lịch sử"/"Năng lực" sau lượt nộp bài đầu tiên, nên
+   thứ tự đổi thì màu đổi chỗ — màu phải gắn với mục, không gắn với vị trí.
+   Độ đặc hiệu: `.dropdown-menu a.nav-sub` (0,2,1) thắng `.dropdown-item` và `.btn-warning`
+   của Bootstrap (0,1,0) lẫn luật hover chung phía trên (0,2,0). Hover dùng `:where()` nên
+   không cộng đặc hiệu, vẫn (0,2,1) nhưng đứng sau dòng cơ sở nên đổi nền được. Riêng mục
+   đang đứng (0,3,0, khối "Trang đang đứng" dưới đây) thắng cả hai: rê chuột vào nó không
+   làm mất dấu tô sáng navy.
+   `a.btn.nav-sub` là nhánh dự phòng cho "Lịch sử"/"Năng lực": static/js/nav_activity.js
+   chèn hai mục đó NGANG HÀNG trên navbar (chèn vào dropdown đang ẩn thì không hiện ra),
+   nên chúng không có tổ tiên là .dropdown-menu. */
+.dropdown-menu a.nav-sub, a.btn.nav-sub { background: var(--sub-bg); color: var(--sub-fg); }
+.dropdown-menu a.nav-sub:where(:hover, :focus),
+a.btn.nav-sub:where(:hover, :focus) { background: var(--sub-bg-hover); color: var(--sub-fg); }
+.nav-sub-blue   { --sub-bg: #dbeafe; --sub-bg-hover: #bfdbfe; --sub-fg: #1e40af; }
+.nav-sub-violet { --sub-bg: #e9d5ff; --sub-bg-hover: #d8b4fe; --sub-fg: #6b21a8; }
+.nav-sub-green  { --sub-bg: #dcfce7; --sub-bg-hover: #bbf7d0; --sub-fg: #166534; }
+.nav-sub-amber  { --sub-bg: #fef3c7; --sub-bg-hover: #fde68a; --sub-fg: #92400e; }
+.nav-sub-orange { --sub-bg: #ffedd5; --sub-bg-hover: #fed7aa; --sub-fg: #9a3412; }
+.nav-sub-teal   { --sub-bg: #ccfbf1; --sub-bg-hover: #99f6e4; --sub-fg: #115e59; }
+.nav-sub-pink   { --sub-bg: #fce7f3; --sub-bg-hover: #fbcfe8; --sub-fg: #9d174d; }
+.nav-sub-indigo { --sub-bg: #e0e7ff; --sub-bg-hover: #c7d2fe; --sub-fg: #3730a3; }
+
+/* ---- Nút "Đóng" của popup: một kiểu duy nhất ở mọi popup ----
+   Đóng là hành động THOÁT nên phải nhìn khác hẳn các nút hành động xanh trong
+   cùng chân popup. Nền đỏ + chữ trắng + dấu ✕ bên trái chữ: dấu ✕ vẽ bằng mask
+   nên tô theo `currentColor`, không cần kèm thẻ <svg> ở từng nút — thứ tự lớp
+   (common.css nạp sau bootstrap) đủ thắng `.btn-secondary`/`.btn-outline-*` cùng
+   độ đặc hiệu, riêng hai trạng thái :hover/:focus phải nêu rõ vì Bootstrap dùng
+   `.btn-x:hover` (0,2,0) chứ không phải nền của `.btn`. */
+.btn-x {
+  background: #dc2626; border-color: #dc2626; color: #fff;
+}
+.btn-x:hover, .btn-x:focus, .btn-x:active, .btn-x.active,
+.btn-outline-secondary.btn-x:hover, .btn-outline-secondary.btn-x:focus {
+  background: #b91c1c; border-color: #b91c1c; color: #fff;
+}
+.btn-x::before {
+  content: ""; display: inline-block; width: .8em; height: .8em;
+  margin-right: .45em; vertical-align: -.09em;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e") no-repeat center / contain;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e") no-repeat center / contain;
+}
+
+/* ---- Combobox: nhãn và mọi item canh giữa, sẵn sàng xuống dòng ----
+   Mặc định của Bootstrap: .dropdown-item có `white-space: nowrap` nên nhãn dài ("Sinh nội
+   dung đầy đủ cho AI (đọc hình vẽ)") tràn khỏi menu, còn chữ trong ô chọn thì lề trái.
+   Độ rộng hẹp là chuyện bình thường — cột nội dung co theo cửa sổ, ô chọn nằm cạnh
+   nhiều ô khác, hay HTML đổi số cột — nên luật đặt ở đây cho MỌI combobox của hệ thống.
+   `text-align-last` là thuộc tính duy nhất canh giữa được Ô ĐÓNG của <select> (đã đo trong
+   trình duyệt). Danh sách xổ ra của <select> do hệ điều hành vẽ nên CSS không với tới —
+   phần tử <option> vẫn được nhắc vì trình duyệt nào tôn trọng CSS thì ô khớp luôn. */
+select, .form-select, .dropdown-item, option {
+  text-align: center;
+}
+select, .form-select { text-align-last: center; }
+option, .dropdown-item {
+  text-align-last: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+/* select2 (danh sách bài học SGK ở trang chủ và bộ lọc câu hỏi) KHÔNG phải <select> đóng:
+   ô chọn là <span class="select2-selection__rendered">, mỗi item là một <li>, nên phải
+   nhắc đúng các lớp ấy thì combobox này mới canh giữa như những combobox còn lại.
+   Danh sách chọn nhiều của nó có ô tick nằm TRÁI từng hàng (.topic-check) — dòng chữ
+   canh giữa trên khoảng còn lại, ô tick vẫn ở chỗ của nó. */
+.select2-container .select2-selection__rendered,
+.select2-container .select2-search__field,
+.select2-container .select2-results__option {
+  text-align: center;
+}
+.select2-container .select2-selection__rendered { text-align-last: center; }
+.select2-container .select2-results__option {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+/* Ô ĐÓNG của select2 mặc định `white-space:nowrap` + ellipsis nên nhãn dài bị cắt thành
+   "…". Luật chống cắt phải CAO HƠN một bậc so với select2 (0,3,0): select2.min.css được
+   nạp ở đầu mảnh trang (templates/index.html), tức SAU common.css, nên hai luật ngang
+   bậc thì select2 thắng. Cách nâng bậc: gộp `.select2-container` với
+   `.select2-container--default` — cả hai lớp đều do select2 gắn lên cùng một phần tử
+   (đã đo trong trình duyệt), không phải lớp tự chọn. Chỉ chế độ nhiều chọn tồn tại
+   trong hệ thống (2 ô bài học SGK), nên không luật nào cho ô đơn. */
+.select2-container.select2-container--default .select2-selection--multiple .select2-selection__rendered {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+/* Mỗi ô đã chọn là một hàng trong hộp; cho nó quyền chiếm tối đa bề rộng hộp để
+   xuống dòng thay vì tràn ra ngoài. */
+.select2-container .select2-selection__choice {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* ---- Score card (kết quả) ----
+   Khối điểm đứng trên vùng "Chi tiết từng câu" và KHÔNG co lại, nên mỗi px nó chiếm
+   là một px mất của danh sách câu. Hàng trên xếp emoji + điểm + nhãn loại bài nằm
+   ngang nhau thay vì chồng lên nhau. */
+.score-card {
+  border-radius: 14px; padding: 12px 18px; text-align: center;
+  margin-bottom: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.07);
+}
+.score-top { display: flex; align-items: center; justify-content: center;
+  gap: 6px 16px; flex-wrap: wrap; }
+.score-emoji { font-size: 1.9rem; line-height: 1; }
+.score-card .mode-badge { margin-bottom: 0; }
+
+/* ---- Question card (kết quả) ---- */
+.q-card {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+  padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.q-num { font-weight: 700; color: #374151; margin-bottom: 8px; }
+
+/* ---- Thanh liên kết nhảy tới từng câu (macro q_jump_bar ở 4 trang kết quả) ----
+   Thanh này có thể mang tới 50 ô nên ô số nhỏ hơn palette phòng thi (34px ở exam.css) để
+   không chiếm chỗ của danh sách câu; nó tự xuống hàng khi thanh hẹp. Tiêu đề của khối nằm
+   trong chính thanh này (tham số `title`) thay vì một hàng <h5> riêng — hàng riêng tốn thêm
+   ~24px chiều cao lấy mất của danh sách câu. */
+.q-jump { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-bottom: 10px; }
+.q-jump-title { font-size: 1.02rem; font-weight: 700; color: #374151; }
+.q-jump-group { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.q-jump-label { font-size: .8rem; font-weight: 600; margin-right: 2px; }
+.q-jump-dot { display: inline-flex; align-items: center; justify-content: center;
+  min-width: 26px; height: 26px; padding: 0 6px; border-radius: 6px;
+  font-size: .8rem; font-weight: 600; text-decoration: none; }
+.q-jump-ok .q-jump-dot { background: #dcfce7; color: #166534; }
+.q-jump-part .q-jump-dot { background: #fef3c7; color: #92400e; }
+.q-jump-bad .q-jump-dot { background: #fee2e2; color: #991b1b; }
+.q-jump-skip .q-jump-dot { background: #e5e7eb; color: #374151; }
+.q-jump-pend .q-jump-dot { background: #f1f5f9; color: #475569; }
+.q-jump-ok .q-jump-label { color: #166534; }
+.q-jump-part .q-jump-label { color: #92400e; }
+.q-jump-bad .q-jump-label { color: #991b1b; }
+.q-jump-skip .q-jump-label { color: #374151; }
+.q-jump-pend .q-jump-label { color: #475569; }
+.q-jump-dot:hover { filter: brightness(.95); }
+/* Câu là phần tử nằm TRONG vùng cuộn .scroll-area, nên khi nhảy tới nó trình duyệt
+   chừa thêm đúng chỗ của menu dính đỉnh — cùng luật với .exam-q ở trang làm bài. */
+.q-card[id], .q[id] { scroll-margin-top: 8px; }
+
+/* Mức sàn vùng "Chi tiết từng câu" của trang kết quả: khối điểm + thanh nhảy + hàng nút
+   không co lại, nên trên cửa sổ thấp cột flex từng ép danh sách câu còn vài chục px.
+   Cùng thuốc với .tbl-wrap.scroll-area ở trang quản trị: đặt mức sàn bằng px, thiếu chỗ
+   thì #page-body tự cuộn. 420px là mức để một cửa sổ thấp vẫn hiện ra khoảng 4 câu thay
+   vì 3 — người đọc phải thấy lời giải, không phải thấy thanh cuộn. */
+.q-detail.scroll-area { min-height: 420px; }
+
+/* ---- MC options trong kết quả ----
+   Phương án ĐÚNG/SAI giữ nguyên xanhĐỎ của trang chấm (đó là PHÁN QUYẾT, không phải
+   loại vùng), còn phương án không chọn thì tô màu vùng "phương án" cho khớp với trang
+   làm bài. dE giữa nền phương án và ô ĐÚNG là 16.1 nên không lẫn được. */
+.mc-opt {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 9px 12px; border-radius: 7px; margin: 3px 0; font-size: 1rem;
+}
+.mc-opt.correct { background: #dcfce7; }
+.mc-opt.wrong   { background: #fee2e2; }
+.mc-opt.neutral { background: var(--zone-opt-bg); color: var(--zone-opt-fg); }
+.mc-opt .opt-icon { flex-shrink: 0; width: 20px; }
+
+/* ---- Vì sao một phương án SAI khác lại sai (feedback.options) ----
+   Dòng này NẰM GIỮA hai hàng phương án nên phải nhìn ra là lời bình, không phải hàng thứ
+   năm: nghiêng, nhỏ hơn hàng phương án một bậc, và có vạch đứng bên trái tách khỏi mép thẻ.
+   Thiếu ba dấu hiệu đó thì "🔍 Số này xuất hiện nguyên văn trong đề bài" đọc thành một
+   phương án của câu hỏi — học sinh lớp nhỏ không phân biệt được theo cỡ chữ. */
+.mc-note {
+  color: #475569; font-size: .85rem; font-style: italic;
+  margin: 2px 0 6px 30px; padding-left: 8px;
+  border-left: 3px solid #cbd5e1;
+}
+
+/* ---- Khối "Phân tích lỗi" (services/error_feedback.py) ----
+   Một khối duy nhất, nền hồng magenta: "bạn sai ở đâu". */
+.fb-box {
+  background: var(--zone-err-bg); color: var(--zone-err-fg);
+  border: 1px solid var(--zone-err-bd); border-radius: 8px;
+  padding: 10px 12px; margin: 10px 0;
+}
+.fb-head { font-weight: 600; color: var(--zone-err-fg); font-size: .98rem; }
+.fb-note { color: var(--zone-err-fg); font-size: .95rem; margin-top: 4px; }
+.fb-advice { color: var(--zone-err-fg); font-size: .92rem; margin-top: 4px; }
+
+/* ---- Essay box hiển thị kết quả ----
+   Vẫn là câu trả lời của học sinh nên giữ màu vùng trả lời; chỉ bỏ `resize` qua
+   `cursor:default`. Chữ "chưa làm" phải theo màu vùng: xám nhạt #9ca3af trên nền lơ
+   chỉ đạt 2.15:1, không đọc được. */
+.essay-box.readonly {
+  background: var(--zone-opt-bg); min-height: 44px; line-height: 1.6;
+  color: var(--zone-opt-fg); cursor: default;
+}
+.essay-empty { color: var(--zone-opt-fg); font-style: italic; }
+
+/* ---- Section label ---- */
+.section-lbl { font-size: .78rem; font-weight: 600; color: #6b7280; margin-bottom: 6px; }
+
+/* ---- AI explain ----
+   Nút "Giải thích" và khung kết quả cùng màu lời giải: bấm vào đâu thì khối hiện ra
+   đúng vùng đó, người đọc không phải đi tìm khung mới giữa trang. */
+.ai-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .78rem; padding: 4px 12px; border-radius: 20px;
+  border: 1px solid var(--zone-sol-fg); color: var(--zone-sol-fg); background: transparent;
+  cursor: pointer; transition: all .15s; margin-top: 10px;
+}
+.ai-btn:hover    { background: var(--zone-sol-bd); }
+.ai-btn:disabled { opacity: .5; cursor: wait; }
+
+.ai-box {
+  margin-top: 10px; padding: 12px 16px;
+  background: var(--zone-sol-bg); color: var(--zone-sol-fg);
+  border: 1px solid var(--zone-sol-bd); border-radius: 8px;
+  font-size: .93rem; line-height: 1.7; display: none;
+}
+.ai-box.visible { display: block; }
+
+/* Markdown bên trong ai-box */
+.ai-box h1, .ai-box h2, .ai-box h3 { font-size: 1rem; font-weight: 700; margin: 10px 0 4px; }
+.ai-box strong { font-weight: 700; }
+.ai-box em     { font-style: italic; }
+.ai-box code   { background: #fff; padding: 1px 5px; border-radius: 4px; font-size: .88rem; }
+.ai-box ul, .ai-box ol { padding-left: 20px; margin: 6px 0; }
+.ai-box li     { margin: 3px 0; }
+.ai-box p      { margin: 6px 0; }
+
+/* ---- Empty state ---- */
+.empty-state { text-align: center; padding: 48px 16px; color: var(--meta-fg); }
+.empty-state .icon { font-size: 3rem; margin-bottom: 8px; }
+
+/* ==========================================================================
+   Responsive — Mobile
+   ========================================================================== */
+@media (max-width: 640px) {
+  .split-row { flex-direction: column; }
+  .split-row .split-sep { width: 100%; height: 1px; }
+
+  .score-card { padding: 16px 12px; }
+  .q-card, .question-block { padding: 12px; }
+
+  .actions { flex-direction: column; }
+  .actions .btn { width: 100%; }
+}
+
+/* ---- Table: scroll ngang trên mobile ---- */
+@media (max-width: 768px) {
+  table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+  /* Form dùng flex inline: cho phép wrap trên mobile */
+  form[style*="display:flex"],
+  div[style*="display:flex"] { flex-wrap: wrap; }
+}
+
+/* ---- Navbar responsive ---- */
+/* Nền + vạch phân chia căng hết chiều ngang, nội dung menu bó vào --page-width
+   để thẳng hàng với cột nội dung (#page-body). */
+.navbar-shell { background: #fff; border-bottom: 1px solid #dee2e6; }
+.navbar-main {
+  display: flex; align-items: center; gap: 6px;
+  width: min(var(--page-width), 100%); margin: 0 auto;
+  padding: 8px 16px; flex-wrap: wrap;
+}
+.navbar-main .btn-sm { padding: 4px 8px; font-size: 0.82rem; }
+
+@media (max-width: 768px) {
+  .navbar-main { gap: 4px; padding: 6px 8px; }
+  #page-body { padding-left: 8px; padding-right: 8px; }
+  .navbar-main .btn-sm { padding: 3px 6px; font-size: 0.75rem; }
+}
+@media (max-width: 480px) {
+  .navbar-main { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .navbar-main > * { flex-shrink: 0; }
+}
+
+/* ---- Nút "Trang chủ": đỏ thương hiệu, không xám như "Bài tập" ----
+   Trước đây cả hai cùng `btn-secondary` nên đứng cạnh nhau y hệt nhau, không phân biệt
+   được nút nào mở trang giới thiệu. Đỏ lấy đúng mã dải tiêu đề `.page-band` (#b42318)
+   cho trùng nhận diện sản phẩm; chữ trắng trên nền đó đo 6,5:1, vượt luật 4,5:1 của repo.
+   Khối này đặt TRƯỚC khối "Trang đang đứng" bên dưới. Nút thường thì rule tô sáng thắng
+   sẵn vì đặc hiệu cao hơn (0,3,0 so với 0,2,0); riêng :hover/:focus của nó (0,3,0) hòa
+   điểm nên phải nhờ thứ tự: đứng sau vẫn là navy, rê chuột vào nút "Trang chủ" khi đang
+   ở /trang-chu không xóa mất dấu "đang ở đây". */
+.navbar-main .nav-home { background: #b42318; border-color: #b42318; color: #fff; }
+.navbar-main .nav-home:hover, .navbar-main .nav-home:focus {
+  background: #8f1c13; border-color: #8f1c13; color: #fff;
+}
+
+/* ---- Trang đang đứng: tô sáng mục menu tương ứng ----
+   Một thuộc tính duy nhất trên khối đỉnh trang — `.site-top[data-nav-active="khóa"]`
+   — nói lên người dùng đang đứng ở trang nào; CSS chỉ việc tô mục mang `data-nav`
+   (nút thường, mục menu con) hoặc `data-nav-group` (nút cha) trùng khóa đó.
+   Khóa do services/ui_service.NAV_PATHS quyết định: Jinja ghi lúc vẽ navbar, còn
+   static/js/nav_active.js ghi lại sau mỗi lượt AJAX vì navbar nằm ngoài #page-body.
+   Màu: xanh navy đậm #0b3d91 cho mục đang đứng; nút cha của nó cũng navy nhưng mang
+   thêm vạch trắng sát mép dưới, nên "đang ở trong nhóm này" phân biệt được với
+   "đang ở đúng mục này" mà không phải dùng hai sắc xanh gần nhau khó nhận. */
+.site-top[data-nav-active="trang_chu"] [data-nav="trang_chu"],
+.site-top[data-nav-active="home"] [data-nav="home"],
+.site-top[data-nav-active="study"] [data-nav="study"],
+.site-top[data-nav-active="symbols"] [data-nav="symbols"],
+.site-top[data-nav-active="exams"] [data-nav="exams"],
+.site-top[data-nav-active="history"] [data-nav="history"],
+.site-top[data-nav-active="capability"] [data-nav="capability"],
+.site-top[data-nav-active="today"] [data-nav="today"],
+.site-top[data-nav-active="weekly_report"] [data-nav="weekly_report"],
+.site-top[data-nav-active="latest_result"] [data-nav="latest_result"],
+.site-top[data-nav-active="help"] [data-nav="help"],
+.site-top[data-nav-active="admin_questions"] [data-nav="admin_questions"],
+.site-top[data-nav-active="admin_uploads"] [data-nav="admin_uploads"],
+.site-top[data-nav-active="admin_topics"] [data-nav="admin_topics"],
+.site-top[data-nav-active="admin_exams"] [data-nav="admin_exams"],
+.site-top[data-nav-active="admin_grading"] [data-nav="admin_grading"],
+.site-top[data-nav-active="admin_algorithms"] [data-nav="admin_algorithms"],
+.site-top[data-nav-active="admin_diagnosis"] [data-nav="admin_diagnosis"],
+.site-top[data-nav-active="admin_ux"] [data-nav="admin_ux"],
+.site-top[data-nav-active="admin_feedback"] [data-nav="admin_feedback"],
+.site-top[data-nav-active="admin_activation"] [data-nav="admin_activation"],
+.site-top[data-nav-active="ai_generate"] [data-nav="ai_generate"],
+.site-top[data-nav-active="settings"] [data-nav="settings"] {
+  background: #0b3d91; border-color: #0b3d91; color: #fff; font-weight: 700;
+}
+/* Bốn mục của "Theo dõi quá trình" vẫn mang class nút (btn) trong menu con nên
+   base/head.html đã đè nền/viền/chữ của chúng. Rule (1,4,2) dưới đây thắng lại:
+   cùng một id nhưng nhiều lớp và thuộc tính hơn. */
+.site-top[data-nav-active="history"] #nav-track-menu [data-nav="history"],
+.site-top[data-nav-active="capability"] #nav-track-menu [data-nav="capability"],
+.site-top[data-nav-active="today"] #nav-track-menu [data-nav="today"],
+.site-top[data-nav-active="weekly_report"] #nav-track-menu [data-nav="weekly_report"] {
+  background: #0b3d91; border-color: #0b3d91; color: #fff; font-weight: 700;
+}
+/* Nút cha sáng khi một mục bên trong nó đang được dùng. Cùng nền navy với mục đang
+   đứng nhưng thêm vạch trắng sát mép dưới: hai chữ "Lý thuyết"/"Bài tập" đứng cạnh
+   nhau mà một nút chỉ khác nhau vài bậc xanh thì mắt không phân biệt được, còn vạch
+   ngang là dấu không nút nào trong menu có được. */
+.site-top[data-nav-active="study"] [data-nav-group="study"],
+.site-top[data-nav-active="symbols"] [data-nav-group="study"],
+.site-top[data-nav-active="home"] [data-nav-group="play"],
+.site-top[data-nav-active="exams"] [data-nav-group="play"],
+.site-top[data-nav-active="history"] [data-nav-group="track"],
+.site-top[data-nav-active="capability"] [data-nav-group="track"],
+.site-top[data-nav-active="today"] [data-nav-group="track"],
+.site-top[data-nav-active="weekly_report"] [data-nav-group="track"] {
+  background: #0b3d91; border-color: #0b3d91; color: #fff; font-weight: 700;
+  box-shadow: inset 0 -3px 0 #fff;
+}
+
+/* ---- Dải trên cùng: chữ tri ân + chuông thông báo ----
+   Một hàng flex: dải chữ chiếm phần còn lại, ô chuông khít góc trên cùng.
+   Dải nằm trong .site-top (position:fixed) nên chuông thấy được ở mọi trang và mọi
+   vị trí cuộn — đó là lý do nó không cần một nút riêng trong menu. */
+.topband {
+  display: flex; align-items: stretch;
+  background: #fff8e1; border-bottom: 1px solid #fde68a;
+  /* Khe hở với mép phải màn hình: ô chuông áp sát góc tới mức trông như bị cắt, nên dải
+     trên chừa một khoảng nhỏ. Đặt ở đây (chứ không ở từng ô) để mọi thứ gắn vào dải này
+     có khoảng cách như nhau. */
+  padding-right: 12px;
+}
+
+/* Ô vuông cho biểu tượng góc phải — hiện chỉ còn chuông thông báo (`base/notif_bell.html`).
+   Dùng cho cả `<a>` lẫn `<button>` nên phải đè nền và viền mặc định của button. */
+.corner-icon {
+  flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  min-width: 34px; padding: 0 8px;
+  background: #475569; color: #fff;
+  border: 0; border-left: 1px solid #fde68a;
+  font: inherit; line-height: 1; cursor: pointer;
+  text-decoration: none;
+}
+.corner-icon:hover, .corner-icon:focus { background: #334155; color: #fff; }
+/* Nút "Hướng dẫn sử dụng" trên thanh menu mặc định cam đặc — người dùng chỉ vào một chỗ
+   để tìm hướng dẫn, nên nó phải nổi lên giữa dãy menu xanh.
+   Màu đo từ bản mẫu: cam đặc chuyển dọc #fb8b3c -> #ea6a12, viền #e2610d.
+   Chọn mạnh hơn `.btn`/`.btn:hover` của Bootstrap (và common.css nạp sau bootstrap) để
+   biến thể `btn` không kéo màu về xanh; riêng dấu "đang ở đây" của common.css dưới vẫn
+   thắng vì selector của nó có thêm `[data-nav-active]`. */
+.navbar-main .nav-help {
+  border-color: #e2610d; color: #fff;
+  background: linear-gradient(#fb8b3c, #ea6a12);
+  box-shadow: 0 1px 2px rgba(124, 45, 18, .35);
+  /* Đẩy mục này ra mép phải: navbar là một hàng flex, khoảng trống dư dồn hết vào
+     trước nút, nên mọi mục khác vẫn bám trái dù admin có thêm nút quản trị. */
+  margin-left: auto;
+}
+.navbar-main .nav-help:hover, .navbar-main .nav-help:focus {
+  background: linear-gradient(#f97316, #c2410c); color: #fff;
+}
+/* ...nhưng rê chuột vào nút khi ĐANG đứng ở /help không được xóa dấu "đang ở đây":
+   rule hover ở trên (0,3,0) hòa điểm với rule tô sáng (0,3,0) và đứng sau nên thắng.
+   Selector dưới (0,4,0) đưa màu navy trở lại cho đúng trường hợp đó. */
+.site-top[data-nav-active="help"] .navbar-main .nav-help:hover,
+.site-top[data-nav-active="help"] .navbar-main .nav-help:focus {
+  background: #0b3d91;
+}
+@media (max-width: 480px) {
+  .corner-icon { min-width: 30px; padding: 0 6px; }
+}
+
+/* ---- Banner chạy chữ lời tri ân ---- */
+/* Dải chữ lặp lại y hệt hai lần, chạy đúng một nửa bề rộng rồi quay về đầu nên
+   hai lượt nối liền nhau, không hở khoảng trống giữa chừng. */
+.marquee-shell {
+  flex: 1 1 auto; min-width: 0;
+  overflow: hidden;
+}
+.marquee-track {
+  display: inline-flex; white-space: nowrap;
+  animation: marquee-scroll 24s linear infinite;
+}
+.marquee-text { padding: 7px 48px; font-size: .9rem; color: #92400e; }
+
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* Máy người dùng tắt hiệu ứng chuyển động: hiện một dòng đứng yên, căn giữa. */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+  .marquee-shell { text-align: center; }
+  .marquee-text[aria-hidden] { display: none; }
+}
+
+/* ---- Footer liên hệ ---- */
+/* KHỐI THƯỜNG Ở CUỐI TÀI LIỆU, không dính đáy nữa: nền căng hết chiều ngang, chữ bó vào
+   --page-width giống menu và cột nội dung. Muốn xem footer thì cuộn tới hết trang — đổi lại
+   footer không bao giờ che mất nội dung, và #page-body được về dòng chảy bình thường.
+   Trang ngắn vẫn đúng: cột nội dung có min-height đủ để footer rơi sát đáy trình duyệt. */
+.footer-shell {
+  background: #1f2937; border-top: 3px solid #111827;
+}
+.footer-main {
+  width: min(var(--page-width), 100%); margin: 0 auto;
+  padding: 14px 16px; font-size: .85rem; color: #e5e7eb;
+  display: grid; grid-template-columns: 1fr minmax(0, max-content) 1fr;
+  align-items: center; gap: 10px 16px;
+}
+/* Chữ liên hệ nằm GIỮA tuyệt đối của dải chân trang (mỗi thông tin một dòng, xem
+   base.html). Ba cột: hai cột ngoài cùng chia nhau chỗ còn lại nên cột giữa — chứa chữ —
+   luôn đúng giữa trang, kể cả khi chỉ có MỘT nút ở một bên. Trước đây để flex thì ô "Góp ý"
+   bên trái đẩy chữ sang phải ~50px mà không có nút nào bên phải cân lại.
+   minmax(0,...) để chữ dài biết xuống dòng thay vì tràn ra đè lên nút. */
+.footer-feedback { grid-column: 1; }
+.footer-info { grid-column: 2; text-align: center; }
+.footer-help { grid-column: 3; }
+.footer-line + .footer-line { margin-top: 4px; }
+.footer-main a { color: #93c5fd; text-decoration: none; }
+.footer-main a:hover { color: #bfdbfe; text-decoration: underline; }
+
+@media (max-width: 480px) {
+  .footer-main { padding: 12px 8px; font-size: .8rem; }
+}
+
+/* Màn hẹp dưới ~600px thì một hàng ba cột hết chỗ: cột trái bị ô nút "Góp ý" chèn
+   (min-content của nó), cột phải rỗng nên không cân lại được, chữ lệch khỏi giữa. Vì vậy
+   xếp chồng — mỗi ô một dòng, chữ liên hệ vẫn canh giữa hàng của nó. } */
+@media (max-width: 599px) {
+  .footer-main { grid-template-columns: minmax(0, 1fr); }
+  .footer-feedback, .footer-info, .footer-help { grid-column: 1; }
+  .footer-help { justify-self: end; }
+}
+
+/* ---- AJAX (static/js/ajax.js): tien trinh tai + thong bao loi ----
+   Moi luot tai/nop deu khoa tuong tac cho den khi xong: `.ajax-overlay` phu toan
+   trang chan moi cu bam (tren ca banner/menu, footer, modal), `.ajax-progress` la
+   thanh tien trinh o dinh trang. Hai phan tu nay do ajax.js chen vao <body>. */
+html.ajax-busy { cursor: progress; }
+.ajax-loading { opacity: .55; pointer-events: none; }
+.ajax-overlay {
+  position: fixed; inset: 0; z-index: 2000; display: none;
+  align-items: center; justify-content: center;
+  background: rgba(241, 245, 249, .55);
+}
+html.ajax-busy .ajax-overlay { display: flex; }
+.ajax-spinner {
+  width: 42px; height: 42px; border-radius: 50%;
+  border: 4px solid rgba(37, 99, 235, .25); border-top-color: #2563eb;
+  animation: ajax-spin .8s linear infinite;
+}
+@keyframes ajax-spin { to { transform: rotate(360deg); } }
+.ajax-progress {
+  position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 2001;
+  overflow: hidden; background: transparent; display: none;
+}
+html.ajax-busy .ajax-progress { display: block; }
+.ajax-progress-fill {
+  width: 35%; height: 100%; background: #2563eb; border-radius: 2px;
+  animation: ajax-progress-slide 1.1s ease-in-out infinite;
+}
+@keyframes ajax-progress-slide {
+  0% { margin-left: -35%; }
+  100% { margin-left: 100%; }
+}
+.ajax-msg {
+  display: flex; align-items: center; gap: 8px;
+  margin: 12px auto; padding: 10px 14px; max-width: 720px;
+  border-radius: 8px; font-size: .92rem;
+}
+.ajax-msg-error { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+.ajax-msg-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
+
+/* ---- Bảng gợi ý ký hiệu (static/js/math_suggest.js) ----
+   Dùng chung mọi nơi gắn nút "Gợi ý ∑": thanh CKEditor ô tự luận của học sinh và ô
+   soạn "Nội dung câu hỏi" ở trang quản trị. .ms-ck-btn đội class ck/ck-button của
+   CKEditor nên đã có nền bo góc sẵn; hai rule đầu chỉ để thắng rule "button{}" của
+   từng trang (đặc tính class > element). Panel là phần tử ngoài cùng, đặt theo vị trí
+   nút nên không cần biết toolbar của CKEditor dài bao nhiêu, cũng không bị
+   fixed-top/fixed-bottom chiếm chỗ. */
+.ms-ck-btn{background:transparent;color:inherit}
+.ms-ck-btn .ck-button__label{font-size:.8125rem}
+.ms-panel{position:absolute;display:none;z-index:1200;width:340px;max-height:360px;
+  overflow:auto;background:#fff;border:1px solid #d1d5db;border-radius:8px;
+  box-shadow:0 8px 24px rgba(0,0,0,.18);padding:8px;font-family:Arial,sans-serif;
+  color:#111827}
+.ms-head{display:flex;gap:6px;margin-bottom:6px}
+.ms-filter{flex:1;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:.8125rem}
+.ms-close{background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:6px;
+  padding:0 10px;font-size:1rem;line-height:1;cursor:pointer;
+  transition:background-color .15s ease-in-out,border-color .15s ease-in-out}
+.ms-close:hover{background:#e5e7eb;border-color:#9ca3af}
+.ms-group{font-size:.75rem;font-weight:bold;color:#6b7280;margin:8px 0 4px}
+.ms-chip{display:inline-flex;align-items:center;gap:5px;margin:0 4px 4px 0;padding:3px 8px;
+  background:#f9fafb;color:#111827;border:1px solid #e5e7eb;border-radius:6px;
+  cursor:pointer;font-size:.9375rem;line-height:1.2}
+.ms-chip:hover{background:#eef2ff;border-color:#c7d2fe}
+.ms-chip .ms-sym{font-weight:bold}
+.ms-chip .ms-name{font-size:.6875rem;color:#6b7280}
+.ms-chip.ms-tpl{border-style:dashed}
+.ms-empty{font-size:.75rem;color:#9ca3af;padding:8px 0}
+.ms-form-title{font-size:.8125rem;font-weight:bold;color:#111827;margin-bottom:4px}
+.ms-slot-label{display:block;font-size:.75rem;color:#374151;margin:6px 0 2px}
+.ms-slot-input{width:100%;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;
+  font-size:.9375rem;color:#111827}
+.ms-preview-label{font-size:.6875rem;color:#6b7280;margin-top:8px}
+.ms-preview{margin-top:2px;padding:6px 8px;min-height:24px;background:#f3f4f6;
+  border-radius:6px;font-size:1.0625rem;color:#111827;white-space:pre-wrap}
+.ms-actions{display:flex;gap:6px;margin-top:8px}
+.ms-btn-primary{background:#10b981;color:#fff;border:none;border-radius:6px;
+  padding:6px 14px;cursor:pointer;font-size:.8125rem;
+  transition:background-color .15s ease-in-out,box-shadow .15s ease-in-out,transform .15s ease-in-out}
+.ms-btn-primary:hover{background:#059669;box-shadow:0 .25rem .6rem rgba(15,23,42,.18);transform:translateY(-1px)}
+.ms-btn-primary:active{transform:none;box-shadow:none}
+.ms-btn-ghost{background:#fff;color:#374151;border:1px solid #d1d5db;border-radius:6px;
+  padding:6px 12px;cursor:pointer;font-size:.8125rem;
+  transition:background-color .15s ease-in-out,border-color .15s ease-in-out}
+.ms-btn-ghost:hover{background:#f3f4f6;border-color:#9ca3af}
+.ms-status{font-size:.75rem;margin-top:6px;color:#6b7280}
+.ms-status.ms-ok{color:#047857}
+/* Đường không có CKEditor: nút nằm ngay trên textarea nên tự bo theo khối soạn. */
+.ms-plain-bar{margin:4px 0}
+.ms-plain-btn{background:#f3f4f6;color:#374151;border:1px solid #d1d5db;border-radius:6px;
+  padding:3px 10px;cursor:pointer;font-size:.8125rem;
+  transition:background-color .15s ease-in-out,border-color .15s ease-in-out}
+.ms-plain-btn:hover{background:#e5e7eb;border-color:#9ca3af}
+
+/* ---- Công thức đã render ngay trong ô soạn thảo (static/js/essay_editor.js) ----
+   Bảng "Gợi ý" chèn $...$ nên CKEditor phải để KaTeX vẽ lại thành vật thể inline;
+   căn giữa dòng để công thức có phân số/căn không đẩy dòng chữ xung quanh lệch đi. */
+.math-tex{display:inline-block;vertical-align:middle;margin:0 1px}
+.math-tex-draw{display:inline-block}
+
+/* ---- Nút mic "nhấn để nói" (static/js/voice_math.js) ----
+   Nút đội sẵn class của nơi gắn (ms-ck-btn trên thanh CKEditor, ms-plain-btn trên
+   textarea) nên ở đây chỉ thêm trạng thái ĐANG NGHE; dòng trạng thái nổi ở góc dưới
+   phải vì thanh công cụ không đủ chỗ cho chữ "đang nghe...". */
+.ms-plain-bar .vm-btn{margin-left:6px}
+.vm-btn.vm-on,.vm-btn.vm-on:hover{background:#dc2626;border-color:#dc2626;color:#fff}
+#vm-bar{position:fixed;right:16px;bottom:16px;z-index:1300;display:none;max-width:340px;
+  padding:8px 12px;border-radius:8px;background:rgba(17,24,39,.92);color:#fff;
+  font-size:.8125rem;line-height:1.4;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+
+/* ---- Khối nhận diện lớp 1-12 (bảng grade_themes, macro grade_theme_card) ----
+   Hình nền SVG 1200x360 cắt giữa bằng `cover` nên khối co giãn được mà lưới ô li
+   không bị biến dạng. `hidden` phải thắng `display:flex` — Bootstrap đã làm vậy bằng
+   !important, nhắc lại ở đây cho khối không lộ ra khi CSS trang nạp sau. */
+.grade-theme{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;
+  margin-bottom:14px;padding:10px 14px;min-height:64px;border:1px solid #e5e7eb;border-radius:12px;
+  background-size:cover;background-position:center}
+.grade-theme[hidden]{display:none}
+.grade-theme .gt-icon{width:40px;height:40px;flex:0 0 auto}
+.gt-name{font-weight:700;font-size:1.05rem}
+.gt-note{color:#374151;font-size:.85rem}
+/* Dòng đếm bài học của trang Học tập ("Lớp 5 · 75 bài học") nằm đè lên hình nền của lớp,
+   dạt hẳn sang phải nhờ margin-left:auto; `flex-wrap` của khối cho nó xuống hàng riêng khi
+   cửa sổ hẹp nhưng vẫn bên phải. Nền trắng + chữ đỏ để đọc được trên mọi hình nền. */
+.gt-badge{margin-left:auto;background:#fff;color:#dc2626;font-size:.85rem;font-weight:600;
+  padding:4px 10px;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.18)}

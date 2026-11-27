@@ -1,0 +1,115 @@
+body{font-family: Arial, sans-serif}
+.q{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin:16px 0}
+.opt{margin:4px 0}
+/* Câu Đúng/Sai: mỗi phát biểu a/b/c… một hàng, hai ô Đúng/Sai nằm cạnh nhau.
+   Ô đang chọn được tô VÀNG cho khớp câu chữ "nhấp vào ô màu vàng để chọn đúng / sai"
+   của đề. `.picked` do static/js/tf_pick.js gắn; `:has(input:checked)` là đường CSS
+   thuần để trạng thái đúng ngay từ lượt vẽ đầu tiên. */
+.tf-statement{margin:8px 0;padding:6px 8px}
+.tf-statement-text{margin-bottom:6px}
+.tf-pick{display:flex;gap:14px;flex-wrap:wrap}
+.tf-box{position:relative;display:inline-flex;align-items:center;cursor:pointer;
+  border:2px solid #e5e7eb;border-radius:8px;padding:6px 16px;background:#fff;
+  font-weight:600;font-size:.9rem;user-select:none;
+  transition:background-color .12s ease-in-out,border-color .12s ease-in-out}
+.tf-box:hover{border-color:#fbbf24;background:#fffbeb}
+.tf-box input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.tf-box.picked,.tf-box:has(input:checked){background:#fde047;border-color:#eab308;color:#713f12}
+.tf-box:has(input:focus-visible){outline:2px solid #2563eb;outline-offset:2px}
+/* Câu "Điền số": ô trả lời là ô nhập số gọn (câu chữ "… = [  ]"), KHÔNG phải CKEditor —
+   học sinh chỉ gõ một con số nên ô lớn + thanh công cụ soạn thảo là thừa và gây nhiễu. */
+.number-box{display:inline-block;min-width:120px;max-width:220px;padding:8px 12px;
+  border:2px solid #e5e7eb;border-radius:8px;font-size:1rem;font-weight:600;
+  letter-spacing:.5px;transition:border-color .12s ease-in-out,box-shadow .12s ease-in-out}
+.number-box:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.number-label{display:block;margin:6px 0 4px;font-size:.9rem;color:#374151}
+/* Câu NHIỀU ô trống (lớp 1–3, xem `services/blanks.py`): ô nhập nằm NGAY TRONG đề bài,
+   đúng chỗ ☐ trên giấy, nên nó là phần tử nội tuyến. Nền vàng nhạt để phân biệt ô phải
+   điền với chữ in; cao 34px đủ rộng cho ngón tay mà không phá hàng chữ như CKEditor.
+   `tabular-nums` giữ các chữ số cùng bề ngang để "1 2 5" không làm ô nhảy chiều. */
+.q-blanks .blank-box{display:inline-block;width:78px;min-width:56px;padding:3px 8px;
+  margin:0 4px;border:2px solid #cbd5e1;border-radius:8px;background:#fffbeb;
+  font-size:1rem;font-weight:600;text-align:center;vertical-align:middle;
+  font-variant-numeric:tabular-nums;
+  transition:border-color .12s ease-in-out,box-shadow .12s ease-in-out,background-color .12s ease-in-out}
+.q-blanks .blank-box:focus{outline:none;border-color:#2563eb;background:#fff;
+  box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.q-blanks .blank-box::placeholder{color:#9ca3af;font-weight:400}
+.blank-hint{font-size:.85rem;color:#6b7280;margin:4px 0 0}
+.src{font-size:.75rem;color:#666}
+button{background:#10b981;color:#fff;border:none;border-radius:6px;padding:10px 14px;cursor:pointer;
+  transition:background-color .15s ease-in-out,box-shadow .15s ease-in-out,transform .15s ease-in-out}
+button:hover{background:#059669;box-shadow:0 .25rem .6rem rgba(15,23,42,.18);transform:translateY(-1px)}
+button:active{transform:none;box-shadow:none}
+.nav{display:flex;gap:8px;margin-bottom:16px}
+.nav a{display:inline-block;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;text-decoration:none;color:#111}
+.nav a:hover{background:#f3f4f6}
+.admin{margin-top:10px;display:flex;gap:8px}
+/* .modal tu che da bo: Bootstrap 5 lo modal + backdrop (z-index 1060/1040).
+   Rule .modal{z-index:1000} cu nam duoi backdrop nen phu hop thoai, chan click. */
+/* Lùi xuống dưới thanh nút hành động (.actions-fixed ở css/common.css) để thông báo
+   không bị nút "Nộp bài" che. */
+.toast{position:fixed;right:16px;top:calc(var(--fixed-top) + 80px);background:#111;color:#fff;padding:10px 14px;border-radius:6px;display:none;z-index:1000}
+/* Khối câu hỏi chỉ còn viền + nền; cuộn do lớp .scroll-area (css/common.css) quyết.
+   Trần 70vh cũ ở đây sinh thêm một thanh cuộn LỒNG TRONG cột nội dung vốn đã tự cuộn.
+   Ở trang có .scroll-area, mặt nền xanh của vùng cuộn (common.css) thắng nền trắng
+   dưới đây — luật trùng tên nhưng độ đặc hiệu cao hơn, nên câu hỏi vẫn là card trắng
+   nằm trên panel chứ không trắng xoá lẫn vào nhau. */
+.q-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:8px}
+/* Khi .q-wrap LÀ vùng đọc của trang "từng câu một": mọi viền, nền và đệm của nó đều là
+   khung lồng khung — khối `.question-block` bên trong (css/common.css) đã tự là tờ giấy
+   trắng có viền. Giữ khung ngoài còn làm mất ~36px chiều cao vô ích, đúng chỗ mà câu hỏi
+   cần. `min-height` thay cho trần cao: vùng đọc không được co lại dưới mức câu một câu
+   hiển được (bệnh "bị ép" của cơ chế một vùng cuộn). */
+.q-wrap.scroll-area{background:transparent;border:0;border-radius:0;padding:0;min-height:260px}
+/* common.css đặt `margin:16px 0` để TÁCH các câu khi xếp liền nhau; một lượt chỉ hiện MỘT
+   câu nên 32px đó nằm trên/dưới câu không có gì bên cạnh — mất trắng chỗ của phương án. */
+.q-wrap.scroll-area > .question-block{margin:0}
+.cb-toggle{cursor:pointer; user-select:none}
+input[type=checkbox], input[type=radio]{cursor:pointer}
+.opt label{cursor:pointer}
+.opt{border-radius:6px}
+/* Màu lơ của hàng phương án và màu lơ đậm khi rê chuột do common.css đặt (vùng
+   "phương án" phải một màu trên MỌI trang làm bài). Trước đây trang này ghi đè
+   :hover thành xám #f3f4f6 nên rê vào phương án là ô mất màu vùng. */
+/* Chữ mờ gợi ý nối tiếp (js/typing_suggest.js): lớp phủ ngoài khối soạn thảo, đặt theo
+   vị trí con trỏ. CKEditor không cho cài chữ lạ vào trong khối nên không làm ghost thật
+   bên trong được; pointer-events:none để không cướp click lúc học sinh đang gõ. */
+.ts-ghost{position:absolute;color:#9ca3af;font-style:italic;font-size:.875rem;
+  white-space:nowrap;pointer-events:none;z-index:30}
+/* Bảng gợi ý ký hiệu (.ms-*) nằm ở css/common.css vì cùng một panel được gắn cả ở
+   ô tự luận của học sinh lẫn ô soạn thảo ở trang quản trị. */
+/* ---- Từng câu một (static/js/question_pager.js) ----
+   Thanh điều hướng là khối ĐỨNG của .fill, đặt trước vùng cuộn nên không cần sticky và
+   không sinh thanh cuộn thứ hai (cơ chế một vùng cuộn ở css/common.css). */
+.q-pager{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0;padding:6px 8px;
+  background:#fff;border:1px solid #e5e7eb;border-radius:8px}
+/* .q-pager tự đặt display:flex nên `hidden` một mình không thắng được — đề một câu thì
+   thanh phải biến mất thật. */
+.q-pager[hidden]{display:none}
+.q-pager-btn{min-height:44px;padding:8px 14px;border:1px solid #cbd5e1;border-radius:8px;
+  background:#f8fafc;color:#0f172a;font-weight:600;cursor:pointer}
+.q-pager-btn:hover{background:#e2e8f0;border-color:#94a3b8;box-shadow:none;transform:none}
+.q-pager-btn:disabled{opacity:.5;cursor:not-allowed}
+.q-pager-count{font-weight:600;color:#0f172a}
+/* Tiêu đề + badge loại bài sống TRONG thanh điều hướng (practice.html): mỗi lượt chỉ
+   thấy một câu nên khối tiêu đề đứng riêng là 59px mất không có gì dưới nó. `h2` vẫn
+   là heading — trình đọc màn hình giữ thứ tự chương. Badge nội tuyến để hàng không cao
+   thêm một dòng (đo trên 1366x768: cả thanh vẫn dưới 40px). */
+.q-pager-title{margin:0;font-size:1.15rem;line-height:1.2;font-weight:600;color:#0f172a;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.q-pager-title .mode-badge{vertical-align:middle}
+.q-pager-jump{display:flex;gap:6px;flex-wrap:wrap}
+.q-pager-dot{display:inline-flex;align-items:center;justify-content:center;min-width:34px;
+  height:34px;padding:0 6px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;
+  color:#0f172a;text-decoration:none;font-weight:600}
+.q-pager-dot:hover{background:#f3f4f6;border-color:#94a3b8}
+.q-pager-dot.current{background:#2563eb;border-color:#2563eb;color:#fff}
+/* Câu ẩn vẫn phải nằm trong DOM: một lượt làm bài là MỘT form và /submit đọc field của MỌI
+   câu, nên pager chỉ đổi câu nào nhìn thấy chứ không cắt câu nào khỏi đề. */
+.q-hidden{display:none}
+@media (max-width:480px){
+  .q-pager{gap:6px}
+  .q-pager-btn{padding:8px 10px;font-size:.9rem}
+}
+

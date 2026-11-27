@@ -1,0 +1,36 @@
+body{font-family: Arial, sans-serif}
+/* Nền trang đã tô xám nên hộp nội dung (Bootstrap .card) phải tự khai báo nền trắng. */
+.card{background:#fff}
+.button, button{background:#2c7be5;color:#fff;border:none;border-radius:6px;padding:10px 14px;text-decoration:none;margin-right:10px;cursor:pointer;
+  transition:background-color .15s ease-in-out,box-shadow .15s ease-in-out,transform .15s ease-in-out}
+.button:hover, button:hover{background:#1f66cd;box-shadow:0 .25rem .6rem rgba(15,23,42,.18);transform:translateY(-1px)}
+.button:active, button:active{transform:none;box-shadow:none}
+.nav{display:flex;gap:8px;margin-bottom:16px}
+.nav a{display:inline-block;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;text-decoration:none;color:#111}
+.nav a:hover{background:#f3f4f6}
+/* The loai bai (Trac nghiem / Tu luan / Ca hai): khung the bam chon, mau vien va nen
+   doi theo trang thai .selected. Truoc day nam trong style="" lap 3 lan tren template
+   va JS phai sua truc tiep borderColor/background. */
+.mode-card{cursor:pointer;border:2px solid #dee2e6;border-radius:8px;padding:10px 16px;background:#fff;display:flex;align-items:center;gap:8px;user-select:none;
+  transition:border-color .15s ease-in-out,background-color .15s ease-in-out,box-shadow .15s ease-in-out,transform .15s ease-in-out}
+.mode-card:hover{border-color:#93c5fd;background:#f5f8ff;box-shadow:0 .25rem .6rem rgba(15,23,42,.12);transform:translateY(-1px)}
+.mode-card.selected{border-color:#0d6efd;background:#eef4ff}
+.flex-spacer{margin-left:auto}
+.mb8{margin-bottom:8px}
+.mt12{margin-top:12px}
+.w100{width:100%}
+input[type=checkbox], input[type=radio]{cursor:pointer}
+.cb-toggle{cursor:pointer; user-select:none}
+/* select2 (danh sách bài học SGK trang chủ): bài học SGK chưa có câu hỏi đã duyệt thì xám
+   và không chọn được — select2 đánh dấu bằng aria-disabled trên hàng kết quả. */
+.select2-container--default .select2-results__option[aria-disabled=true]{color:#9ca3af;cursor:not-allowed}
+.select2-container--default .select2-selection--multiple{min-height:38px;border:1px solid #e5e7eb;border-radius:6px}
+/* Chọn bài học SGK bằng checkbox: mỗi hàng trong select2 có ô tick phía trước, kèm một
+   checkbox "Tất cả" ngay trên ô chọn. Ô tick là hình vẽ (span) nên hàng vẫn bấm được
+   như trước, trạng thái tick do select2 quyết định qua aria-selected. */
+.topic-all-row{display:inline-flex;align-items:center;gap:6px;margin:4px 0;font-weight:500;cursor:pointer;user-select:none}
+.topic-option{display:flex;align-items:center;gap:8px}
+.topic-check{position:relative;flex:0 0 auto;width:14px;height:14px;border:1px solid #9ca3af;border-radius:3px;background:#fff}
+.topic-check.is-checked{border-color:#2c7be5;background:#2c7be5}
+.topic-check.is-checked::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.select2-container--default .select2-results__option[aria-disabled=true] .topic-check{border-color:#d1d5db;background:#f3f4f6}

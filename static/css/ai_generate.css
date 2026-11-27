@@ -1,0 +1,47 @@
+/* ==========================================================================
+   ai_generate.css — trang sinh câu hỏi AI
+   ========================================================================== */
+
+/* Status banner */
+.ai-status-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px; border-radius: 8px; margin-bottom: 20px; font-size: 0.88rem;
+}
+.ai-status-bar.ok  { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+.ai-status-bar.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.status-dot.green { background: #22c55e; }
+.status-dot.red   { background: #ef4444; animation: blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* Results */
+.q-card {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+  padding: 16px; margin-bottom: 14px; position: relative;
+}
+.q-card .q-num { font-weight: 700; color: #374151; margin-bottom: 8px; }
+.q-card .opt-row {
+  padding: 5px 8px; border-radius: 6px; margin: 3px 0;
+  display: flex; align-items: center; gap: 8px;
+  /* ô chưa biết đáp án vẫn phải đọc ra là "phương án" — cùng màu vùng với trang làm bài */
+  background: var(--zone-opt-bg); color: var(--zone-opt-fg);
+}
+.q-card .opt-row.correct { background: #dcfce7; }
+.q-card .opt-label { font-weight: 600; width: 22px; flex-shrink: 0; }
+.save-btn {
+  position: absolute; top: 12px; right: 12px;
+  font-size: 0.78rem; padding: 4px 10px;
+}
+.badge-diff-easy   { background: #dcfce7; color: #166534; }
+.badge-diff-medium { background: #fef9c3; color: #854d0e; }
+.badge-diff-hard   { background: #fee2e2; color: #991b1b; }
+
+/* Spinner */
+.spinner {
+  display: none; width: 22px; height: 22px;
+  border: 3px solid #e5e7eb; border-top-color: #6366f1;
+  border-radius: 50%; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#results-section { display: none; }

@@ -1,0 +1,173 @@
+/* Chatbox huong dan su dung ung dung — widget noi trong chân trang.
+   Nút "Trợ giúp" nằm TRONG dải chân trang (ô #ca-slot do base.html dành sẵn,
+   canh phải theo cột nội dung), nên ở đây chỉ còn panel là lớp phủ: nó mở ngay
+   phía trên nút, neo vào #ca-slot. */
+#ca-slot { position: relative; }
+
+/* #ca-root KHONG duoc an: panel an hien bang #ca-panel + .open, con nut "Tro
+   giup" thi phai luon lay-out duoc de bam vao. An cung root thi khong con loi
+   nao mo duoc panel (ke ca phim tat o cuoi file nay). */
+#ca-root {
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.ca-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border: 1px solid #0d6efd;
+  border-radius: 999px;
+  background: #0d6efd;
+  color: #fff;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .18);
+}
+
+.ca-toggle:hover { background: #0b5ed7; }
+
+#ca-panel {
+  display: none;
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  z-index: 1049;
+  flex-direction: column;
+  width: min(380px, calc(100vw - 36px));
+  /* Chừa đủ chỗ cho banner + menu dính đỉnh nên panel không bao giờ chui xuống
+     dưới khối cố định đó. */
+  max-height: min(560px, calc(100vh - var(--fixed-top) - 60px));
+  border: 1px solid #d6dbe1;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .22);
+  overflow: hidden;
+}
+
+#ca-root.open #ca-panel { display: flex; }
+
+#ca-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #0d6efd;
+  color: #fff;
+  font-weight: 600;
+  font-size: .95rem;
+}
+
+#ca-head .ca-title { flex: 1; }
+
+/* chat_assistant.js tao 2 nut nay bang LOP (el('button', 'ca-clear', ...)), khong
+   phai id, nen phai dung .ca-clear / .ca-close — dung #ca-clear thi rule chet,
+   nut tra loi ve kieu tho cua trinh duyet. */
+.ca-clear {
+  border: 0;
+  background: rgba(255, 255, 255, .18);
+  color: #fff;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: .8rem;
+  cursor: pointer;
+}
+
+.ca-clear:hover { background: rgba(255, 255, 255, .32); }
+
+/* Nút "Đóng" của panel chỉ khác nền, không khác cỡ: nền đỏ + icon ✕ do lớp
+   .btn-x trong common.css vẽ. Ở đây chỉ giữ phần kích thước của hàng nút. */
+.ca-close {
+  border: 0;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: .8rem;
+  cursor: pointer;
+}
+
+#ca-log {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  background: #f8fafc;
+  font-size: .9rem;
+  line-height: 1.45;
+}
+
+.ca-msg { margin-bottom: 10px; }
+
+.ca-msg .ca-bubble {
+  display: inline-block;
+  max-width: 92%;
+  padding: 8px 11px;
+  border-radius: 10px;
+  background: #e9eef5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.ca-msg.me { text-align: right; }
+.ca-msg.me .ca-bubble { background: #0d6efd; color: #fff; }
+
+.ca-msg.bot .ca-bubble { background: #fff; border: 1px solid #e2e8f0; text-align: left; }
+.ca-msg.bot .ca-bubble ul { margin: 4px 0 0; padding-left: 18px; }
+.ca-msg.bot .ca-bubble li { margin: 2px 0; }
+.ca-msg.bot .ca-bubble a { color: #0a58ca; text-decoration: underline; }
+.ca-msg.bot .ca-bubble code { background: #eef2f7; padding: 1px 4px; border-radius: 4px; }
+
+.ca-note { font-size: .78rem; color: #6c757d; margin-top: 4px; }
+.ca-error .ca-bubble { background: #fdecea; border: 1px solid #f5c2c7; color: #842029; }
+
+#ca-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+
+.ca-chip {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: .78rem;
+  cursor: pointer;
+}
+
+.ca-chip:hover { border-color: #0d6efd; color: #0d6efd; }
+
+#ca-form {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+#ca-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: .9rem;
+}
+
+.ca-send {
+  border: 0;
+  border-radius: 8px;
+  padding: 0 14px;
+  background: #0d6efd;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .15s ease-in-out;
+}
+
+.ca-send:hover { background: #0b5ed7; }
+
+.ca-send[disabled] { background: #9ec5fe; cursor: default; }
+.ca-send[disabled]:hover { background: #9ec5fe; }
+
+@media (max-width: 480px) {
+  /* Nút đã nằm trong chân trang sát mép phải nên panel chỉ việc rộng hết
+     khổ còn lại; chiều cao vẫn theo công thức chung (trừ --fixed-top). */
+  #ca-panel { width: calc(100vw - 20px); }
+}

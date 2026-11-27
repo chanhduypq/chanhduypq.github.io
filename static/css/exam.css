@@ -1,0 +1,339 @@
+/* ==========================================================================
+   exam.css — phòng thi (làm đề) và bảng kết quả một lượt thi
+   Độ rộng trang lấy từ common.css (--page-width), file này không đặt lại.
+   ========================================================================== */
+
+/* Header chỉ còn ở trang KẾT QUẢ (templates/students/exam_result.html); trang làm bài
+   dùng .exam-bar bên dưới. */
+.exam-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 16px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.exam-meta { font-size: .85rem; color: #6b7280; }
+
+/* ---- Khung dính đỉnh: thanh phòng thi + ghi chú + palette ----
+   Ba khối này đứng NGOÀI vùng đọc nên trên cửa sổ thấp chính nó bị cuộn mất. Trước
+   đây chỉ `.exam-bar` sticky, thế là palette (lối nhảy từng câu) trôi đi còn thanh
+   thì ở lại. Một khối bọc ngoài sticky thay cho ba mức `top` tính bằng px — không
+   phải đo chiều cao bằng JS, thêm/bớt một ghi chú cũng không lệch. */
+.exam-chrome {
+  position: sticky; top: 0; z-index: 3;
+}
+/* Nhưng dính đỉnh chỉ ổn khi khung đó NHỎ hơn cột nội dung. Đo thật ở cửa sổ 510x426:
+   cột chỉ cao 201px (trừ 74 đỉnh + 151 footer) còn khung điều khiển tới 268px — thanh
+   wrap thành bốn hàng vì hẹp, palette hai hàng vì 19 câu. Sticky khi đó phủ KÍN cột nên
+   câu hỏi không còn chỗ nào hiện ra, tệ hơn cả trôi. Cửa sổ thấp thì trả khung về dòng
+   thường và để #page-body cuộn một mạch: phải cuộn mới thấy bài, còn hơn không thấy gì. */
+@media (max-height: 620px) {
+  .exam-chrome { position: static; }
+  /* Form không co lại: .scroll-area cao đúng bằng câu hỏi nên không có vùng cuộn lồng
+     nhau, con lăn đặt ở đâu cũng cuộn được cả cột. */
+  #exam-form { flex-shrink: 0; }
+}
+
+/* ---- Thanh phòng thi: MỘT dải thay cho header + thanh pager + dock nộp bài ----
+   Ba khối đó từng cộng thành 315px chrome ngoài vùng cuộn (header 132 + ghi chú 38 +
+   palette 23 hàng 88 + pager 57), nên trên cửa sổ 1366x768 vùng câu hỏi chỉ còn 114px và
+   trên cửa sổ thấp bị ép tới 25px. Một hàng ~56px ở đây mang đủ bốn thứ: điều hướng
+   câu, đồng hồ, nút nộp. Hàng chỉ cao lên khi màn hẹp buộc flex-wrap.
+
+   Nền xanh `#dbeafe` phân biệt hẳn palette trắng bên dưới: hai khối từng cùng
+   `#fff` + viền `#e5e7eb` nên "vùng bấm chuyển câu" và "vùng nhảy tới câu" trông như
+   một. Chữ phụ đổi sang --meta-fg (#475569, 5,3:1 trên nền mới) vì #6b7280 chỉ còn
+   3,5:1 — thấp hơn luật 4,5:1 của repo. */
+.exam-bar {
+  display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap;
+  background: #dbeafe; border: 1px solid #93c5fd; border-radius: 10px;
+  padding: 8px 12px; margin-bottom: 10px;
+}
+/* Khối thông tin là thứ DUY NHẤT được phép co: mọi khối bên phải nó đều phải bấm
+   được, còn chữ dài thì ellipsis lo. */
+.exam-bar-id { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; }
+/* Không còn dòng "Đề số …": đề hiện tại BỐC NGẪU NHIÊN từ kho nên con số đó không
+   ứng với cái gì học sinh có thể đối chiếu. Một dòng mô tả dưới đây nói hết những gì
+   em cần biết về đề đang mở. */
+.exam-bar-meta { font-size: .78rem; color: var(--meta-fg);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.exam-bar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+/* Thanh điều hướng câu nằm NGAY TRONG thanh phòng thi nên phải cởi bỏ nền/viền/đệm mà
+   practice.css đặt cho .q-pager (ở trang luyện tập nó là một khối đứng riêng). */
+.exam-bar-nav { background: none; border: 0; padding: 0; margin: 0; gap: 8px; }
+/* Nút và bộ đếm phải khác nền thanh, nếu không "Trước / Câu 3 / Sau" chìm vào đúng chỗ
+   chữ cần nhìn nhất. Nút navy chữ trắng (6,3:1), bộ đếm là viên trắng chữ navy — hai
+   vai trò khác nhau nên hai hình khác nhau, và cả hai scope trong .exam-bar-nav để
+   trang Luyện tập giữ nguyên bộ nút xám của practice.css. */
+.exam-bar-nav .q-pager-btn {
+  background: #1d4ed8; border-color: #1d4ed8; color: #fff;
+}
+.exam-bar-nav .q-pager-btn:hover { background: #1e40af; border-color: #1e40af; color: #fff; }
+.exam-bar-nav .q-pager-count {
+  background: #fff; border: 1px solid #93c5fd; border-radius: 999px;
+  padding: 4px 12px; color: #1d4ed8; white-space: nowrap;
+}
+
+/* ---- Hai nút Trước/Sau ra HAI MÉP, ĐÚNG HÀNG dải "Câu N" (#862 → #867) ----
+   Trong thanh thì muốn đổi câu phải rời mắt lên đỉnh trang. Hai nút giờ bám hai mép của tờ
+   bài và ngồi ngay hàng với dải "Câu N · Đại số · Phần … · 0,21 điểm" — chỗ mắt đang đọc khi
+   quyết định làm câu nào; viên đếm "Câu N / M" vẫn ở trong thanh vì nó là chữ, không phải nút.
+
+   `fixed` chứ không `absolute`: `.exam-chrome` sticky không phải khối neo, còn khối có vị
+   trí gần nhất là chính nó — absolute sẽ neo theo trang và trôi khi tài liệu cuộn xuống
+   footer. Không tổ tiên nào đặt transform/filter/will-change nên `fixed` neo theo cửa sổ.
+
+   NGƯỠNG 900px chứ không phải 1320px (#867): đo trên máy thật thì `screen.width` chỉ 1280px
+   CSS (màn 1920x1080 độ 150%), nên rule 1320px KHÔNG BAO GIỜ bật trên máy người dùng — hai
+   nút vẫn nằm trong thanh và cả #862 thành chữ chết. Vì vậy mép trong của nút tính theo MÉP TỜ
+   BÀI (`--page-width` trừ 16px đệm của #page-body), hai nút cùng rộng 86px để phép tính ra số
+   chứ không phụ thuộc bề ngang chữ. Khe 4px giữa nút và tờ bài luôn đúng ở mọi cửa sổ ≥1252px:
+   cả hai công thức `left` đều dịch theo `50% ∓ min(--page-width,100%)/2 ± 16 ∓ 4`.
+
+   Dưới 1252px thì `max(2px, …)` / `min(…, 100% - 88px)` ghim nút sát mép cửa sổ (x = 2..88)
+   và nó đè lên vùng đệm của tờ bài — đúng lúc đó `padding: 10px 96px` của dải "Câu N" có việc:
+   chữ đầu dải bắt đầu từ 128px tính từ mép cửa sổ (16 đệm cột + 16 đệm tờ bài + 96 đệm dải)
+   nên không bao giờ nằm dưới nút. Gutter ở cửa sổ 1280px là 106px (1280−1100)/2 → nút 86px +
+   khe 4px vẫn nằm ngoài tờ bài.
+
+   `translateY(-50%)` phải lặp lại ở `:hover`: practice.css đặt `.q-pager-btn:hover
+   {transform:none}` (để trừ hiệu ứng nâng nút của Bootstrap), thiếu hai rule dưới thì con
+   trỏ rê vào là nút nhảy ngược xuống nửa chiều cao nó vừa được canh. */
+@media (min-width: 900px) {
+  .exam-bar-nav .q-pager-btn {
+    position: fixed;
+    /* `width: 86px` + đệm 14px của practice.css chỉ chừa 58px cho chữ, hẹp hơn đúng vài
+       px so với "‹ Trước" (đo thật: nút trái cao 65px vì xuống hàng, nút phải 44px) —
+       thành cặp nút lệch chiều cao trên cùng một hàng. Kéo đệm về 8px và giữ một dòng. */
+    width: 86px;
+    padding-left: 8px; padding-right: 8px; white-space: nowrap;
+    /* Tâm của dải "Câu N". `--pager-mid` do static/js/question_pager.js đo `.q-number` của
+       câu đang hiện — khung dính đỉnh (thanh + ghi chú + palette) cao bao nhiêu tuỳ
+       bề ngang cửa sổ nên CSS không tự trừ được. Giá trị dự phòng là tâm của cột nội dung
+       (cột cao `100vh - --fixed-top`, xem common.css) dùng khi JS chưa chạy. */
+    top: var(--pager-mid, calc(50vh + var(--fixed-top) / 2));
+    transform: translateY(-50%);
+    z-index: 4;   /* trên .exam-chrome (3), vẫn dưới overlay/modal (>= 2000) */
+  }
+  /* 74px = 86 (bề ngang nút) − 16 (đệm của #page-body) + 4 (khe): mép TRONG của mỗi nút
+     dừng lại đúng 4px trước mép tờ bài ở mọi cửa sổ ≥1252px, và `min(…, 100% - 88px)` giữ
+     hai nút đối xứng qua trục giữa khi ghim vào sát cửa sổ. */
+  .exam-bar-nav [data-pager-prev] {
+    left: max(2px, calc(50% - min(var(--page-width), 100%) / 2 - 74px));
+  }
+  .exam-bar-nav [data-pager-next] {
+    left: min(calc(50% + min(var(--page-width), 100%) / 2 + 74px - 86px), calc(100% - 88px));
+  }
+  /* Đệm đứng 10px để dải cao đủ chứa nút 44px: không có nó thì mép dưới nút chạm hàng đầu
+     tiên của đề bài (dưới dải chỉ có 8px margin). */
+  #exam-form .exam-q .q-number { padding: 10px 96px; }
+  .exam-bar-nav .q-pager-btn:hover { transform: translateY(-50%); }
+}
+
+/* Đồng hồ do server khởi động (remaining_seconds từ deadline_at trong DB), nằm gọn trong
+   thanh nên nhãn và số đứng cùng hàng. .warn do JS thêm khi còn dưới 5 phút. */
+.exam-clock {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+  padding: 4px 10px; display: flex; align-items: baseline; gap: 8px; white-space: nowrap;
+}
+.exam-clock-label { font-size: .75rem; color: #6b7280; }
+.exam-clock-value {
+  font-size: 1.25rem; font-weight: 700; color: #111827;
+  font-variant-numeric: tabular-nums; letter-spacing: .5px;
+}
+.exam-clock.warn { border-color: #fca5a5; background: #fef2f2; }
+.exam-clock.warn .exam-clock-value { color: #b91c1c; }
+
+/* Ghi chú: nộp quá hạn, tắt chấm AI, còn câu bỏ trống */
+.exam-note {
+  background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;
+  padding: 8px 12px; font-size: .85rem; color: #0c4a6e; margin-bottom: 10px;
+}
+.exam-note.warn { background: #fefce8; border-color: #fde68a; color: #854d0e; }
+
+/* Bảng "đang chấm" mà static/js/exam.js (showGrading) dựng lên giữa màn hình trong lúc
+   server giải câu điền số và gợi ý tự luận. Z-index phải trên .ajax-overlay (2000) và
+   .ajax-progress (2001) của common.css: nó sinh ra sau hai lớp phủ đó và là thứ duy nhất
+   học sinh cần đọc trong lúc chờ. */
+.exam-grading {
+  position: fixed; inset: 0; z-index: 2002;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.exam-grading-card {
+  background: #fff; border: 1px solid #bfdbfe; border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(17, 24, 39, .18);
+  padding: 16px 18px; max-width: 420px; text-align: center;
+}
+.exam-grading-title { font-size: 1rem; font-weight: 700; color: #1d4ed8; margin-bottom: 6px; }
+.exam-grading-note { font-size: .85rem; color: #374151; line-height: 1.45; }
+.exam-grading-wait {
+  margin-top: 8px; font-size: .8rem; color: #6b7280;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Palette: một ô vuông mỗi câu, bấm để nhảy tới câu, đi hàng dọc theo số câu của ĐỀ (không
+   còn cắt theo `exam_items.part` của nguồn — xem services/exam_service.paper). Palette đứng
+   ngoài vùng câu hỏi nên không bao giờ che mất bài, và nằm TRONG .exam-chrome nên dính đỉnh
+   đúng như thanh điều hướng — hai khối cùng là lối đi giữa các câu, trôi một cái thì cái kia
+   ở lại cũng vô ích. */
+.exam-palette {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+  padding: 8px 12px; margin-bottom: 10px;
+  display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center;
+}
+/* Chip báo "mấy câu nguồn không kèm đáp án" nằm trong chính hàng ô câu: một hàng dọc
+   34px thay cho một khối .exam-note 38px đứng riêng. */
+.exam-palette-note {
+  font-size: .78rem; color: #854d0e; background: #fefce8; border: 1px solid #fde68a;
+  border-radius: 999px; padding: 3px 10px; margin-right: 4px;
+}
+.exam-dot {
+  /* 34px thay vì 27px: ô palette bấm bằng ngón tay trên điện thoại, dưới 32px rất hay
+     bấm hụt sang ô bên cạnh. */
+  width: 34px; height: 34px; border-radius: 7px; border: 1px solid #d1d5db;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: .9rem; color: #374151; text-decoration: none; background: #f9fafb;
+}
+.exam-dot:hover { border-color: #9ca3af; background: #eef2ff; }
+.exam-dot.done { background: #dcfce7; border-color: #86efac; color: #166534; }
+/* Câu đang xem: học sinh không có cách nào biết số nào là câu mình đang đọc khi đề 40 câu
+   trải dài. Nền lấy ĐÚNG màu của trạng thái rê chuột (#eef2ff, cùng với viền #9ca3af) nên
+   ô hiện tại trông như con trỏ đang đứng trên nó — không phải một màu thứ ba phải học.
+   Đặt SAU .done: đang xem câu đã làm thì ô đổi sang màu hiện tại, vì "mình đang ở câu nào"
+   quan trọng hơn màu "đã làm" đúng một ô (muốn xem câu đã làm chưa thì bấm sang ô kế).
+   Lớp này do static/js/question_pager.js gắn khi đổi câu, không phải template. */
+.exam-dot.current { border-color: #9ca3af; background: #eef2ff; }
+
+/* ---- Vùng câu hỏi: mức sàn + bỏ khung lồng khung ----
+   Bệnh: .scroll-area của common.css vừa tô panel (nền + viền + đệm 12px) vừa chứa bài,
+   mà .question-block lại là card có viền và margin 16px — hai khung lồng nhau ăn 40px
+   chiều cao và 56px bề ngang mà không mang chữ nào. Và vì khối đứng không co lại
+   (flex-shrink:0 ở common.css), trên cửa sổ thấp vùng đọc từng bị ép còn 25px.
+   Thuốc: card trắng là mặt đọc duy nhất (panel bỏ nền/viền/đệm), còn vùng đọc có MỨC SÀN
+   vừa đủ một câu ngắn — thà phải cuộn còn hơn mất chỗ làm bài. Trần 55vh cũ có nghĩa là
+   trên cửa sổ 1366x768 vùng đọc LUÔN vượt chỗ trống, nên #page-body cuộn và câu không bao
+   giờ chịu co: pager "từng câu một" (static/js/question_pager.js) đo chỗ trống thật để thu
+   gọn câu bằng `zoom`, nên phải để vùng đọc đúng bằng chỗ trống còn lại. */
+#exam-form > .scroll-area {
+  min-height: 120px;
+  background: transparent; border: 0; border-radius: 0; padding: 0;
+}
+/* Form ĐƯỢC co lại đúng số px còn thừa (mặc định của .fill ở common.css, không ghi đè):
+   đó là điều kiện để pager "từng câu một" đo được chỗ trống thật. Luật `flex-shrink:0` cũ
+   đi kèm mức sàn 55vh — form cao bằng nội dung thì #page-body cuộn, câu không bao giờ co,
+   và người làm bài phải kéo lên kéo xuống. Mức sàn bây giờ nhỏ hơn chỗ trống trên mọi cửa
+   sổ thông thường, nên vùng đọc nhận đúng phần còn lại và chỉ cuộn khi câu quá dài thật.
+
+   Mức sàn TỪNG là 260px và đó chính là lý do footer che mất bốn phương án: vùng đọc cao
+   260px trong khi chỗ trống chỉ ~76px, nên #page-body mới là thứ cuộn còn .scroll-area thì
+   không (scrollHeight == clientHeight) — con lăn đặt trên câu chữ không đi đâu, và pager đo
+   `clientHeight` của vùng đọc nên thấy 260px, kết luận "vừa rồi" mà không thu. 120px vẫn đủ
+   cho dòng "Câu N" + một phương án, còn cửa sổ thấp hơn nữa thì #page-body cuộn và
+   .exam-chrome dính đỉnh giữ nguyên nút điều hướng, đồng hồ, nộp bài. */
+/* Khối phần không còn đầu đề riêng (mỗi lúc chỉ một câu hiện), nó chỉ gom câu để JS ẩn
+   giúp; khoảng cách do chính card quyết định nên margin cũ 22px là thừa. */
+.exam-part { margin: 0; }
+/* Cùng luật với .q-wrap.scroll-area ở practice.css: một lúc chỉ hiện MỘT câu nên 10px phía
+   dưới câu là khoảng trống không có gì bên cạnh, ăn vào chỗ của phương án cuối. */
+#exam-form .exam-q { margin: 0; }
+
+/* Dải "Câu N · Đại số · Phần … · điểm" CANH GIỮA (#867): đó là hàng duy nhất nói em đang ở
+   câu nào, và hai nút Trước/Sau áp đúng hai mép của hàng đó, nên chữ nằm giữa thì hai nút
+   thành cặp khung đối xứng hai bên. Không viết mỗi `.exam-q .q-number`: trang KẾT QUẢ cũng
+   dùng class `.exam-q` nhưng dải câu ở đó là `.q-num`, và trang kết quả phải giữ canh trái. */
+#exam-form .exam-q .q-number { text-align: center; }
+
+/* "Phần I — Trắc nghiệm nhiều phương án lựa chọn" ngay trong dòng "Câu N": đủ để em biết
+   câu này thuộc phần nào mà không phải trả 30px cho một khối đầu đề. Chữ đậm hơn xám chuẩn
+   một bậc (#1d4ed8) vì đây là nhãn điều hướng, không phải chữ phụ. */
+.exam-part-badge {
+  font-size: .76rem; font-weight: 600; color: #1d4ed8; background: #eef2ff;
+  border-radius: 999px; padding: 2px 9px; margin-left: 6px; white-space: nowrap;
+}
+
+/* Nhảy tới câu theo palette: vùng cuộn hiện là .scroll-area chứ không phải cả
+   trang, nên chỉ cần chừa một khe nhỏ phía trên đầu câu. */
+.exam-q { position: relative; scroll-margin-top: 8px; }
+.exam-points {
+  font-size: .76rem; font-weight: 600; color: #6b7280;
+  background: #f3f4f6; border-radius: 999px; padding: 2px 9px; margin-left: 6px;
+}
+.exam-sub-hint { font-size: .8rem; color: #6b7280; margin: 2px 0 8px; }
+
+/* Bốn phát biểu của câu Đúng/Sai: text bên trái, hai radio bên phải */
+.exam-statement {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px;
+  background: #fcfcfd;
+}
+.exam-statement-text { flex: 1; min-width: 220px; }
+.exam-statement-pick { display: flex; gap: 14px; font-size: .85rem; white-space: nowrap; }
+.exam-statement-pick label { cursor: pointer; }
+
+/* Ý Đúng/Sai trên MÀN RỘNG: bốn ý xếp HAI cột. Mỗi ý cao 55px nên riêng bốn ý đã 231px,
+   cộng đề bài có hình là câu tràn khỏi vùng đọc (~400px trên cửa sổ 768px) và học sinh phải
+   kéo lên kéo xuống mới thấy đủ bốn ý — trái đúng thứ trang làm bài phải hiển thị cùng lúc.
+   Hai cột vẫn giữ mỗi ý MỘT hàng (cột ~500px đủ chỗ cho chữ + hai ô Đúng/Sai), chỉ bớt hai
+   hàng. `:not(.q-hidden)` bắt buộc như trong common.css: selector có `:has()` đặc hiệu hơn
+   `.q-hidden` (static/practice.css) nên thiếu nó thì câu bị pager ẩn vẫn bày ra dưới câu
+   đang làm. Dưới 1000px mỗi cột hẹp không đủ chỗ cho ô Đúng/Sai nên ở lại một cột. */
+@media (min-width: 1000px) {
+  .question-block:not(.q-hidden):has(.exam-statement) {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px;
+  }
+  .question-block:not(.q-hidden):has(.exam-statement) > :not(.exam-statement) { grid-column: 1 / -1; }
+}
+
+/* Kết quả: điểm to bên phải header */
+.exam-score { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; }
+.exam-score-value { font-size: 2.6rem; font-weight: 700; line-height: 1.05; color: #111827; }
+.exam-score-max { font-size: .85rem; color: #6b7280; }
+
+/* Bảng tách nguồn điểm: máy chấm / AI chấm tham khảo / tổng */
+.exam-breakdown {
+  width: 100%; max-width: 620px; border-collapse: collapse;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 10px;
+  overflow: hidden; margin-bottom: 14px; font-size: .88rem;
+}
+.exam-breakdown td { padding: 7px 12px; border-bottom: 1px solid #f1f5f9; color: #374151; }
+.exam-breakdown .num { text-align: right; font-weight: 700; width: 62px; }
+.exam-breakdown .max { text-align: right; color: #6b7280; width: 76px; }
+.exam-breakdown tr.total td { border-bottom: none; background: #f8fafc; font-weight: 600; }
+
+/* Nhãn điểm đạt được trên từng câu */
+.exam-awarded {
+  font-size: .76rem; font-weight: 600; border-radius: 999px; padding: 2px 9px; margin-left: 6px;
+  background: #fee2e2; color: #991b1b;
+}
+.exam-awarded.ok { background: #dcfce7; color: #166534; }
+.exam-awarded.part { background: #fef3c7; color: #92400e; }
+.exam-awarded.ai { background: #ede9fe; color: #5b21b6; }
+/* Câu đề không kèm đáp án: không phải 0 điểm nên không được tô đỏ như câu sai. */
+.exam-awarded.pend { background: #f1f5f9; color: #475569; }
+
+.exam-statement-verdict { font-size: .76rem; color: #6b7280; text-align: right; }
+
+.exam-answer-key {
+  font-size: .85rem; color: #374151; background: #f8fafc;
+  border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 11px; margin-top: 8px;
+}
+.exam-answer-key .hint { display: block; font-size: .76rem; color: #6b7280; margin-top: 3px; }
+
+/* Mức sàn của vùng câu hỏi là chuyện của MÀN HÌNH, không phải của trang giấy: báo in phải
+   dài bao nhiêu cũng in hết (cùng luật với .tbl-wrap/.q-detail trong common.css). */
+@media print {
+  #exam-form > .scroll-area { min-height: 0; }
+}
+
+@media (max-width: 600px) {
+  .exam-head { flex-direction: column; }
+  .exam-statement-pick { width: 100%; }
+  .exam-bar { padding: 8px 10px; gap: 8px 10px; }
+  /* Dòng mô tả loại đề/số câu KHÔNG bị ẩn trên màn hẹp nữa: từ khi bỏ "Đề số …" nó là
+     chữ duy nhất nói học sinh đang làm đề nào, và đề hiện tại bốc ngẫu nhiên nên em
+     càng cần thấy "giữa kỳ 1 · 23 câu". Ellipsis đã lo phần tràn bề ngang. */
+}
+
+/* Màn hẹp: palette là ô điều hướng chứ không phải nội dung cần đọc nên cao quá thì nó tự
+   cuộn trong lòng. Trần 22vh để điện thoại thật (844px) vẫn hiện đủ 3 hàng ô câu, còn cửa sổ
+   cao dưới ~500px không bị đẩy câu hỏi và nút nộp ra ngoài màn. */
+@media (max-width: 699px) {
+  .exam-palette { max-height: 22vh; overflow: auto; }
+}
