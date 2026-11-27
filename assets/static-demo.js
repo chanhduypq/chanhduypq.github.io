@@ -21,11 +21,13 @@
     return new URL(String(name || 'index.html'), window.location.href).href;
   }
 
-  function entryFileUrl(name) {
+  function entryFileUrl(name, search) {
     var prefix = '/' + 'chanhduypq.github.io/';
     var base = window.location.origin + '/';
     if (window.location.pathname.indexOf(prefix) === 0) base = window.location.origin + prefix;
-    return new URL(String(name || 'index.html'), base).href;
+    var url = new URL(String(name || 'index.html'), base);
+    if (search && !url.search) url.search = search;
+    return url.href;
   }
 
   function routeTarget(value) {
@@ -59,7 +61,7 @@
   function navigate(value, replace) {
     var target = routeTarget(value);
     if (!target) return false;
-    var href = fileUrl(target);
+    var href = entryFileUrl(target, parseUrl(value).search);
     if (replace && window.history && history.replaceState) history.replaceState(null, '', href);
     else window.location.href = href;
     return true;
@@ -326,7 +328,7 @@
       var targetPath = appPath(parseUrl(entryFileUrl(initialTarget)));
       if (targetPath !== currentPath && !(currentPath === '/' && targetPath === '/index.html') &&
           !(initialTarget === 'index.html' && currentPath !== '/')) {
-        window.location.replace(entryFileUrl(initialTarget));
+        window.location.replace(entryFileUrl(initialTarget, window.location.search));
         return;
       }
     }
