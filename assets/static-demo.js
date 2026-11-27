@@ -92,7 +92,9 @@
     document.addEventListener('submit', function (event) {
       var form = event.target;
       if (!form || !form.tagName || form.tagName.toLowerCase() !== 'form') return;
+      if (!form.hasAttribute('data-demo-form')) return;
       event.preventDefault();
+      event.stopPropagation();
       if (form.hasAttribute('data-demo-submit')) {
         if (window.showNotice) window.showNotice(demo.messages.submit, 'Thông báo');
         return;
