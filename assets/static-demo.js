@@ -51,7 +51,8 @@
     if (routes[path]) return routes[path];
     if (path.indexOf('/exam/ngau-nhien') === 0) return variants['/exams'] && variants['/exams'][grade] || 'exams.html';
     if (path.indexOf('/practice_similar/') === 0) return 'practice.html';
-    if (path.indexOf('/redo/') === 0) return 'redo-last.html';
+    var redoMatch = path.match(/^\/redo\/(\d+)$/);
+    if (redoMatch) return 'redo-' + redoMatch[1] + '.html';
     return 'index.html';
   }
 
